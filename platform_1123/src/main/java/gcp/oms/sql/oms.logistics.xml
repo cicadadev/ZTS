@@ -1,0 +1,3107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="oms.logistics">
+
+	<select id="getIoSeq" resultType="java.math.BigDecimal">
+		/* [oms.logistics.getIoSeq][victor][2016. 08. 23.] */
+		SELECT SQ_OMS_LOGISTICS_IO_SEQ.NEXTVAL FROM DUAL
+	</select>
+	
+	<!-- 배송승인 리스트 -->
+	<select id="orderProductList" parameterType="omsLogisticsSearch" resultType="omsOrderproduct" fetchSize="1000">
+		/* [oms.logistics.orderProductList][brad][2016. 7. 8.] */
+     		SELECT C.*,
+     			   COUNT (*) OVER () AS TOTAL_COUNT,
+	       		   COUNT (DISTINCT ORDER_ID) OVER () AS TOTAL_ORDER_COUNT
+     		FROM (
+				SELECT B.*,
+		       		   RANK ()
+		                 OVER (
+		                    ORDER BY
+		                       ORDER_ID,
+		                       NO_WRAP_CNT,
+		                       ORDER_PRODUCT_NO)
+		                    AS ORDER_SEQ,
+		               CASE
+		                  WHEN     WEAR_PRODCUT_CNT = ORDER_PRODUCT_CNT
+		                       AND WEAR_PRODCUT_CNT > 0
+		                  THEN
+		                     '1'
+		                  WHEN     WEAR_PRODCUT_CNT &lt;&gt; ORDER_PRODUCT_CNT
+		                       AND WEAR_PRODCUT_CNT > 0
+		                  THEN
+		                     '2'
+		                  ELSE
+		                     '3'
+		               END
+		                  AS WEAR_ORDER_TYPE,
+		               CASE
+                           WHEN SUM (NO_WRAP_CNT) OVER (PARTITION BY ORDER_ID, DELIVERY_ADDRESS_NO) = 1
+                           THEN
+                              'Y'
+                           ELSE
+                              'N'
+                       END
+                           AS ONE_ITEM_ORDER_YN     
+		          FROM (
+						SELECT A.*,
+		                       SUM (DECODE (WEAR_PRODUCT_YN, 'Y', 1, 0)) OVER (PARTITION BY ORDER_ID) AS WEAR_PRODCUT_CNT,
+		                       SUM (NO_WRAP_CNT) OVER (PARTITION BY ORDER_ID) AS ORDER_PRODUCT_CNT,
+		                       CASE
+		                          WHEN SUM (PREMIUM_CNT) OVER (PARTITION BY ORDER_ID) > 0
+		                          THEN
+		                             'Y'
+		                          ELSE
+		                             'N'
+		                       END
+		                          AS PREMIUM_ORDER_YN,
+		                       CASE
+		                          WHEN WEAR_PRODUCT_YN = 'Y' AND ERP_PRODUCT_ID IS NOT NULL
+		                          THEN
+		                             ORDER_PRODUCT_NAME || '_' || ERP_PRODUCT_ID
+		                          ELSE
+		                             ORDER_PRODUCT_NAME
+		                       END
+		                          AS PRODUCT_NAME
+	                  FROM (
+							SELECT /*+ INDEX ( T4 IDX_OMS_ORDERPRODUCT_DRDT ) */
+								   T1.STORE_ID,
+								   T1.SITE_TYPE_CD,
+	                               T1.ORDER_TYPE_CD,
+	                               T1.NAME1 AS ORDERER_NM,
+	                               T1.PHONE2 AS ORDERER_MOBILE,
+	                               T1.MEMBER_ID AS ORDERER_ID,
+	                               T2.DELIVERY_ADDRESS_NO,
+	                               T2.NAME1 AS RECEIVER_NM,
+	                               T2.PHONE1 AS RECEIVER_PHONE,
+	                               T2.PHONE2 AS RECEIVER_MOBILE,
+	                               T2.ZIP_CD,
+	                               T2.ADDRESS1 || CHR (32) || T2.ADDRESS2 AS DELIVERY_ADDRESS,
+	                               TO_CHAR (T4.DELIVERY_RESERVE_DT, 'YYYY/MM/DD') AS ORDER_DATE,
+	                               T4.ORDER_ID,
+	                               T4.ORDER_PRODUCT_NO,
+	                               T4.ORDER_DELIVERY_TYPE_CD,
+	                               T4.ORDER_PRODUCT_TYPE_CD,
+	                               T4.ORDER_PRODUCT_STATE_CD,
+	                               T4.PRODUCT_ID,
+	                               T4.PRODUCT_NAME AS ORDER_PRODUCT_NAME,
+	                               T4.SALEPRODUCT_ID,
+	                               T4.SALEPRODUCT_NAME,
+	                               T4.ERP_PRODUCT_ID,
+	                               T4.ERP_SALEPRODUCT_ID,
+	                               T4.ORDER_QTY - T4.CANCEL_QTY - T4.OUT_QTY AS OUT_RESERVE_QTY,
+	                               T4.SEND_ERROR_YN,
+	                               T4.SEND_ERROR_REASON_CD,
+	                               T4.DELIVERY_CANCEL_REASON_CD,
+	                               DECODE (T4.DEAL_ID, 3, 1, 0) AS PREMIUM_CNT,
+	                               DECODE (ORDER_PRODUCT_TYPE_CD, 'ORDER_PRODUCT_TYPE_CD.WRAP', 0, 1) AS NO_WRAP_CNT,
+	                               T5.NAME AS SITE_NAME,
+	                               '센터배송' AS DELIVERY_METHOD,
+								   T6.LOCATION_ID,	
+	                               T6.REAL_STOCK_QTY,
+	                               CASE
+	                                  WHEN EXISTS
+	                                          (SELECT 1
+	                                             FROM DUAL
+	                                            WHERE T4.CATEGORY_ID IN
+	                                                     (SELECT NAME
+	                                                        FROM CCS_CODE
+	                                                       WHERE CD_GROUP_CD =
+	                                                                'DUAL_WRAP_CATEGORY_CD'))
+	                                  THEN
+	                                     'Y'
+	                                  ELSE
+	                                     'N'
+	                               END
+	                                  AS DUAL_WRAP_YN,
+	                               CASE
+	                                  WHEN EXISTS
+	                                          (SELECT 1
+	                                             FROM DUAL
+	                                            WHERE T4.BRAND_ID IN
+	                                                     (SELECT NAME
+	                                                        FROM CCS_CODE
+	                                                       WHERE CD_GROUP_CD =
+	                                                                'WEAR_BRAND_CD'))
+	                                  THEN
+	                                     'Y'
+	                                  ELSE
+	                                     'N'
+	                               END
+	                                  AS WEAR_PRODUCT_YN
+					   		FROM OMS_ORDER T1 
+					   			 INNER JOIN OMS_DELIVERYADDRESS T2 ON T1.ORDER_ID = T2.ORDER_ID
+                                 INNER JOIN OMS_ORDERPRODUCT T4 ON T1.ORDER_ID = T4.ORDER_ID AND T2.DELIVERY_ADDRESS_NO = T4.DELIVERY_ADDRESS_NO
+                               	 INNER JOIN CCS_SITE T5 ON T1.STORE_ID = T5.STORE_ID AND T1.SITE_ID = T5.SITE_ID
+                                 INNER JOIN PMS_SALEPRODUCT T6 ON T4.STORE_ID = T6.STORE_ID AND T4.SALEPRODUCT_ID = T6.SALEPRODUCT_ID
+							WHERE T1.STORE_ID = #{storeId}
+								  AND T4.ORDER_PRODUCT_TYPE_CD &lt;&gt; 'ORDER_PRODUCT_TYPE_CD.SET'
+								  AND T4.SALE_TYPE_CD = 'SALE_TYPE_CD.PURCHASE'
+							<if test="startDate != null and startDate != ''">
+								<if test="endDate != null and endDate != ''">
+									AND T4.DELIVERY_RESERVE_DT BETWEEN TO_DATE (#{startDate}, 'YYYY-MM-DD HH24:MI:SS') AND TO_DATE (#{endDate}, 'YYYY-MM-DD HH24:MI:SS')
+								</if>
+							</if>
+							<choose>
+								<when test="orderProductStateCds != null and orderProductStateCds != ''">
+									AND T4.ORDER_PRODUCT_STATE_CD IN (${orderProductStateCds})
+								</when>
+								<otherwise>
+									AND T4.ORDER_PRODUCT_STATE_CD IN ('ORDER_PRODUCT_STATE_CD.READY', 'ORDER_PRODUCT_STATE_CD.PARTIALDELIVERY', 'ORDER_PRODUCT_STATE_CD.CANCELAPPROVAL', 'ORDER_PRODUCT_STATE_CD.CANCELDELIVERY')
+								</otherwise>
+							</choose>
+							<if test="orderDeliveryType != null and orderDeliveryType != ''">
+								AND T4.ORDER_DELIVERY_TYPE_CD IN (${orderDeliveryType})
+							</if>
+							<if test="orderType != null and orderType != ''">
+								AND T1.ORDER_TYPE_CD IN (${orderType})
+							</if>
+							<if test="siteIds != null and siteIds != ''">
+								AND T5.SITE_ID IN (${siteIds})
+							</if>
+							<if test='orderer != null and orderer != ""'>
+								<if test='ordererType == "name"'>
+								 	AND T1.NAME1 like #{orderer} || '%'
+								</if>
+								<if test='ordererType == "id"'>
+								 	AND T1.MEMBER_ID like #{orderer} || '%'
+								</if>
+								<if test='ordererType == "mobile"'>
+									AND T1.PHONE2 like #{orderer} || '%'
+								</if>
+							</if>
+							<if test='receiver != null and receiver != ""'>
+								<if test='receiverType == "name"'>
+								 	AND T2.NAME1 like #{receiver} || '%'
+								</if>
+								<if test='receiverType == "mobile"'>
+									AND T2.PHONE2 like #{receiver} || '%'
+								</if>
+							</if>
+							<if test='orderId != null and orderId != ""'>
+								AND T1.ORDER_ID = #{orderId}			
+							</if>
+							<if test='product != null and product != ""'>
+								<if test='productType == "productId"'>
+								 	AND T1.ORDER_ID IN (SELECT ORDER_ID FROM OMS_ORDERPRODUCT WHERE PRODUCT_ID LIKE #{product} || '%')
+								</if>
+								<if test='productType == "productName"'>
+								 	AND T1.ORDER_ID IN (SELECT ORDER_ID FROM OMS_ORDERPRODUCT WHERE PRODUCT_NAME LIKE #{product} || '%')
+								</if>
+							</if>
+							<if test='normalYn != null and normalYn != ""'>
+								<if test='normalYn == "N"'>
+								 	AND T4.SEND_ERROR_YN &lt;&gt; #{normalYn}
+								 	<if test='sendErrorReasonCd != null and sendErrorReasonCd != ""'>
+								 		AND T4.SEND_ERROR_REASON_CD = #{sendErrorReasonCd}
+									</if>
+								</if>
+								<if test='normalYn == "Y"'>
+									AND (T4.SEND_ERROR_YN IS NULL OR T4.SEND_ERROR_YN &lt;&gt; #{normalYn})
+								</if>
+							</if>
+							<if test="deliveryCancelReasonCd != null and deliveryCancelReasonCd != ''">
+								AND T4.DELIVERY_CANCEL_REASON_CD = #{deliveryCancelReasonCd}		
+							</if>
+							) A
+						) B
+					) C
+			<where>
+				<if test="orderProductType != null and orderProductType != ''">
+					<if test="orderProductType == 'SINGLE'">
+						AND ONE_ITEM_ORDER_YN = 'Y'			
+					</if>
+					<if test="orderProductType == 'OTHERS'">
+						AND ONE_ITEM_ORDER_YN = 'N'
+					</if>
+				</if>
+				<if test='deliveryType != null and deliveryType != ""'>
+					<if test='deliveryType == "1"'>
+						AND WEAR_ORDER_TYPE = '1'
+					</if>
+					<if test='deliveryType == "2"'>
+						AND WEAR_ORDER_TYPE = '2'
+					</if>
+					<if test='deliveryType == "3"'>
+						AND WEAR_ORDER_TYPE = '3'
+					</if>
+					<if test='deliveryType == "4"'>
+						AND SITE_TYPE_CD = 'SITE_TYPE_CD.OWN'
+					</if>
+					<if test='deliveryType == "5"'>
+						AND SITE_TYPE_CD = 'SITE_TYPE_CD.OWN' AND WEAR_ORDER_TYPE = '1'
+					</if>
+					<if test='deliveryType == "6"'>
+						AND SITE_TYPE_CD = 'SITE_TYPE_CD.OWN' AND WEAR_ORDER_TYPE = '2'
+					</if>
+					<if test='deliveryType == "7"'>
+						AND SITE_TYPE_CD = 'SITE_TYPE_CD.OWN' AND WEAR_ORDER_TYPE = '3'
+					</if>
+					<if test='deliveryType == "8"'>
+						AND SITE_TYPE_CD = 'SITE_TYPE_CD.DOMESTIC'
+					</if>
+					<if test='deliveryType == "9"'>
+						AND SITE_TYPE_CD = 'SITE_TYPE_CD.DOMESTIC' AND WEAR_ORDER_TYPE = '1'
+					</if>
+					<if test='deliveryType == "10"'>
+						AND SITE_TYPE_CD = 'SITE_TYPE_CD.DOMESTIC' AND WEAR_ORDER_TYPE = '2'
+					</if>
+					<if test='deliveryType == "11"'>
+						AND SITE_TYPE_CD = 'SITE_TYPE_CD.DOMESTIC' AND WEAR_ORDER_TYPE = '3'
+					</if>
+					<if test='deliveryType == "12"'>
+						AND PREMIUM_ORDER_YN = 'Y'
+					</if>
+					<if test='deliveryType == "13"'>
+						AND SITE_TYPE_CD = 'SITE_TYPE_CD.CHINA'
+					</if>
+					<if test='deliveryType == "14"'>
+						AND SITE_TYPE_CD = 'SITE_TYPE_CD.CHINA' AND WEAR_ORDER_TYPE = '1'
+					</if>
+					<if test='deliveryType == "15"'>
+						AND SITE_TYPE_CD = 'SITE_TYPE_CD.CHINA' AND WEAR_ORDER_TYPE = '2'
+					</if>
+					<if test='deliveryType == "16"'>
+						AND SITE_TYPE_CD = 'SITE_TYPE_CD.CHINA' AND WEAR_ORDER_TYPE = '3'
+					</if>
+				</if>
+			</where>
+			ORDER BY ORDER_SEQ
+	</select>
+	
+	
+	<!-- 배송승인 상품 물류데이터 일괄 INSERT -->
+	<update id="insertLogisticsList" parameterType="java.util.HashMap">
+		/* [oms.logistics.insertLogisticsList][brad][2016. 10. 22.] */
+	 	INSERT INTO OMS_LOGISTICS (
+	 					   LOGISTICS_INOUT_NO,
+                           ORDER_ID,
+                           ORDER_PRODUCT_NO,
+                           WAREHOUSE_INOUT_TYPE_CD,
+                           DELIVERY_IF_TYPE_CD,
+                           LOGISTICS_STATE_CD,
+                           INS_ID,
+                           INS_DT,
+                           OUT_RESERVE_QTY,
+                           DELIVERY_SERVICE_CD,
+                           TRACKING_IF_YN,
+                           IO_SEQ)
+		   WITH DATA
+	          AS (SELECT A.*,
+		                 DENSE_RANK () OVER (ORDER BY DELI_ADDR) AS GROUP_SEQ,
+		                 CASE
+		                 	  WHEN OUT_RESERVE_QTY = 0
+			                  THEN
+			                     0
+		                      WHEN    DELIVERY_TOGETHER_QTY IS NULL
+		                           OR DELIVERY_TOGETHER_QTY = 0
+		                      THEN
+		                         1
+		                      ELSE
+		                         CEIL (OUT_RESERVE_QTY / DELIVERY_TOGETHER_QTY)
+		                   END
+		                      AS DIVIDE_CNT
+	              FROM (SELECT /*+ INDEX ( T3 PK_OMS_ORDERPRODUCT ) */
+	              			  T3.ORDER_ID,
+	                          T3.ORDER_PRODUCT_NO,
+	                          T3.ORDER_QTY - T3.CANCEL_QTY - T3.OUT_QTY AS OUT_RESERVE_QTY,
+	                          NVL (T3.LP_NO, '1') || T2.NAME1 || T2.ZIP_CD || T2.PHONE1 || T2.PHONE2 || T2.ADDRESS1 || T2.ADDRESS2 AS DELI_ADDR,
+	                          T4.DELIVERY_SERVICE_CD,
+	                          T5.DELIVERY_TOGETHER_QTY
+	                     FROM OMS_ORDER T1
+	                          INNER JOIN OMS_DELIVERYADDRESS T2 ON T1.ORDER_ID = T2.ORDER_ID
+	                          INNER JOIN OMS_ORDERPRODUCT T3 ON T2.ORDER_ID = T3.ORDER_ID AND T2.DELIVERY_ADDRESS_NO = T3.DELIVERY_ADDRESS_NO
+	                          INNER JOIN OMS_DELIVERY T4 ON T3.ORDER_ID = T4.ORDER_ID AND T3.DELIVERY_ADDRESS_NO = T4.DELIVERY_ADDRESS_NO AND T3.DELIVERY_POLICY_NO = T4.DELIVERY_POLICY_NO
+	                          INNER JOIN PMS_SALEPRODUCT T5 ON T3.STORE_ID = T5.STORE_ID AND T3.SALEPRODUCT_ID = T5.SALEPRODUCT_ID
+	                     WHERE T1.STORE_ID = #{storeId}
+	                           AND T3.ORDER_PRODUCT_STATE_CD IN ('ORDER_PRODUCT_STATE_CD.READY', 'ORDER_PRODUCT_STATE_CD.PARTIALDELIVERY', 'ORDER_PRODUCT_STATE_CD.CANCELAPPROVAL', 'ORDER_PRODUCT_STATE_CD.CANCELDELIVERY')
+	                           AND T3.ORDER_PRODUCT_TYPE_CD &lt;&gt; 'ORDER_PRODUCT_TYPE_CD.SET'
+	                           AND T3.SALE_TYPE_CD = 'SALE_TYPE_CD.PURCHASE'
+	                           AND (T3.SEND_ERROR_YN IS NULL OR SEND_ERROR_YN = 'N')
+							   AND EXISTS ( 
+									SELECT 1 
+				       				FROM (
+											 <foreach collection="list" item="item" index="index" separator="UNION ALL">
+											 	SELECT #{item.orderId} AS ORDER_ID, #{item.orderProductNo} AS ORDER_PRODUCT_NO FROM DUAL 
+										     </foreach>
+										  ) X 
+								    WHERE X.ORDER_ID = T3.ORDER_ID
+									AND X.ORDER_PRODUCT_NO = T3.ORDER_PRODUCT_NO
+						   	   )
+						) A
+				   )
+		   SELECT LOGISTICS_INOUT_NO,
+		          ORDER_ID,
+		          ORDER_PRODUCT_NO,
+		          'WAREHOUSE_INOUT_TYPE_CD.OUT',
+		          #{deliveryIfTypeCd},
+		          #{logisticsStateCd},
+		          #{updId},
+		          SYSDATE,
+		          OUT_QTY,
+		          DELIVERY_SERVICE_CD,
+		          'N',
+		          ZTSSHOP.SQ_OMS_LOGISTICS_IO_SEQ.NEXTVAL
+		     FROM (SELECT D.*,
+		     			   (  NVL (SUM (GUBUN) OVER (ORDER BY
+		                                GROUP_SEQ,
+		                                DIVIDE_YN DESC,
+		                                ORDER_ID,
+		                                ORDER_PRODUCT_NO
+		                             ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING),
+		                       0)
+		                  + GROUP_SEQ
+		                  + MAX_LOGISTICS_INOUT_NO) AS LOGISTICS_INOUT_NO
+		     		FROM(
+			     		SELECT C.*,
+			                  (SELECT NVL ((SELECT MAX (LOGISTICS_INOUT_NO) FROM OMS_LOGISTICS), 0) FROM DUAL)
+			                     AS MAX_LOGISTICS_INOUT_NO,
+			                  CASE WHEN DIVIDE_YN = 'Y' THEN 1 ELSE 0 END AS GUBUN,
+			                  CASE
+                                   WHEN DIVIDE_YN = 'Y'
+                                   THEN
+                                      DELIVERY_TOGETHER_QTY
+                                   WHEN DIVIDE_YN = 'N' AND DIVIDE_CNT > 1
+                                   THEN
+                                      MOD (OUT_RESERVE_QTY, DELIVERY_TOGETHER_QTY)
+                                   ELSE OUT_RESERVE_QTY
+                               END
+                                  AS OUT_QTY   
+			             FROM (SELECT A.*,
+			                          CASE
+			                             WHEN DIVIDE_CNT > 1 AND DIVIDE_CNT &lt;&gt; LV
+			                             THEN
+			                                'Y'
+			                             WHEN     DIVIDE_CNT > 1
+			                                  AND DIVIDE_CNT = LV
+			                                  AND MOD (OUT_RESERVE_QTY,
+			                                           DELIVERY_TOGETHER_QTY) = 0
+			                             THEN
+			                                'Y'
+			                             ELSE
+			                                'N'
+			                          END
+			                             AS DIVIDE_YN
+			                     FROM DATA A,
+			                          (    SELECT LEVEL LV
+			                                 FROM (SELECT MAX (DIVIDE_CNT) CNT FROM DATA)
+			                           CONNECT BY LEVEL &lt;= CNT) B
+			                    WHERE LV BETWEEN 1 AND DIVIDE_CNT) C) D
+					ORDER BY LOGISTICS_INOUT_NO, ORDER_ID, ORDER_PRODUCT_NO)		                    
+	</update>
+	
+	<!-- 배송승인 완료된 주문상품 리스트 -->
+	<select id="getApprovalProduct" parameterType="java.util.HashMap" resultType="omsOrderproduct" fetchSize="1000">
+		/* [oms.logistics.getApprovalProduct][brad][2016. 10. 23.] */
+		SELECT /*+ INDEX ( T3 PK_OMS_ORDERPRODUCT ) */
+  			  T2.ORDER_ID,
+              T2.ORDER_PRODUCT_NO,
+              T2.ORDER_PRODUCT_TYPE_CD,
+              T2.UPPER_ORDER_PRODUCT_NO,
+              T2.ORDER_DELIVERY_TYPE_CD
+         FROM OMS_ORDER T1
+              INNER JOIN OMS_ORDERPRODUCT T2 ON T1.ORDER_ID = T2.ORDER_ID
+              INNER JOIN OMS_LOGISTICS T3 ON T2.ORDER_ID = T3.ORDER_ID AND T2.ORDER_PRODUCT_NO = T3.ORDER_PRODUCT_NO
+         WHERE T1.STORE_ID = #{storeId}
+               AND T2.ORDER_PRODUCT_STATE_CD IN ('ORDER_PRODUCT_STATE_CD.READY', 'ORDER_PRODUCT_STATE_CD.PARTIALDELIVERY', 'ORDER_PRODUCT_STATE_CD.CANCELAPPROVAL', 'ORDER_PRODUCT_STATE_CD.CANCELDELIVERY')
+               AND T2.ORDER_PRODUCT_TYPE_CD &lt;&gt; 'ORDER_PRODUCT_TYPE_CD.SET'
+               AND T2.SALE_TYPE_CD = 'SALE_TYPE_CD.PURCHASE'
+               AND (T2.SEND_ERROR_YN IS NULL OR SEND_ERROR_YN = 'N')
+               AND T3.WAREHOUSE_INOUT_TYPE_CD = 'WAREHOUSE_INOUT_TYPE_CD.OUT'
+               AND T3.LOGISTICS_STATE_CD IN ('LOGISTICS_STATE_CD.APPROVAL', 'LOGISTICS_STATE_CD.SEND')
+               AND T3.DELIVERY_IF_TYPE_CD IN ('DELIVERY_IF_TYPE_CD.DAS', 'DELIVERY_IF_TYPE_CD.HANJIN')
+               AND EXISTS ( 
+					SELECT 1 
+       				FROM (
+							 <foreach collection="list" item="item" index="index" separator="UNION ALL">
+							 	SELECT #{item.orderId} AS ORDER_ID, #{item.orderProductNo} AS ORDER_PRODUCT_NO FROM DUAL 
+						     </foreach>
+						  ) A 
+				    WHERE A.ORDER_ID = T2.ORDER_ID
+					AND A.ORDER_PRODUCT_NO = T2.ORDER_PRODUCT_NO
+		   	   )
+		 ORDER BY T2.ORDER_ID, T2.ORDER_PRODUCT_NO
+	</select>
+	
+	<!-- 세트상품의 부모의 상태를 업데이트 -->
+	<update id="updateOrderProductState" parameterType="java.util.HashMap">
+		UPDATE OMS_ORDERPRODUCT SET ORDER_PRODUCT_STATE_CD = #{orderProductStateCd}
+		      ,UPD_DT = SYSDATE
+		      ,UPD_ID = #{updId}
+		      <if test='orderProductStateCd == "ORDER_PRODUCT_STATE_CD.SHIP"'>
+		      ,OUT_QTY = (ORDER_QTY - CANCEL_QTY - OUT_QTY)
+		      ,SHIP_DT = #{shipDt}
+		      </if>
+		      <if test='orderProductStateCd == "ORDER_PRODUCT_STATE_CD.DELIVERY_ORDER"'>
+		      ,DELIVERY_ORDER_DT = #{deliveryOrderDt}
+		      </if>
+		      <if test='orderProductStateCd == "ORDER_PRODUCT_STATE_CD.DELIVERY"'>
+		      ,DELIVERY_DT = #{deliveryDt}
+		      </if>
+		WHERE STORE_ID = #{storeId}
+		AND ORDER_ID = #{orderId}
+		AND ORDER_PRODUCT_NO = #{orderProductNo}
+        <if test='orderProductStateCd == "ORDER_PRODUCT_STATE_CD.DELIVERY_ORDER"'>
+			AND NOT EXISTS (
+				SELECT 1 FROM OMS_ORDERPRODUCT
+				WHERE STORE_ID = #{storeId}
+				AND ORDER_ID = #{orderId}
+				AND ORDER_PRODUCT_NO = #{orderProductNo}
+				AND ORDER_PRODUCT_TYPE_CD = 'ORDER_PRODUCT_TYPE_CD.SET'
+		        AND ORDER_PRODUCT_STATE_CD = 'ORDER_PRODUCT_STATE_CD.DELIVERY_ORDER'
+			)
+		</if>
+		<if test='orderProductStateCd == "ORDER_PRODUCT_STATE_CD.SHIP"'>
+			AND NOT EXISTS (
+				SELECT 1 FROM OMS_ORDERPRODUCT
+				WHERE STORE_ID = #{storeId}
+				AND ORDER_ID = #{orderId}
+				AND UPPER_ORDER_PRODUCT_NO = #{orderProductNo}
+				AND ORDER_DELIVERY_TYPE_CD = 'ORDER_DELIVERY_TYPE_CD.ORDER'
+				AND ORDER_PRODUCT_TYPE_CD = 'ORDER_PRODUCT_TYPE_CD.SUB'
+		        AND ORDER_PRODUCT_STATE_CD NOT IN ('ORDER_PRODUCT_STATE_CD.SHIP', 'ORDER_PRODUCT_STATE_CD.DELIVERY', 'ORDER_PRODUCT_STATE_CD.CONFIRMED', 'ORDER_PRODUCT_STATE_CD.CANCEL')
+			)
+		</if>
+		<if test='orderProductStateCd == "ORDER_PRODUCT_STATE_CD.DELIVERY"'>
+			AND NOT EXISTS (
+	            SELECT 1 FROM OMS_ORDERPRODUCT
+	            WHERE STORE_ID = #{storeId}
+	            AND ORDER_ID = #{orderId}
+	            AND UPPER_ORDER_PRODUCT_NO = #{orderProductNo}
+	            AND ORDER_DELIVERY_TYPE_CD = 'ORDER_DELIVERY_TYPE_CD.ORDER'
+	            AND ORDER_PRODUCT_TYPE_CD = 'ORDER_PRODUCT_TYPE_CD.SUB'
+	            AND ORDER_PRODUCT_STATE_CD NOT IN ('ORDER_PRODUCT_STATE_CD.DELIVERY', 'ORDER_PRODUCT_STATE_CD.CANCEL')
+            )
+		</if>
+	</update>
+	
+	<!-- 클레임 세트상품의 부모의 상태를 업데이트 -->
+	<update id="updateClaimOrderProductState" parameterType="java.util.HashMap">
+		UPDATE OMS_CLAIMPRODUCT SET CLAIM_PRODUCT_STATE_CD = #{claimProductStateCd}
+		      ,RETURN_DT = #{returnDt}
+		      ,UPD_DT = SYSDATE
+		      ,UPD_ID = #{updId}
+		WHERE CLAIM_NO = #{claimNo}
+		AND ORDER_ID = #{orderId}
+		AND ORDER_PRODUCT_NO = #{orderProductNo}
+		AND NOT EXISTS (
+			SELECT 1 
+			FROM OMS_ORDERPRODUCT T1
+			INNER JOIN OMS_CLAIMPRODUCT T2 ON T1.ORDER_ID = T2.ORDER_ID AND T1.ORDER_PRODUCT_NO = T2.ORDER_PRODUCT_NO
+			WHERE T1.STORE_ID = #{storeId}
+			AND T1.ORDER_ID = #{orderId}
+			AND T1.UPPER_ORDER_PRODUCT_NO = #{orderProductNo}
+			AND T1.ORDER_PRODUCT_TYPE_CD = 'ORDER_PRODUCT_TYPE_CD.SUB'
+			AND T2.CLAIM_NO = #{claimNo}
+	        AND T2.CLAIM_PRODUCT_STATE_CD = 'CLAIM_PRODUCT_STATE_CD.RETURN_ORDER'
+		)
+	</update>
+	
+	<!-- 주문테이블의 상태를 업데이트 -->
+	<update id="updateOrderDeliveryState" parameterType="java.util.HashMap">
+		UPDATE OMS_ORDER SET ORDER_DELIVERY_STATE_CD = #{orderDeliveryStateCd}
+		      ,UPD_DT = SYSDATE
+		      ,UPD_ID = #{updId}
+      	WHERE STORE_ID = #{storeId}
+		AND ORDER_ID = #{orderId}
+        <if test='orderDeliveryStateCd == "ORDER_DELIVERY_STATE_CD.DELIVERY_ORDER"'>
+			AND NOT EXISTS (
+				SELECT 1 FROM OMS_ORDER
+				WHERE STORE_ID = #{storeId}
+				AND ORDER_ID = #{orderId}
+		        AND ORDER_DELIVERY_STATE_CD = 'ORDER_DELIVERY_STATE_CD.DELIVERY_ORDER'
+			)
+		</if>
+		<if test='orderDeliveryStateCd == "ORDER_DELIVERY_STATE_CD.SHIP"'>
+			AND NOT EXISTS (
+				SELECT 1 FROM OMS_ORDERPRODUCT
+				WHERE STORE_ID = #{storeId}
+				AND ORDER_ID = #{orderId}
+				AND ORDER_DELIVERY_TYPE_CD = 'ORDER_DELIVERY_TYPE_CD.ORDER'
+		        AND ORDER_PRODUCT_STATE_CD NOT IN ('ORDER_PRODUCT_STATE_CD.SHIP', 'ORDER_PRODUCT_STATE_CD.DELIVERY', 'ORDER_PRODUCT_STATE_CD.CONFIRMED', 'ORDER_PRODUCT_STATE_CD.CANCEL')
+			)
+		</if>
+		<if test='orderDeliveryStateCd == "ORDER_DELIVERY_STATE_CD.DELIVERY"'>
+			AND NOT EXISTS (
+	            SELECT 1 FROM OMS_ORDERPRODUCT
+	            WHERE STORE_ID = #{storeId} 
+	            AND ORDER_ID = #{orderId}
+	            AND ORDER_DELIVERY_TYPE_CD = 'ORDER_DELIVERY_TYPE_CD.ORDER'
+	            AND ORDER_PRODUCT_STATE_CD NOT IN ('ORDER_PRODUCT_STATE_CD.DELIVERY', 'ORDER_PRODUCT_STATE_CD.CANCEL')
+            )
+		</if>
+	</update>
+	
+	<!-- 교환상품, 재배송 상품 출고시 클레임 상태 업데이트 -->
+	<update id="updateClaimState" parameterType="java.util.HashMap">
+		UPDATE OMS_CLAIM SET CLAIM_STATE_CD = #{claimStateCd}
+			  ,COMPLETE_DT = SYSDATE
+		      ,UPD_DT = SYSDATE
+		      ,UPD_ID = #{updId}
+		WHERE ORDER_ID = #{orderId}
+		AND CLAIM_NO = #{claimNo}
+		AND NOT EXISTS (
+			SELECT 1 FROM
+			OMS_ORDER T1
+			INNER JOIN OMS_CLAIM T2 ON T1.ORDER_ID = T2.ORDER_ID
+			INNER JOIN OMS_CLAIMPRODUCT T3 ON T2.ORDER_ID = T3.ORDER_ID AND T2.CLAIM_NO = T3.CLAIM_NO
+			WHERE T1.STORE_ID = #{storeId}
+			AND T1.ORDER_ID = #{orderId}
+			AND T2.CLAIM_NO = #{claimNo}
+	        AND T3.CLAIM_PRODUCT_STATE_CD NOT IN ('CLAIM_PRODUCT_STATE_CD.RETURN')
+		)
+		AND NOT EXISTS (
+			SELECT 1 FROM
+			OMS_ORDERPRODUCT
+			WHERE ORDER_ID = #{orderId}
+			AND ORDER_DELIVERY_TYPE_CD = #{orderDeliveryTypeCd}
+	        AND CLAIM_NO = #{claimNo}
+	        AND ORDER_PRODUCT_STATE_CD NOT IN ('ORDER_PRODUCT_STATE_CD.SHIP', 'ORDER_PRODUCT_STATE_CD.DELIVERY', 'ORDER_PRODUCT_STATE_CD.CONFIRMED', 'ORDER_PRODUCT_STATE_CD.CANCEL')
+		)
+	</update>
+	
+	<!-- 주문상품 배송승인 전송오류 업데이트 -->
+	<update id="updateSendErrorReasonCd" parameterType="omsOrderproduct">
+		UPDATE OMS_ORDERPRODUCT T1 SET T1.SEND_ERROR_REASON_CD = #{sendErrorReasonCd}
+			  ,T1.SEND_ERROR_YN = #{sendErrorYn}
+		      ,T1.UPD_DT = SYSDATE
+		      ,T1.UPD_ID = #{updId}
+      	WHERE T1.STORE_ID = #{storeId}
+		AND EXISTS ( 
+						SELECT 1 
+	       				FROM (SELECT #{orderId} AS ORDER_ID, #{orderProductNo} AS ORDER_PRODUCT_NO FROM DUAL) A 
+					    WHERE A.ORDER_ID = T1.ORDER_ID
+						AND A.ORDER_PRODUCT_NO = T1.ORDER_PRODUCT_NO
+			   	   )
+	</update>
+	
+	<!-- 전송 오류 주문상품의 동일주문도 전송오류 업데이트 -->
+	<update id="updateSendErrorOrderReasonCd" parameterType="java.util.HashMap">
+		UPDATE OMS_ORDERPRODUCT T1 SET T1.SEND_ERROR_REASON_CD = #{sendErrorReasonCd}
+			  ,T1.SEND_ERROR_YN = #{sendErrorYn}
+		      ,T1.UPD_DT = SYSDATE
+		      ,T1.UPD_ID = #{updId}
+      	WHERE T1.STORE_ID = #{storeId}
+      	AND (T1.SEND_ERROR_YN IS NULL OR T1.SEND_ERROR_YN = 'N')
+      	AND EXISTS ( 
+						SELECT 1 
+	       				FROM (
+								 <foreach collection="errorList" item="item" index="index" separator="UNION ALL">
+								 	SELECT #{item} AS ORDER_ID FROM DUAL 
+							     </foreach>
+							  ) A 
+					    WHERE A.ORDER_ID = T1.ORDER_ID
+			   	   )
+		AND EXISTS ( 
+						SELECT 1 
+	       				FROM (
+								 <foreach collection="list" item="item" index="index" separator="UNION ALL">
+								 	SELECT #{item.orderId} AS ORDER_ID, #{item.orderProductNo} AS ORDER_PRODUCT_NO FROM DUAL 
+							     </foreach>
+							  ) A 
+					    WHERE A.ORDER_ID = T1.ORDER_ID
+						AND A.ORDER_PRODUCT_NO = T1.ORDER_PRODUCT_NO
+			   	   )	   	   
+	</update>
+	
+	<!-- 배송 승인 취소 리스트 조회 -->
+	<select id="cancelApprovalList" parameterType="omsLogisticsSearch" resultMap="approvalCancelResultMap" fetchSize="1000">
+		/* [oms.logistics.cancelApprovalList][brad][2016. 7. 18.] */
+		SELECT A.*,
+			   CASE
+                  WHEN WEAR_PRODUCT_YN = 'Y' AND ERP_PRODUCT_ID IS NOT NULL
+                  THEN
+                     ORDER_PRODUCT_NAME || '_' || ERP_PRODUCT_ID
+                  ELSE
+                     ORDER_PRODUCT_NAME
+               END
+                  AS PRODUCT_NAME,
+			   COUNT (*) OVER () AS TOTAL_COUNT,
+       		   COUNT (DISTINCT ORDER_ID) OVER () AS TOTAL_ORDER_COUNT
+		FROM (
+			SELECT /*+ INDEX ( T3 IDX_OMS_LOGISTICS_INSDT ) */
+				   T1.ORDER_TYPE_CD,
+				   T1.NAME1 AS ORDERER_NAME,
+				   T1.PHONE2 AS ORDERER_MOBILE,
+				   T1.SITE_ORDER_ID,
+				   T1.MEMBER_ID AS ORDERER_ID,
+				   T2.ORDER_ID,
+				   T2.ORDER_PRODUCT_NO,
+				   T2.PRODUCT_ID,
+				   T2.PRODUCT_NAME AS ORDER_PRODUCT_NAME,
+				   T2.ERP_PRODUCT_ID,
+				   T2.SALEPRODUCT_NAME,
+				   T2.BUSINESS_NAME,
+				   T2.ORDER_PRODUCT_TYPE_CD,
+				   T2.WRAP_YN,
+	               T2.WRAP_VOLUME,
+			       T3.INS_DT,
+				   T3.LOGISTICS_INOUT_NO,
+				   T3.DELIVERY_IF_TYPE_CD,
+				   T3.LOGISTICS_STATE_CD,
+				   T3.OUT_RESERVE_QTY,
+				   T3.DELIVERY_CANCEL_REASON_CD,
+				   T4.NAME AS SITE_NAME,
+				   T5.DELIVERY_ADDRESS_NO,
+				   T5.NAME1 AS RECEIVER_NAME,
+	       		   T5.PHONE1 AS RECEIVER_PHONE,
+	       		   T5.PHONE2 AS RECEIVER_MOBILE,
+				   T5.ZIP_CD,
+				   T5.ADDRESS1||CHR(32)||T5.ADDRESS2 AS DELIVERY_ADDRESS, 
+				   DECODE(T2.SALE_TYPE_CD, 'SALE_TYPE_CD.PURCHASE', '센터배송', '업체배송') AS DELIVERY_METHOD,
+				   CASE
+                      WHEN EXISTS
+                              (SELECT 1
+                                 FROM DUAL
+                                WHERE T2.BRAND_ID IN
+                                         (SELECT NAME
+                                            FROM CCS_CODE
+                                           WHERE CD_GROUP_CD =
+                                                    'WEAR_BRAND_CD'))
+                      THEN
+                         'Y'
+                      ELSE
+                         'N'
+                   END
+                      AS WEAR_PRODUCT_YN,
+	       		   RANK () OVER (ORDER BY
+	                       T3.LOGISTICS_INOUT_NO,
+	                       T3.ORDER_ID,
+	                       DECODE (T2.ORDER_PRODUCT_TYPE_CD, 'ORDER_PRODUCT_TYPE_CD.WRAP', 0, 1),
+	                       T3.ORDER_PRODUCT_NO)
+	                    AS ORDER_SEQ
+	   		FROM OMS_ORDER T1
+	   			 INNER JOIN OMS_ORDERPRODUCT T2 ON T1.ORDER_ID = T2.ORDER_ID
+	   			 INNER JOIN OMS_LOGISTICS T3 ON T2.ORDER_ID = T3.ORDER_ID AND T2.ORDER_PRODUCT_NO = T3.ORDER_PRODUCT_NO
+	   			 INNER JOIN CCS_SITE T4 ON T1.SITE_ID = T4.SITE_ID AND T1.STORE_ID = T4.STORE_ID
+	   			 INNER JOIN OMS_DELIVERYADDRESS T5 ON T1.ORDER_ID = T5.ORDER_ID AND T2.DELIVERY_ADDRESS_NO = T5.DELIVERY_ADDRESS_NO
+			WHERE T1.STORE_ID = #{storeId}
+		    AND T3.WAREHOUSE_INOUT_TYPE_CD = 'WAREHOUSE_INOUT_TYPE_CD.OUT'
+		    <choose>
+		    	<when test="deliveryMethod != null and deliveryMethod != ''">
+		    		<if test="deliveryMethod == 'PURCHASE'">
+						AND T2.SALE_TYPE_CD = 'SALE_TYPE_CD.PURCHASE' AND T3.LOGISTICS_STATE_CD = 'LOGISTICS_STATE_CD.APPROVAL' AND T3.DELIVERY_IF_TYPE_CD = 'DELIVERY_IF_TYPE_CD.HANJIN'
+					</if>
+					<if test="deliveryMethod == 'CONSIGN'">
+						AND T2.SALE_TYPE_CD = 'SALE_TYPE_CD.CONSIGN' AND T3.LOGISTICS_STATE_CD ='LOGISTICS_STATE_CD.INVOICE'
+					</if>
+		    	</when>
+		    	<otherwise>
+		    		AND ((T2.SALE_TYPE_CD = 'SALE_TYPE_CD.PURCHASE' AND T3.LOGISTICS_STATE_CD = 'LOGISTICS_STATE_CD.APPROVAL' AND T3.DELIVERY_IF_TYPE_CD = 'DELIVERY_IF_TYPE_CD.HANJIN')
+			       		 OR (T2.SALE_TYPE_CD = 'SALE_TYPE_CD.CONSIGN' AND T3.LOGISTICS_STATE_CD = 'LOGISTICS_STATE_CD.INVOICE'))
+		    	</otherwise>
+		    </choose>  
+			<if test="startDate != null and startDate != ''">
+				<if test="endDate != null and endDate != ''">
+					AND T3.INS_DT BETWEEN TO_DATE (#{startDate}, 'YYYY-MM-DD HH24:MI:SS') AND TO_DATE (#{endDate}, 'YYYY-MM-DD HH24:MI:SS')
+				</if>
+			</if>
+			<if test="orderType != null and orderType != ''">
+				AND T1.ORDER_TYPE_CD IN (${orderType})
+			</if>
+			<if test=" businessId != null and businessId != '' ">
+				AND T2.BUSINESS_ID = #{ businessId }
+			</if>
+			<if test='orderer != null and orderer != ""'>
+				<if test='ordererType == "name"'>
+				 	AND T1.NAME1 like #{orderer} || '%'
+				</if>
+				<if test='ordererType == "id"'>
+				 	AND T1.MEMBER_ID like #{orderer} || '%'
+				</if>
+				<if test='ordererType == "mobile"'>
+					AND T1.PHONE2 like #{orderer} || '%'
+				</if>
+			</if>
+			<if test='receiver != null and receiver != ""'>
+				<if test='receiverType == "name"'>
+				 	AND T5.NAME1 like #{receiver} || '%'
+				</if>
+				<if test='receiverType == "mobile"'>
+					AND T5.PHONE2 like #{receiver} || '%'
+				</if>
+			</if>
+			<if test='orderId != null and orderId != ""'>
+				AND T1.ORDER_ID = #{orderId}			
+			</if>
+			<if test='siteOrderId != null and siteOrderId != ""'>
+				AND T1.SITE_ORDER_ID = #{siteOrderId}			
+			</if>
+			<if test='product != null and product != ""'>
+				<if test='productType == "productId"'>
+				 	AND T1.ORDER_ID IN (SELECT ORDER_ID FROM OMS_ORDERPRODUCT WHERE PRODUCT_ID LIKE #{product} || '%')
+				</if>
+				<if test='productType == "productName"'>
+				 	AND T1.ORDER_ID IN (SELECT ORDER_ID FROM OMS_ORDERPRODUCT WHERE PRODUCT_NAME LIKE #{product} || '%')
+				</if>
+			</if>
+			) A
+			ORDER BY ORDER_SEQ
+	</select>
+	
+	<resultMap type="omsLogistics" id="approvalCancelResultMap" autoMapping="true">
+		<id property="orderId"          column="ORDER_ID"/>
+		<id property="orderProductNo"   column="ORDER_PRODUCT_NO"/>
+		<id property="logisticsInoutNo" column="LOGISTICS_INOUT_NO"/>
+		
+		<association property="omsOrderproduct"   javaType="omsOrderproduct">
+			<id property="orderId"        column="ORDER_ID"/>
+			<id property="orderProductNo" column="ORDER_PRODUCT_NO"/>
+			
+			<result property="productId"            column="PRODUCT_ID"/>
+			<result property="productName"          column="PRODUCT_NAME"/>
+			<result property="saleproductName"      column="SALEPRODUCT_NAME"/>
+			<result property="businessName"         column="BUSINESS_NAME"/>
+			<result property="siteName"             column="SITE_NAME"/>
+			<result property="deliveryMethod"       column="DELIVERY_METHOD"/>
+			<result property="orderProductTypeCd"   column="ORDER_PRODUCT_TYPE_CD"/>
+			
+			<association property="omsOrder"   javaType="omsOrder">
+				<result property="orderTypeCd" column="ORDER_TYPE_CD"/>
+				<result property="name1"       column="ORDERER_NAME"/>
+				<result property="phone2"      column="ORDERER_MOBILE"/>
+				<result property="siteOrderId" column="SITE_ORDER_ID"/>
+			</association>
+			
+			<association property="omsDeliveryaddress" javaType="omsDeliveryaddress">
+				<result property="deliveryAddressNo"  column="DELIVERY_ADDRESS_NO"/>
+				<result property="name1"              column="RECEIVER_NAME"/>
+				<result property="phone1"             column="RECEIVER_PHONE"/>
+				<result property="phone2"             column="RECEIVER_MOBILE"/>
+				<result property="zipCd"              column="ZIP_CD"/>
+				<result property="deliveryAddress"    column="DELIVERY_ADDRESS"/>
+			</association>
+		</association>
+	</resultMap>
+	
+	<!-- 배송 승인 취소 일괄 처리 리스트 조회 -->
+	<select id="bulkCancelApprovalList" resultMap="bulkCancelApprovalResultMap">
+		/* [oms.logistics.bulkCancelApprovalList][brad][2016. 11. 5.] */
+		SELECT T1.ORDER_TYPE_CD,
+			   T1.NAME1 AS ORDERER_NAME,
+			   T1.PHONE2 AS ORDERER_MOBILE,
+			   T1.SITE_ORDER_ID,
+			   T1.MEMBER_ID AS ORDERER_ID,
+			   T2.ORDER_ID,
+			   T2.ORDER_PRODUCT_NO,
+			   T2.PRODUCT_ID,
+			   T2.PRODUCT_NAME,
+			   T2.ERP_PRODUCT_ID,
+			   T2.SALEPRODUCT_NAME,
+			   T2.BUSINESS_NAME,
+			   T2.ORDER_PRODUCT_TYPE_CD,
+			   T2.WRAP_YN,
+               T2.WRAP_VOLUME,
+		       T3.INS_DT,
+			   T3.LOGISTICS_INOUT_NO,
+			   T3.DELIVERY_IF_TYPE_CD,
+			   T3.LOGISTICS_STATE_CD,
+			   T3.OUT_RESERVE_QTY,
+			   T3.DELIVERY_CANCEL_REASON_CD,
+			   T4.NAME AS SITE_NAME,
+			   T5.DELIVERY_ADDRESS_NO,
+			   T5.NAME1 AS RECEIVER_NAME,
+       		   T5.PHONE1 AS RECEIVER_PHONE,
+       		   T5.PHONE2 AS RECEIVER_MOBILE,
+			   T5.ZIP_CD,
+			   T5.ADDRESS1||CHR(32)||T5.ADDRESS2 AS DELIVERY_ADDRESS, 
+			   DECODE(T2.SALE_TYPE_CD, 'SALE_TYPE_CD.PURCHASE', '센터배송', '업체배송') AS DELIVERY_METHOD
+   		FROM OMS_ORDER T1
+   			 INNER JOIN OMS_ORDERPRODUCT T2 ON T1.ORDER_ID = T2.ORDER_ID
+   			 INNER JOIN OMS_LOGISTICS T3 ON T2.ORDER_ID = T3.ORDER_ID AND T2.ORDER_PRODUCT_NO = T3.ORDER_PRODUCT_NO
+   			 INNER JOIN CCS_SITE T4 ON T1.SITE_ID = T4.SITE_ID AND T1.STORE_ID = T4.STORE_ID
+   			 INNER JOIN OMS_DELIVERYADDRESS T5 ON T1.ORDER_ID = T5.ORDER_ID AND T2.DELIVERY_ADDRESS_NO = T5.DELIVERY_ADDRESS_NO
+		WHERE T1.STORE_ID = #{storeId}
+		AND T3.LOGISTICS_INOUT_NO = #{logisticsInoutNo}
+		AND T3.ORDER_ID = #{orderId}
+		AND T3.ORDER_PRODUCT_NO = #{orderProductNo}
+	</select>
+	
+	<resultMap type="omsLogistics" id="bulkCancelApprovalResultMap" autoMapping="true">
+		<id property="orderId"          column="ORDER_ID"/>
+		<id property="orderProductNo"   column="ORDER_PRODUCT_NO"/>
+		<id property="logisticsInoutNo" column="LOGISTICS_INOUT_NO"/>
+		
+		<association property="omsOrderproduct"   javaType="omsOrderproduct">
+			<id property="orderId"        column="ORDER_ID"/>
+			<id property="orderProductNo" column="ORDER_PRODUCT_NO"/>
+			
+			<result property="productId"            column="PRODUCT_ID"/>
+			<result property="productName"          column="PRODUCT_NAME"/>
+			<result property="saleproductName"      column="SALEPRODUCT_NAME"/>
+			<result property="businessName"         column="BUSINESS_NAME"/>
+			<result property="siteName"             column="SITE_NAME"/>
+			<result property="deliveryMethod"       column="DELIVERY_METHOD"/>
+			<result property="orderProductTypeCd"   column="ORDER_PRODUCT_TYPE_CD"/>
+			
+			<association property="omsOrder"   javaType="omsOrder">
+				<result property="orderTypeCd" column="ORDER_TYPE_CD"/>
+				<result property="name1"       column="ORDERER_NAME"/>
+				<result property="phone2"      column="ORDERER_MOBILE"/>
+				<result property="siteOrderId" column="SITE_ORDER_ID"/>
+			</association>
+			
+			<association property="omsDeliveryaddress" javaType="omsDeliveryaddress">
+				<result property="deliveryAddressNo"  column="DELIVERY_ADDRESS_NO"/>
+				<result property="name1"              column="RECEIVER_NAME"/>
+				<result property="phone1"             column="RECEIVER_PHONE"/>
+				<result property="phone2"             column="RECEIVER_MOBILE"/>
+				<result property="zipCd"              column="ZIP_CD"/>
+				<result property="deliveryAddress"    column="DELIVERY_ADDRESS"/>
+			</association>
+		</association>
+	</resultMap>
+	
+	<!-- 배송승인 취소 업데이트 -->
+	<update id="updateCancelApproval" parameterType="omsLogistics">
+		UPDATE OMS_LOGISTICS SET LOGISTICS_STATE_CD = #{logisticsStateCd}
+			  ,DELIVERY_CANCEL_REASON_CD = #{deliveryCancelReasonCd}
+			  ,COMPLETE_DT = TO_DATE (#{completeDt}, 'YYYY-MM-DD HH24:MI:SS')
+		      ,UPD_DT = #{updDt}
+		      ,UPD_ID = #{updId}
+      	WHERE ORDER_ID = #{orderId}
+      	AND ORDER_PRODUCT_NO = #{orderProductNo}
+      	AND LOGISTICS_INOUT_NO = #{logisticsInoutNo}
+      	AND EXISTS (
+						SELECT 1 FROM OMS_LOGISTICS
+						WHERE ORDER_ID = #{orderId}
+						AND ORDER_PRODUCT_NO = #{orderProductNo}
+						AND LOGISTICS_INOUT_NO = #{logisticsInoutNo}
+						<choose>
+							<when test="deliveryIfTypeCd != null and deliveryIfTypeCd != ''">
+								AND LOGISTICS_STATE_CD = 'LOGISTICS_STATE_CD.APPROVAL'
+							</when>
+							<otherwise>
+								AND LOGISTICS_STATE_CD = 'LOGISTICS_STATE_CD.INVOICE'
+							</otherwise>
+						</choose>
+					)
+	</update>
+	
+	<select id="getMaxLogisticsInoutNo" resultType="java.math.BigDecimal">
+		/* [oms.logistics.getLogisticsDuplicate][brad][2016. 7. 19.] */
+		SELECT NVL((SELECT MAX(LOGISTICS_INOUT_NO) FROM OMS_LOGISTICS),0) + 1 FROM DUAL
+	</select>
+	
+	<select id="getMaxDeliveryOrder" resultType="int">
+		/* [oms.logistics.getMaxDeliveryOrder][brad][2016. 7. 19.] */
+		SELECT /*+ INDEX ( OMS_LOGISTICS IDX_OMS_LOGISTICS_INSDT ) */
+			NVL(MAX(DELIVERY_ORDER)+1, 1)
+		FROM OMS_LOGISTICS
+		WHERE INS_DT BETWEEN TO_CHAR(TRUNC(SYSDATE), 'YYYY-MM-DD HH24:MI:SS') AND TO_CHAR(TRUNC(SYSDATE) + 0.99999, 'YYYY-MM-DD HH24:MI:SS')
+	</select>
+	
+	<!-- 한진 택배사 우편번호 체크  -->
+ 	<select id="checkZipCodeHanjin" resultType="int">
+		/* [oms.logistics.checkZipCodeHanjin][brad][2016. 7. 19.] */
+		SELECT COUNT(*)
+		FROM VW_ZIP_COD
+		WHERE ZIP_COD = #{zipCd}
+	</select>
+ 	
+	<select id="checkLocationUseYn" resultType="int">
+		/* [oms.logistics.checkLocation][brad][2016. 7. 19.] */
+		SELECT COUNT(*)
+        FROM OMS_ORDER T1
+			 INNER JOIN OMS_ORDERPRODUCT T3 ON T1.STORE_ID = T3.STORE_ID AND T1.ORDER_ID = T3.ORDER_ID
+             INNER JOIN PMS_SALEPRODUCT T4 ON T3.STORE_ID = T4.STORE_ID AND T3.SALEPRODUCT_ID = T4.SALEPRODUCT_ID
+  			 LEFT OUTER JOIN PMS_WAREHOUSELOCATION T5 ON T4.WAREHOUSE_ID = T5.WAREHOUSE_ID AND T4.LOCATION_ID = T5.LOCATION_ID
+        WHERE T1.STORE_ID = #{storeId}
+        AND T3.ORDER_ID = #{orderId}
+        AND T3.ORDER_PRODUCT_NO = #{orderProductNo}
+        AND T5.LOCATION_USE_YN = 'Y'
+	</select>
+	
+	<!-- DAS쪽 승인데이터 입력 -->
+	<update id="insertZeroOrderMtr" parameterType="gcp.external.model.ZeroOrderMtr">
+		/* [oms.logistics.insertZeroOrderMtr][brad][2016. 7. 22.] */
+	 	INSERT INTO DAS_BTOC.ZERO_ORD_MTR (
+						STX,
+						PICK_POSTNO,
+						SELL_POSTNO,
+						SELL_ADDRESS1,
+						SELL_ADDRESS2,
+						BX_CODE,
+						SELL_NM,
+						SELL_PHONENO1,
+						SELL_PHONENO2,
+						CUST_POSTNPO,
+						CUST_ADDRESS1,
+						CUST_ADDRESS2,
+						CUST_NM,
+						CUST_PHONENO1,
+						CUST_PHONENO2,
+						MESSAGE,
+						ORDER_NO,
+						ORDER_SEQ,
+						WB_NO,
+						ITEMCD,
+						ITEM_NM,
+						BOX_QTY,
+						PAY_COND,
+						PAY_AMOUNT,
+						ITEMSEQ,
+						UNIT_ID,
+						UNIT_NAME,
+						BARCODE,
+						SECTION_NM,
+						ONE_DELI_YN,
+						DAS_YN,
+						STAFF_YN,
+						COMPOSE_NUM,
+						VEN_ID,
+						VEN_NAME,
+						ITEM_GB,
+						SITE_ID,
+						ORD_LOGISTICS_NOS)
+		   WITH DATA
+	        AS (SELECT B.*,
+	                   DECODE (NVL (B.DELI_ORDER_CNT, 1), NVL (B.DAS_CNT, 0), 'Y', 'N')
+	                      AS DAS_YN,
+	                   DECODE (NVL (B.DELI_ORDER_CNT, 1), 1, 'Y', 'N')
+	                      AS ONE_DELI_YN
+	              FROM (SELECT A.*,
+	                           SUM (DECODE (DAS_PRODUCT_YN, 'Y', 1, 0))
+	                              OVER (PARTITION BY LOGISTICS_INOUT_NO) AS DAS_CNT,
+	                           SUM (DECODE (ORDER_PRODUCT_TYPE_CD, 'ORDER_PRODUCT_TYPE_CD.WRAP', 0, 1)) 
+                           		  OVER (PARTITION BY LOGISTICS_INOUT_NO) AS DELI_ORDER_CNT,
+	                           NVL (WRAP_VOLUME, 0) * OUT_RESERVE_QTY
+	                              AS WRAP_SIZE,
+	                           CASE
+		                          WHEN DAS_PRODUCT_YN = 'Y' AND ERP_PRODUCT_ID IS NOT NULL
+		                          THEN
+		                             ORDER_PRODUCT_NAME || '_' || ERP_PRODUCT_ID
+		                          ELSE
+		                             ORDER_PRODUCT_NAME
+		                       END
+		                          AS PRODUCT_NAME  
+	                      FROM (SELECT /*+ INDEX ( T5 IDX_OMS_LOGISTICS ) */
+	                                  T1.SITE_ID,
+	                                   T2.NAME1 AS RECEIVER_NM,
+	                                   NVL(T2.PHONE1, T2.PHONE2) AS RECEIVER_PHONE,
+	                                   T2.PHONE2 AS RECEIVER_MOBILE,
+	                                   T2.ZIP_CD,
+	                                   T2.ADDRESS1,
+	                                   T2.ADDRESS2,
+	                                   SUBSTRB (REPLACE (T2.NOTE, CHR (39), ''), 0, 60) AS NOTE,
+	                                   T3.WRAP_TOGETHER_YN,
+	                                   T4.ORDER_ID,
+	                                   T4.ORDER_PRODUCT_NO,
+	                                   T4.PRODUCT_ID,
+	                                   T4.PRODUCT_NAME AS ORDER_PRODUCT_NAME,
+	                                   T4.SALEPRODUCT_ID,
+	                                   T4.SALEPRODUCT_NAME,
+	                                   T4.ERP_PRODUCT_ID,
+	                                   T4.ERP_SALEPRODUCT_ID,
+	                                   T4.BUSINESS_ID,
+	                                   T4.BUSINESS_NAME,
+	                                   T4.WRAP_YN,
+	                                   T4.WRAP_VOLUME,
+	                                   T4.ORDER_PRODUCT_TYPE_CD,
+	                                   T5.OUT_RESERVE_QTY,
+	                                   T5.LOGISTICS_INOUT_NO,
+		                               T6.LOCATION_ID,
+		                               DECODE(T1.SITE_ID, '252', NVL2(T4.PARTNER_TRANS_ID, T4.PARTNER_TRANS_ID || 'ZEROTO', ''), '265', T4.LP_NO, '266', T4.LP_NO, NULL) AS ORD_LOGISTICS_NOS,
+	                                   CASE
+	                                      WHEN EXISTS
+	                                              (SELECT 1
+	                                                 FROM DUAL
+	                                                WHERE T4.BRAND_ID IN
+	                                                         (SELECT NAME
+	                                                            FROM CCS_CODE
+	                                                           WHERE CD_GROUP_CD =
+	                                                                    'WEAR_BRAND_CD'))
+	                                      THEN
+	                                         'Y'
+	                                      ELSE
+	                                         'N'
+	                                   END
+	                                      AS DAS_PRODUCT_YN
+	                              FROM OMS_ORDER T1
+	                                   INNER JOIN OMS_DELIVERYADDRESS T2
+	                                      ON T1.ORDER_ID = T2.ORDER_ID
+	                                   INNER JOIN OMS_DELIVERY T3
+	                                      ON     T2.ORDER_ID = T3.ORDER_ID
+	                                         AND T2.DELIVERY_ADDRESS_NO =
+	                                                T3.DELIVERY_ADDRESS_NO
+	                                   INNER JOIN OMS_ORDERPRODUCT T4
+	                                      ON     T1.ORDER_ID = T4.ORDER_ID
+	                                         AND T2.DELIVERY_ADDRESS_NO =
+	                                                T4.DELIVERY_ADDRESS_NO
+	                                         AND T3.DELIVERY_POLICY_NO =
+	                                                T4.DELIVERY_POLICY_NO
+	                                   INNER JOIN OMS_LOGISTICS T5
+	                                      ON     T4.ORDER_ID = T5.ORDER_ID
+	                                         AND T4.ORDER_PRODUCT_NO =
+	                                                T5.ORDER_PRODUCT_NO
+	                                   INNER JOIN PMS_SALEPRODUCT T6
+	                                      ON     T4.STORE_ID = T6.STORE_ID
+	                                         AND T4.SALEPRODUCT_ID =
+	                                                T6.SALEPRODUCT_ID
+	                             WHERE     T1.STORE_ID = #{storeId}
+	                                   AND T4.SALE_TYPE_CD = 'SALE_TYPE_CD.PURCHASE'
+							           AND T5.WAREHOUSE_INOUT_TYPE_CD = 'WAREHOUSE_INOUT_TYPE_CD.OUT'
+							           AND T5.DELIVERY_IF_TYPE_CD = 'DELIVERY_IF_TYPE_CD.DAS'
+							           AND T5.LOGISTICS_STATE_CD = 'LOGISTICS_STATE_CD.SEND'
+							           AND EXISTS ( 
+											SELECT 1 
+						       				FROM (
+													 <foreach collection="list" item="item" index="index" separator="UNION ALL">
+												 	 	 SELECT #{item.orderId} AS ORDER_ID, #{item.orderProductNo} AS ORDER_PRODUCT_NO FROM DUAL 
+												     </foreach>
+												  ) X 
+										    WHERE X.ORDER_ID = T5.ORDER_ID
+											AND X.ORDER_PRODUCT_NO = T5.ORDER_PRODUCT_NO
+								   	   )
+								) A) B
+		   )
+		   SELECT #{stx, jdbcType=VARCHAR},
+				  #{pickPostno, jdbcType=VARCHAR},
+				  #{sellPostno, jdbcType=VARCHAR},
+				  #{sellAddress1, jdbcType=VARCHAR},	
+				  #{sellAddress2, jdbcType=VARCHAR},
+				  #{bxCode, jdbcType=VARCHAR},
+				  #{sellNm, jdbcType=VARCHAR},
+				  #{sellPhoneno1, jdbcType=VARCHAR},
+				  '',
+		          ZIP_CD,
+		          ADDRESS1,
+		          ADDRESS2,
+		          SUBSTRB(RECEIVER_NM, 0, 30),
+		          REPLACE(RECEIVER_PHONE, '-', '') AS RECEIVER_PHONE,
+		          REPLACE(RECEIVER_MOBILE, '-', '') AS RECEIVER_MOBILE,
+		          SUBSTRB(NOTE, 0, 80),
+		          LOGISTICS_INOUT_NO,
+		          CUST_ORD_SEQ,
+		          '',
+		          PRODUCT_ID,
+		          CASE
+		             WHEN (   SALEPRODUCT_NAME IS NULL
+		                   OR SALEPRODUCT_NAME = '없음')
+		             THEN
+		                SUBSTRB(GIFT_STR || PRODUCT_NAME, 0, 150)
+		             ELSE
+		                   SUBSTRB(GIFT_STR
+		                || PRODUCT_NAME
+		                || '['
+		                || SALEPRODUCT_NAME
+		                || ']', 0, 150)
+		          END
+		             AS ITEM_NM,
+		          OUT_RESERVE_QTY,
+		          '',
+		          #{payAmount, jdbcType=NUMERIC},
+		          CUST_ORD_SEQ,
+		          SALEPRODUCT_ID,
+		          SALEPRODUCT_NAME,
+		          DECODE(NVL(ERP_SALEPRODUCT_ID, ''), '', TO_CHAR(PRODUCT_ID), ERP_SALEPRODUCT_ID),
+		          LOCATION_ID,
+		          ONE_DELI_YN,
+		          DAS_YN,
+		          'N',
+		          '',
+		          BUSINESS_ID,
+		          BUSINESS_NAME,
+		          CASE
+		             WHEN ORDER_PRODUCT_TYPE_CD = 'ORDER_PRODUCT_TYPE_CD.GENERAL' OR ORDER_PRODUCT_TYPE_CD = 'ORDER_PRODUCT_TYPE_CD.WRAP'
+		             THEN
+		                'M'
+		             WHEN ORDER_PRODUCT_TYPE_CD = 'ORDER_PRODUCT_TYPE_CD.SUB'
+		             THEN
+		                'S'
+		             ELSE
+		                'G'
+		          END
+		             AS ITEM_GB,
+		          SITE_ID,
+		          ORD_LOGISTICS_NOS
+		     FROM
+		     (SELECT A.*,
+		             ROW_NUMBER ()
+			          OVER (PARTITION BY A.LOGISTICS_INOUT_NO
+			                ORDER BY DECODE (A.ORDER_PRODUCT_TYPE_CD, 'ORDER_PRODUCT_TYPE_CD.WRAP', 0, 1), A.ORDER_ID, A.ORDER_PRODUCT_NO) AS CUST_ORD_SEQ,
+			         CASE
+	                     WHEN A.WRAP_YN = 'Y' AND A.WRAP_TOGETHER_YN = 'Y'
+	                     THEN
+	                           '[선물합포:'
+	                        || CEIL (NVL (A.WRAP_SIZE, 0))
+	                        || ']'
+	                     WHEN A.WRAP_YN = 'Y' AND A.WRAP_TOGETHER_YN = 'N'
+	                     THEN
+	                           '[선물개별:'
+	                        || CEIL (NVL (A.WRAP_SIZE, 0))
+	                        || ']'
+	                     ELSE
+	                        ''
+	                  END
+	                     AS GIFT_STR
+		     FROM DATA A)				
+	</update>
+	
+	<!-- DAS 테스트용 운송장생성 -->
+	<update id="insertIfLabelList" parameterType="omsOrderproduct">
+		/* [oms.logistics.insertIfLabelList][brad][2016. 9. 25.] */
+	 	INSERT INTO DAS_BTOC.IF_LABEL_LIST (
+	 		O_DAY,
+	 		ORD_NO,
+	 		ITEMCD,
+	 		BATCH,
+	 		BATCH_NO,
+	 		INV_NO,
+	 		STATUS
+	 	)
+	 	SELECT DISTINCT TO_CHAR(SYSDATE, 'YYYY-MM-DD') AS O_DAY,
+	 		   ORDER_NO,
+	 		   '1' AS ITEMCD,
+	 		   1 AS BATCH,
+	 		   1 AS BATCH_NO,
+ 			   (SELECT ROUND(DBMS_RANDOM.VALUE(100, 999999999999),0) FROM DUAL) AS INV_NO,
+	 		   1 AS STATUS
+ 		FROM DAS_BTOC.ZERO_ORD_MTR
+ 		WHERE ORDER_NO IN (
+ 		SELECT /*+ INDEX ( T5 PK_OMS_LOGISTICS ) */ 
+ 		LOGISTICS_INOUT_NO
+ 		FROM OMS_LOGISTICS
+ 		WHERE ORDER_ID = #{orderId} 
+ 		AND ORDER_PRODUCT_NO = #{orderProductNo})
+	</update>
+	
+	<!-- 데이터 전송 / 운송장 생성 리스트 조회 -->
+	<select id="getInvoiceList" parameterType="omsLogisticsSearch" resultMap="invoiceListMap">
+		/* [oms.logistics.getInvoiceList][brad][2016. 7. 27.] */
+		SELECT X.*,
+			   CASE
+                  WHEN WEAR_PRODUCT_YN = 'Y' AND ERP_PRODUCT_ID IS NOT NULL
+                  THEN
+                     ORDER_PRODUCT_NAME || '_' || ERP_PRODUCT_ID
+                  ELSE
+                     ORDER_PRODUCT_NAME
+               END
+                  AS PRODUCT_NAME,
+			   COUNT (*) OVER () AS TOTAL_COUNT,
+         	   COUNT (DISTINCT ORDER_ID) OVER () AS TOTAL_ORDER_COUNT
+           FROM (
+				SELECT /*+ INDEX ( T3 IDX_OMS_LOGISTICS_INSDT ) */
+					   T1.ORDER_TYPE_CD,
+					   T1.NAME1 AS ORDERER_NAME,
+					   T1.PHONE2 AS ORDERER_MOBILE,
+					   T1.STORE_ID,
+					   T1.MEMBER_ID AS ORDERER_ID,
+					   T2.ORDER_ID,
+					   T2.ORDER_PRODUCT_NO,
+					   T2.PRODUCT_ID,
+					   T2.PRODUCT_NAME AS ORDER_PRODUCT_NAME,
+					   T2.ERP_PRODUCT_ID,
+					   T2.SALEPRODUCT_NAME,
+					   T2.WRAP_YN,
+					   T2.WRAP_VOLUME,
+					   T2.DELIVERY_POLICY_NO,
+					   T3.LOGISTICS_INOUT_NO,
+					   T3.INS_DT,
+					   T3.OUT_RESERVE_QTY,
+					   T4.DELIVERY_ADDRESS_NO,
+					   T4.NAME1 AS RECEIVER_NAME,
+		       		   T4.PHONE1 AS RECEIVER_PHONE,
+		       		   T4.PHONE2 AS RECEIVER_MOBILE,
+					   T4.ZIP_CD,
+					   T4.ADDRESS1||CHR(32)||T4.ADDRESS2 AS DELIVERY_ADDRESS, 
+					   T4.NOTE,
+					   T5.NAME AS SITE_NAME,
+					   DECODE(T3.LOGISTICS_STATE_CD,'LOGISTICS_STATE_CD.SEND','Y','N') AS SEND_YN,
+					   CASE
+                           WHEN EXISTS
+                                   (SELECT 1
+                                      FROM DUAL
+                                     WHERE T2.CATEGORY_ID IN
+                                              (SELECT NAME
+                                                 FROM CCS_CODE
+                                                WHERE CD_GROUP_CD =
+                                                         'DUAL_WRAP_CATEGORY_CD'))
+                           THEN
+                              'Y'
+                           ELSE
+                              'N'
+                        END
+                           AS DUAL_WRAP_YN,
+                       CASE
+                          WHEN EXISTS
+                                  (SELECT 1
+                                     FROM DUAL
+                                    WHERE T2.BRAND_ID IN
+                                             (SELECT NAME
+                                                FROM CCS_CODE
+                                               WHERE CD_GROUP_CD =
+                                                        'WEAR_BRAND_CD'))
+                          THEN
+                             'Y'
+                          ELSE
+                             'N'
+                       END
+                          AS WEAR_PRODUCT_YN,   
+					   RANK ()
+		                 OVER (
+		                    ORDER BY
+		                       T3.LOGISTICS_INOUT_NO,
+		                       T3.ORDER_ID,
+		                       DECODE (T2.ORDER_PRODUCT_TYPE_CD, 'ORDER_PRODUCT_TYPE_CD.WRAP', 0, 1),
+		                       T3.ORDER_PRODUCT_NO)
+		                    AS ORDER_SEQ
+				FROM OMS_ORDER T1
+					 INNER JOIN OMS_DELIVERYADDRESS T4 ON T1.ORDER_ID = T4.ORDER_ID
+					 INNER JOIN OMS_ORDERPRODUCT T2 ON T1.ORDER_ID = T2.ORDER_ID  AND T4.DELIVERY_ADDRESS_NO = T2.DELIVERY_ADDRESS_NO
+					 INNER JOIN OMS_LOGISTICS T3 ON T2.ORDER_ID = T3.ORDER_ID AND T2.ORDER_PRODUCT_NO = T3.ORDER_PRODUCT_NO
+					 INNER JOIN CCS_SITE T5 ON T1.SITE_ID = T5.SITE_ID AND T1.STORE_ID = T5.STORE_ID
+				WHERE T1.STORE_ID = #{storeId}
+					  AND T2.SALE_TYPE_CD = 'SALE_TYPE_CD.PURCHASE'
+					  AND T3.WAREHOUSE_INOUT_TYPE_CD = 'WAREHOUSE_INOUT_TYPE_CD.OUT'
+					  AND T3.LOGISTICS_STATE_CD IN ('LOGISTICS_STATE_CD.APPROVAL', 'LOGISTICS_STATE_CD.SEND')
+				<if test="logisticsIfType != null and logisticsIfType != ''">
+					AND T3.DELIVERY_IF_TYPE_CD = #{logisticsIfType}
+				</if>
+				<if test="startDate != null and startDate != ''">
+					<if test="endDate != null and endDate != ''">
+						AND T3.INS_DT BETWEEN TO_DATE (#{startDate}, 'YYYY-MM-DD HH24:MI:SS') AND TO_DATE (#{endDate}, 'YYYY-MM-DD HH24:MI:SS')
+					</if>
+				</if>
+				<if test="orderType != null and orderType != ''">
+					AND T1.ORDER_TYPE_CD IN (${orderType})
+				</if>
+				<if test="siteId != null and siteId != ''">
+					AND T1.SITE_ID = #{siteId}
+				</if>
+				<if test='orderer != null and orderer != ""'>
+					<if test='ordererType == "name"'>
+					 	AND T1.NAME1 like #{orderer} || '%'
+					</if>
+					<if test='ordererType == "id"'>
+					 	AND T1.MEMBER_ID like #{orderer} || '%'
+					</if>
+					<if test='ordererType == "mobile"'>
+						AND T1.PHONE2 like #{orderer} || '%'
+					</if>
+				</if>
+				<if test='receiver != null and receiver != ""'>
+					<if test='receiverType == "name"'>
+					 	AND T4.NAME1 like #{receiver} || '%'
+					</if>
+					<if test='receiverType == "mobile"'>
+						AND T4.PHONE2 like #{receiver} || '%'
+					</if>
+				</if>
+				<if test='orderId != null and orderId != ""'>
+					AND T1.ORDER_ID = #{orderId}			
+				</if>
+				<if test='product != null and product != ""'>
+					<if test='productType == "productId"'>
+					 	AND T1.ORDER_ID IN (SELECT ORDER_ID FROM OMS_ORDERPRODUCT WHERE PRODUCT_ID LIKE #{product} || '%')
+					</if>
+					<if test='productType == "productName"'>
+					 	AND T1.ORDER_ID IN (SELECT ORDER_ID FROM OMS_ORDERPRODUCT WHERE PRODUCT_NAME LIKE #{product} || '%')
+					</if>
+				</if>
+			) X
+			<where>
+				<if test='sendYn != null and sendYn != ""'>
+					AND X.SEND_YN = #{sendYn}			
+				</if>
+			</where>
+			ORDER BY ORDER_SEQ
+	</select>
+	
+	<resultMap type="omsLogistics" id="invoiceListMap" autoMapping="true">
+		<id property="logisticsInoutNo"  column="LOGISTICS_INOUT_NO"/>
+		<id property="orderId"           column="ORDER_ID"/>
+		<id property="orderProductNo"    column="ORDER_PRODUCT_NO"/>
+		
+		<association property="omsOrderproduct"  javaType="omsOrderproduct">
+			<id property="orderId"               column="ORDER_ID"/>
+			<id property="orderProductNo"        column="ORDER_PRODUCT_NO"/>
+			
+			<result property="productId"         column="PRODUCT_ID"/>
+			<result property="productName"       column="PRODUCT_NAME"/>
+			<result property="saleproductName"   column="SALEPRODUCT_NAME"/>
+			<result property="orderQty"          column="ORDER_QTY"/>
+			<result property="cancelQty"         column="CANCEL_QTY"/>
+			<result property="wrapYn"            column="WRAP_YN"/>
+			<result property="wrapVolume"        column="WRAP_VOLUME"/>
+			<result property="siteName"          column="SITE_NAME"/>
+			<result property="custOrdSeq"        column="CUST_ORD_SEQ"/>
+			<result property="deliveryAddressNo" column="DELIVERY_ADDRESS_NO"/>
+			<result property="dualWrapYn"        column="DUAL_WRAP_YN"/>
+			
+			<association property="omsOrder"   javaType="omsOrder">
+				<result property="orderTypeCd" column="ORDER_TYPE_CD"/>
+				<result property="name1"       column="ORDERER_NAME"/>
+				<result property="phone2"      column="ORDERER_MOBILE"/>
+			</association>
+			
+			<association property="omsDeliveryaddress" javaType="omsDeliveryaddress">
+				<result property="name1"       column="RECEIVER_NAME"/>
+				<result property="phone1"      column="RECEIVER_PHONE"/>
+				<result property="phone2"      column="RECEIVER_MOBILE"/>
+				<result property="zipCd"       column="ZIP_CD"/>
+				<result property="note"        column="NOTE"/>
+				<result property="deliveryAddress"    column="DELIVERY_ADDRESS"/>
+			</association>
+		</association>
+	</resultMap>
+	
+	<!-- 한진 데이터 전송 리스트 조회 -->
+	<select id="getSendHanjinList" parameterType="java.util.HashMap" resultMap="sendHanjinListMap">
+		/* [oms.logistics.getInvoiceList][brad][2016. 7. 27.] */
+		SELECT A.*,
+			   CASE
+                  WHEN WEAR_PRODUCT_YN = 'Y' AND ERP_PRODUCT_ID IS NOT NULL
+                  THEN
+                     ORDER_PRODUCT_NAME || '_' || ERP_PRODUCT_ID
+                  ELSE
+                     ORDER_PRODUCT_NAME
+               END
+                  AS PRODUCT_NAME
+		FROM
+		(
+			SELECT /*+ INDEX ( T5 PK_OMS_LOGISTICS ) */
+				   T1.NAME1 AS ORDERER_NAME,
+				   T1.PHONE2 AS ORDERER_MOBILE,
+				   T1.STORE_ID,
+				   T1.SITE_ID,
+				   T1.MEMBER_ID AS ORDERER_ID,
+				   T2.DELIVERY_ADDRESS_NO,
+				   T2.NAME1 AS RECEIVER_NAME,
+	       		   T2.PHONE1 AS RECEIVER_PHONE,
+	       		   T2.PHONE2 AS RECEIVER_MOBILE,
+				   T2.ZIP_CD,
+				   REPLACE(T2.ADDRESS1, CHR(39), '') AS ADDRESS1,
+				   REPLACE(T2.ADDRESS2, CHR(39), '') AS ADDRESS2,
+				   SUBSTRB(REPLACE(T2.NOTE, CHR(39), ''), 0, 80) AS NOTE,
+				   T3.WRAP_TOGETHER_YN,
+				   T3.DELIVERY_POLICY_NO,
+				   T4.ORDER_ID,
+				   T4.ORDER_PRODUCT_NO,
+				   T4.PRODUCT_ID,
+				   T4.PRODUCT_NAME AS ORDER_PRODUCT_NAME,
+				   T4.ERP_PRODUCT_ID,
+				   T4.SALEPRODUCT_NAME,
+				   T4.WRAP_YN,
+				   T4.WRAP_VOLUME,
+				   T5.LOGISTICS_INOUT_NO,
+				   T5.INS_DT,
+				   T5.OUT_RESERVE_QTY,
+				   NVL (T4.WRAP_VOLUME, 0) * T5.OUT_RESERVE_QTY AS WRAP_SIZE,
+				   CASE
+                      WHEN EXISTS
+                              (SELECT 1
+                                 FROM DUAL
+                                WHERE T4.BRAND_ID IN
+                                         (SELECT NAME
+                                            FROM CCS_CODE
+                                           WHERE CD_GROUP_CD =
+                                                    'WEAR_BRAND_CD'))
+                      THEN
+                         'Y'
+                      ELSE
+                         'N'
+                   END
+                      AS WEAR_PRODUCT_YN,
+				   ROW_NUMBER ()
+				          OVER (PARTITION BY T5.LOGISTICS_INOUT_NO
+				                ORDER BY DECODE (T4.ORDER_PRODUCT_TYPE_CD, 'ORDER_PRODUCT_TYPE_CD.WRAP', 0, 1), T5.ORDER_ID, T5.ORDER_PRODUCT_NO) AS CUST_ORD_SEQ
+			FROM OMS_ORDER T1
+				 INNER JOIN OMS_DELIVERYADDRESS T2 ON T1.ORDER_ID = T2.ORDER_ID
+		         INNER JOIN OMS_DELIVERY T3 ON T2.ORDER_ID = T3.ORDER_ID AND T2.DELIVERY_ADDRESS_NO = T3.DELIVERY_ADDRESS_NO
+		         INNER JOIN OMS_ORDERPRODUCT T4 ON T1.ORDER_ID = T4.ORDER_ID AND T2.DELIVERY_ADDRESS_NO = T4.DELIVERY_ADDRESS_NO AND T3.DELIVERY_POLICY_NO = T4.DELIVERY_POLICY_NO
+				 INNER JOIN OMS_LOGISTICS T5 ON T4.ORDER_ID = T5.ORDER_ID AND T4.ORDER_PRODUCT_NO = T5.ORDER_PRODUCT_NO
+			WHERE T1.STORE_ID = #{storeId}
+				  AND T5.WAREHOUSE_INOUT_TYPE_CD = 'WAREHOUSE_INOUT_TYPE_CD.OUT'
+				  AND T5.LOGISTICS_STATE_CD = 'LOGISTICS_STATE_CD.APPROVAL'
+				  AND T5.DELIVERY_IF_TYPE_CD = 'DELIVERY_IF_TYPE_CD.HANJIN'
+				  AND EXISTS ( 
+									SELECT 1 
+				       				FROM (
+											 <foreach collection="list" item="item" index="index" separator="UNION ALL">
+										 	 	 SELECT #{item.logisticsInoutNo} AS LOGISTICS_INOUT_NO, #{item.orderId} AS ORDER_ID, #{item.orderProductNo} AS ORDER_PRODUCT_NO FROM DUAL 
+										     </foreach>
+										  ) A 
+								    WHERE A.LOGISTICS_INOUT_NO = T5.LOGISTICS_INOUT_NO 
+								    AND A.ORDER_ID = T5.ORDER_ID
+									AND A.ORDER_PRODUCT_NO = T5.ORDER_PRODUCT_NO
+						   	   )
+   	   ) A
+   	   ORDER BY LOGISTICS_INOUT_NO, CUST_ORD_SEQ
+	</select>
+	
+	<resultMap type="omsLogistics" id="sendHanjinListMap" autoMapping="true">
+		<id property="orderId"            column="ORDER_ID"/>
+		<id property="orderProductNo"     column="ORDER_PRODUCT_NO"/>
+		<id property="logisticsInoutNo"   column="LOGISTICS_INOUT_NO"/>
+		
+		<association property="omsOrderproduct"  javaType="omsOrderproduct">
+			<id property="orderId"               column="ORDER_ID"/>
+			<id property="orderProductNo"        column="ORDER_PRODUCT_NO"/>
+			
+			<result property="productId"         column="PRODUCT_ID"/>
+			<result property="productName"       column="PRODUCT_NAME"/>
+			<result property="saleproductName"   column="SALEPRODUCT_NAME"/>
+			<result property="wrapYn"            column="WRAP_YN"/>
+			<result property="wrapVolume"        column="WRAP_VOLUME"/>
+			<result property="custOrdSeq"        column="CUST_ORD_SEQ"/>
+			<result property="deliveryAddressNo" column="DELIVERY_ADDRESS_NO"/>
+			<result property="wrapSize"          column="WRAP_SIZE"/>
+			
+			<association property="omsOrder"   javaType="omsOrder">
+				<id property="orderId"            column="ORDER_ID"/>
+				
+				<result property="siteId"      column="SITE_ID"/>
+				<result property="name1"       column="ORDERER_NAME"/>
+				<result property="phone2"      column="ORDERER_MOBILE"/>
+			</association>
+			
+			<association property="omsDeliveryaddress" javaType="omsDeliveryaddress">
+				<id property="orderId"            column="ORDER_ID"/>
+				<id property="deliveryAddressNo"  column="DELIVERY_ADDRESS_NO"/>
+				
+				<result property="name1"       column="RECEIVER_NAME"/>
+				<result property="phone1"      column="RECEIVER_PHONE"/>
+				<result property="phone2"      column="RECEIVER_MOBILE"/>
+				<result property="zipCd"       column="ZIP_CD"/>
+				<result property="address1"    column="ADDRESS1"/>
+				<result property="address2"    column="ADDRESS2"/>
+				<result property="note"        column="NOTE"/>
+			</association>
+			
+			<association property="omsDelivery"     javaType="omsDelivery">
+				<id property="orderId"            column="ORDER_ID"/>
+				<id property="deliveryAddressNo"  column="DELIVERY_ADDRESS_NO"/>
+				<id property="deliveryPolicyNo"   column="DELIVERY_POLICY_NO"/>
+				
+				<result property="wrapTogetherYn" column="WRAP_TOGETHER_YN"/>
+			</association>
+		</association>
+	</resultMap>
+	
+	<!-- 한진 데이터 전송 후 LOGISTICS_STATE 업데이트 -->
+	<update id="updateLogisticsState" parameterType="java.util.HashMap">
+		/* [oms.logistics.updateLogisticsState][brad][2016. 9. 27.] */
+		UPDATE OMS_LOGISTICS T1 SET T1.LOGISTICS_STATE_CD = #{logisticsStateCd}
+		      ,T1.UPD_DT = SYSDATE
+		      ,T1.UPD_ID = #{updId}
+        WHERE EXISTS ( 
+						SELECT 1 
+	       				FROM (
+								 <foreach collection="list" item="item" index="index" separator="UNION ALL">
+							 	 	SELECT #{item.logisticsInoutNo} AS LOGISTICS_INOUT_NO, #{item.orderId} AS ORDER_ID, #{item.orderProductNo} AS ORDER_PRODUCT_NO FROM DUAL 
+							     </foreach>
+							  ) A 
+					    WHERE A.LOGISTICS_INOUT_NO = T1.LOGISTICS_INOUT_NO
+					    AND A.ORDER_ID = T1.ORDER_ID
+					    AND A.ORDER_PRODUCT_NO = T1.ORDER_PRODUCT_NO
+			   	     )
+	</update>
+	
+	<select id="getInvoiceLabelList" resultType="gcp.external.model.IfLabel">
+		/* [oms.logistics.getInvoiceLabelList][brad][2016. 7. 27.] */
+		SELECT DISTINCT INV_NO,
+			   ORD_NO                      
+   		FROM DAS_BTOC.IF_LABEL_LIST
+		WHERE STATUS IN (1, 2)
+			  AND (SND_ST  = 0 OR SND_ST IS NULL)
+			  AND O_DAY > TO_CHAR(sysdate-5, 'YYYY-MM-DD')
+	</select>
+	
+	<update id="updateInvoiceNo" parameterType="omsLogistics">
+		/* [oms.logistics."updateInvoice"][brad][2016. 7. 29.] */
+		UPDATE OMS_LOGISTICS 
+		SET INVOICE_NO = #{invoiceNo}
+	       ,DELIVERY_ORDER = #{deliveryOrder}
+	       ,LOGISTICS_STATE_CD = #{logisticsStateCd}
+	       ,INVOICE_DT = #{invoiceDt}
+	       ,UPD_DT = #{updDt}
+	       ,UPD_ID = #{updId}
+		WHERE LOGISTICS_INOUT_NO = #{logisticsInoutNo}
+		AND WAREHOUSE_INOUT_TYPE_CD = 'WAREHOUSE_INOUT_TYPE_CD.OUT'
+		AND LOGISTICS_STATE_CD = 'LOGISTICS_STATE_CD.SEND'
+		AND DELIVERY_IF_TYPE_CD = #{deliveryIfTypeCd}
+	</update>
+	
+	<update id="updateLabelList" parameterType="java.util.List">
+		/* [oms.logistics.updateLabelList][brad][2016. 7. 29.] */
+		UPDATE DAS_BTOC.IF_LABEL_LIST T1
+		SET T1.SND_ST = 1,
+			T1.UTIME = sysdate
+		WHERE T1.STATUS IN (1, 2)
+		AND (T1.SND_ST = 0 OR T1.SND_ST IS NULL)
+		AND T1.O_DAY > TO_CHAR(sysdate-5, 'YYYY-MM-DD')
+		AND EXISTS ( 
+						SELECT 1 
+	       				FROM (
+								 <foreach collection="list" item="item" index="index" separator="UNION ALL">
+								 	SELECT #{item} AS ORD_NO FROM DUAL 
+							     </foreach>
+							  ) A 
+					    WHERE A.ORD_NO = T1.ORD_NO
+			   	   )
+	</update>
+	
+	<update id="insertSendDelivery" parameterType="gcp.external.model.IfLabel">
+		/* [oms.logistics.insertSendDelivery][brad][2016. 8. 3.] */
+	 	INSERT INTO ZTS_TERM.SEND_DELIVERY (
+						SEQ,
+						SEND_INV_EDIT_YN,
+						SABANGNET_IDX,
+						TAK_CODE,
+						TAK_INVOICE,
+						REGIST_DATE) 
+				SELECT  ZTS_TERM.SQ_SEND_DELIVERY.NEXTVAL,
+				 		NVL((SELECT DISTINCT 'Y' FROM ZTS_TERM.SEND_DELIVERY WHERE SABANGNET_IDX = A.IDX),'N') SEND_INV_EDIT_YN,
+				 		A.IDX,
+				 		'004',
+				 		#{invNo, jdbcType=VARCHAR},
+				 		SYSDATE
+ 		FROM ZTS_TERM.RECEIVE_ORDER A
+ 		WHERE BO_ORDER_ID IN (SELECT DISTINCT ORDER_ID FROM OMS_LOGISTICS WHERE LOGISTICS_INOUT_NO = #{ordNo})
+		AND NOT EXISTS (SELECT 1 FROM ZTS_TERM.SEND_DELIVERY WHERE SABANGNET_IDX = A.IDX AND TAK_INVOICE = #{invNo})
+	</update>
+	
+	<!-- 한진 데이타 전송 -->
+	<insert id="insertHanjinZeroOrderMtr" parameterType="gcp.external.model.ZeroOrderMtr">
+	/* [oms.logistics.insertHanjinZeroOrderMtr][brad][2016. 7. 22.] */
+	<selectKey keyProperty="seqNo" resultType="String" order="BEFORE">
+		SELECT ZERO_ORDER_SEQ.nextval FROM DUAL
+	</selectKey>
+ 	INSERT INTO ZERO_ORD_MTR (
+ 				SEQNO,
+				STX,
+				SO_DATE,
+				PICK_POSTNO,
+				SELL_POSTNO,
+				SELL_ADDRESS1,
+				SELL_ADDRESS2,
+				BX_CODE,
+				SELL_NM,
+				SELL_PHONENO1,
+				SELL_PHONENO2,
+				CUST_POSTNPO,
+				CUST_ADDRESS1,
+				CUST_ADDRESS2,
+				CUST_NM,
+				CUST_PHONENO1,
+				CUST_PHONENO2,
+				MESSAGE,
+				ORDER_NO,
+				ORDER_SEQ,
+				WB_NO,
+				ITEMCD,
+				ITEM_NM,
+				BOX_QTY,
+				PAY_COND,
+				PAY_AMOUNT,
+				ITEMSEQ)
+		VALUES ( #{seqNo, jdbcType=VARCHAR},
+				 #{stx, jdbcType=VARCHAR},
+				 sysdate,
+				 #{pickPostno, jdbcType=VARCHAR},
+				 #{sellPostno, jdbcType=VARCHAR},
+				 #{sellAddress1, jdbcType=VARCHAR},	
+				 #{sellAddress2, jdbcType=VARCHAR},
+				 #{bxCode, jdbcType=VARCHAR},
+				 #{sellNm, jdbcType=VARCHAR},
+				 #{sellPhoneno1, jdbcType=VARCHAR},
+				 #{sellPhoneno2, jdbcType=VARCHAR},
+				 RPAD(#{custPostnpo, jdbcType=VARCHAR},6,' '),
+				 SUBSTRB(#{custAddress1, jdbcType=VARCHAR}, 1, 80),
+				 SUBSTRB(#{custAddress2, jdbcType=VARCHAR}, 1, 80),
+				 #{custNm, jdbcType=VARCHAR},
+				 REPLACE(#{custPhoneno1, jdbcType=VARCHAR}, '-', ''),
+				 REPLACE(#{custPhoneno2, jdbcType=VARCHAR}, '-', ''),
+				 SUBSTRB(#{message, jdbcType=VARCHAR}, 1, 80),
+				 #{orderNo, jdbcType=VARCHAR},
+				 #{orderSeq, jdbcType=VARCHAR},			
+				 #{wbNo, jdbcType=VARCHAR},
+				 #{itemcd, jdbcType=VARCHAR},
+	             SUBSTRB(#{itemNm, jdbcType=VARCHAR}, 1, 150),
+	             #{boxQty, jdbcType=NUMERIC},
+	             #{payCond, jdbcType=VARCHAR},
+	             #{payAmount, jdbcType=NUMERIC},
+	             #{itemseq, jdbcType=VARCHAR}
+				 )
+	</insert>
+	
+	<select id="getHanjinInvoiceList" resultMap="hanjinInvoiceListMap">
+		/* [oms.logistics.getHanjinInvoiceList][brad][2016. 7. 27.] */
+			SELECT DISTINCT WB_NO, ORDER_NO
+			FROM ZERO_TRS_MTR T1
+			WHERE RECV_FLG = '0'
+			AND INGTYPE &lt;&gt; '08'
+			AND	INGTYPE	&lt;&gt; '92'
+			AND STX	= 'S'
+			AND ADDDATETIME > sysdate-5
+			AND BX_CODE = #{bxCode}
+	</select>
+	
+	<resultMap type="gcp.external.model.IfLabel" id="hanjinInvoiceListMap">
+		<id property="invNo"       column="WB_NO"/>
+		<id property="ordNo"       column="ORDER_NO"/>
+	</resultMap>
+	
+	<update id="updateHanjinInvoiceList" parameterType="java.util.HashMap">
+		/* [oms.logistics.updateHanjinInvoiceList][brad][2016. 7. 29.] */
+		UPDATE ZERO_TRS_MTR T1
+		SET T1.RECV_FLG = '1',
+			T1.EDI_DAT = sysdate
+		WHERE T1.RECV_FLG = '0'
+		AND T1.BX_CODE = #{bxCode}
+		AND T1.INGTYPE &lt;&gt; '08'
+		AND	T1.INGTYPE	&lt;&gt; '92'
+		AND T1.STX	= 'S'
+		AND T1.ADDDATETIME > sysdate-5
+		AND EXISTS ( 
+						SELECT 1 
+	       				FROM (
+								 <foreach collection="list" item="item" index="index" separator="UNION ALL">
+							 	 	 SELECT #{item} AS ORDER_NO FROM DUAL 
+							     </foreach>
+							  ) A 
+					    WHERE A.ORDER_NO = T1.ORDER_NO
+			   	   )
+	</update>
+	
+	<!-- 피킹리스트 조회 -->
+	<select id="getPickingList" parameterType="omsLogisticsSearch" resultType="omsOrderproduct">
+		/* [oms.logistics.getPickingList][brad][2016. 8. 8.] */
+		SELECT LOCATION_ID,
+		       PRODUCT_ID,
+		       CASE
+                   WHEN WEAR_PRODUCT_YN = 'Y' AND ERP_PRODUCT_ID IS NOT NULL
+                   THEN
+                      ORDER_PRODUCT_NAME || '_' || ERP_PRODUCT_ID
+                   ELSE
+                      ORDER_PRODUCT_NAME
+                END
+                   AS PRODUCT_NAME,
+       		   ERP_PRODUCT_ID,
+	           SALEPRODUCT_ID,
+	           SALEPRODUCT_NAME,
+	           BOX_UNIT_QTY,
+	           DELIVERY_ORDER,
+	           INVOICE_DT,
+	           QUOTIENT,
+			   REMAINDER
+		FROM
+		(
+			SELECT LOCATION_ID,
+	       		   PRODUCT_ID,
+	       		   PRODUCT_NAME AS ORDER_PRODUCT_NAME,
+	       		   ERP_PRODUCT_ID,
+		           SALEPRODUCT_ID,
+		           SALEPRODUCT_NAME,
+		           BOX_UNIT_QTY,
+		           DELIVERY_ORDER,
+		           INVOICE_DT,
+		           WEAR_PRODUCT_YN,
+		           CASE
+		               WHEN BOX_UNIT_QTY > 1
+		               THEN
+		                  TRUNC (SUM (OUT_RESERVE_QTY) / NVL (BOX_UNIT_QTY, 1))
+		               ELSE
+		                  0
+		           END
+		               AS QUOTIENT,
+		           CASE
+		               WHEN BOX_UNIT_QTY > 1
+		               THEN
+		                  MOD (SUM (OUT_RESERVE_QTY), NVL (BOX_UNIT_QTY, 1))
+		               ELSE
+		                  SUM (OUT_RESERVE_QTY)
+		           END
+		               AS REMAINDER
+		    FROM
+		    (           
+				SELECT T4.LOCATION_ID,   
+					   T2.PRODUCT_ID,
+					   T2.ERP_PRODUCT_ID,
+					   CASE
+		                  WHEN T2.ORDER_PRODUCT_TYPE_CD =
+		                          'ORDER_PRODUCT_TYPE_CD.WRAP'
+		                  THEN
+		                     '선물포장비'
+		                  ELSE
+		                     T2.PRODUCT_NAME
+		               END
+		                  AS PRODUCT_NAME,
+					   T2.SALEPRODUCT_ID,
+					   T2.SALEPRODUCT_NAME,
+					   T2.BOX_UNIT_QTY,
+					   T3.OUT_RESERVE_QTY,
+					   CASE
+	                      WHEN EXISTS
+	                              (SELECT 1
+	                                 FROM DUAL
+	                                WHERE T2.BRAND_ID IN
+	                                         (SELECT NAME
+	                                            FROM CCS_CODE
+	                                           WHERE CD_GROUP_CD =
+	                                                    'WEAR_BRAND_CD'))
+	                      THEN
+	                         'Y'
+	                      ELSE
+	                         'N'
+	                   END
+	                      AS WEAR_PRODUCT_YN,
+					   <choose>
+							<when test="startDeliveryOrder != null and startDeliveryOrder != ''">
+								MAX(T3.DELIVERY_ORDER) OVER () AS DELIVERY_ORDER,
+							</when>
+							<otherwise>
+								T3.DELIVERY_ORDER,
+							</otherwise>
+					   </choose>
+					   TO_CHAR(T3.INVOICE_DT, 'yyyy/MM/dd') AS INVOICE_DT
+		   		FROM OMS_ORDER T1
+		   			 INNER JOIN OMS_ORDERPRODUCT T2 ON T1.ORDER_ID = T2.ORDER_ID
+					 INNER JOIN OMS_LOGISTICS T3 ON T2.ORDER_ID = T3.ORDER_ID AND T2.ORDER_PRODUCT_NO = T3.ORDER_PRODUCT_NO
+					 INNER JOIN PMS_SALEPRODUCT T4 ON T2.STORE_ID = T4.STORE_ID AND T2.SALEPRODUCT_ID = T4.SALEPRODUCT_ID
+				WHERE T1.STORE_ID = #{storeId}
+				AND T2.SALE_TYPE_CD = 'SALE_TYPE_CD.PURCHASE'
+				AND T3.LOGISTICS_STATE_CD = 'LOGISTICS_STATE_CD.INVOICE'
+			    AND T3.WAREHOUSE_INOUT_TYPE_CD = 'WAREHOUSE_INOUT_TYPE_CD.OUT'
+				<if test="startDate != null and startDate != ''">
+					<if test="endDate != null and endDate != ''">
+						AND T3.INVOICE_DT BETWEEN TO_DATE (#{startDate}, 'YYYY-MM-DD HH24:MI:SS') AND TO_DATE (#{endDate}, 'YYYY-MM-DD HH24:MI:SS')
+					</if>
+				</if>
+				<if test="orderType != null and orderType != ''">
+					AND T1.ORDER_TYPE_CD IN (${orderType})
+				</if>
+				<if test="locationId != null and locationId != ''">
+					AND T2.LOCATION_ID = #{locationId}
+				</if>
+				<if test="startDeliveryOrder != null and startDeliveryOrder != ''">
+					<if test="endDeliveryOrder != null and endDeliveryOrder != ''">
+						AND T3.DELIVERY_ORDER BETWEEN #{startDeliveryOrder} AND #{endDeliveryOrder} 
+					</if>
+				</if>
+			)
+			GROUP BY LOCATION_ID, PRODUCT_ID, PRODUCT_NAME, ERP_PRODUCT_ID, SALEPRODUCT_ID, SALEPRODUCT_NAME, BOX_UNIT_QTY, DELIVERY_ORDER, INVOICE_DT, WEAR_PRODUCT_YN
+			ORDER BY DELIVERY_ORDER, LOCATION_ID
+		) A
+	</select>
+	
+	<!-- 모든 창고 로케이션 리스트 조회 -->
+	<select id="getAllLocationList" resultType="pmsWarehouselocation">
+		/* [oms.logistics.getAllLocationList][brad][2016. 8. 9.] */
+			SELECT * 
+			FROM PMS_WAREHOUSE T1
+			INNER JOIN PMS_WAREHOUSELOCATION T2 ON T1.WAREHOUSE_ID = T2.WAREHOUSE_ID
+			WHERE T1.WAREHOUSE_ID = #{warehouseId}
+			AND T2.LOCATION_USE_YN = 'Y'
+			ORDER BY T2.LOCATION_ID
+	</select>
+	
+	<!-- 조건별 창고 로케이션 리스트 조회 -->
+	<select id="getLocationList" resultType="pmsWarehouselocation" parameterType="omsLogisticsSearch">
+		/* [oms.logistics.getLocationList][brad][2016. 8. 9.] */
+		<include refid="ccs.common.pagingPre" />
+			SELECT T1.NAME AS WAREHOUSE_NAME,
+			       T2.* 
+			FROM PMS_WAREHOUSE T1
+			INNER JOIN PMS_WAREHOUSELOCATION T2 ON T1.WAREHOUSE_ID = T2.WAREHOUSE_ID
+			<where>
+				<if test="warehouseId != null and warehouseId != ''">
+					AND T1.WAREHOUSE_ID IN (${warehouseId})
+				</if>
+				<if test="locationUseYn != null and locationUseYn != ''">
+					AND LOCATION_USE_YN IN (${locationUseYn})
+				</if>
+				<if test="locationId != null and locationId != ''">
+					AND LOCATION_ID = #{locationId}
+				</if>
+			</where>
+		<include refid="ccs.common.pagingPost" />	
+	</select>
+	
+	<select id="checkLocationId" resultType="int">
+		<include refid="selectLocationWithId"/>
+	</select>
+	
+	<sql id="selectLocationWithId">
+		SELECT COUNT(*)
+		FROM PMS_WAREHOUSE T1
+		INNER JOIN PMS_WAREHOUSELOCATION T2 ON T1.WAREHOUSE_ID = T2.WAREHOUSE_ID
+		<where>
+			<if test="warehouseId != null and warehouseId != ''">
+				AND T1.WAREHOUSE_ID = #{warehouseId}
+			</if>
+			<if test="locationId != null and locationId != ''">
+				AND LOCATION_ID = #{locationId}
+			</if>	
+		</where>
+	</sql>
+	
+	<!-- 창고 로케이션 매핑 상품 리스트 조회 -->
+	<select id="getLocationMappingList" resultMap="locationMappingResultMap" parameterType="omsLogisticsSearch">
+		/* [oms.logistics.getLocationMappingList][brad][2016. 8. 9.] */
+		<include refid="ccs.common.pagingPre" />
+			SELECT T1.NAME AS PRODUCT_NAME,
+			       T1.PRODUCT_ID,
+			       T2.STORE_ID,
+			       T2.SALEPRODUCT_ID,
+			       T2.NAME AS SALEPRODUCT_NAME,
+			       T2.ERP_SALEPRODUCT_ID,
+			       T2.WAREHOUSE_ID,
+			       T2.LOCATION_ID,
+			       T2.DELIVERY_TOGETHER_QTY,
+			       T2.INS_ID,
+			       T2.INS_DT,
+			       T2.UPD_ID,
+			       T2.UPD_DT,
+			       T3.LOCATION_USE_YN,
+			       T4.NAME AS BUSINESS_NAME
+			FROM PMS_PRODUCT T1
+			INNER JOIN PMS_SALEPRODUCT T2 ON T1.PRODUCT_ID = T2.PRODUCT_ID
+			LEFT OUTER JOIN PMS_WAREHOUSELOCATION T3 ON T2.WAREHOUSE_ID = T3.WAREHOUSE_ID AND T2.LOCATION_ID = T3.LOCATION_ID
+			INNER JOIN CCS_BUSINESS T4 ON T1.STORE_ID = T4.STORE_ID AND T1.BUSINESS_ID = T4.BUSINESS_ID
+			<where>
+				<if test="storeId != null and storeId != ''">
+					AND T1.STORE_ID = #{storeId}
+				</if>
+				<if test=" businessId != null and businessId != '' ">
+					AND T1.BUSINESS_ID = #{ businessId }
+				</if>
+				<if test="locationId != null and locationId != ''">
+					AND T2.LOCATION_ID = #{locationId}
+				</if>
+				<choose>
+					<when test="locationUseYn != null and locationUseYn != ''">
+						<choose>
+							<when test="locationRegistYn != null and locationRegistYn != ''">
+								AND (T3.LOCATION_USE_YN IN (${locationUseYn}) OR T3.LOCATION_USE_YN IS NULL)
+							</when>
+							<otherwise>
+								AND T3.LOCATION_USE_YN IN (${locationUseYn})
+							</otherwise>
+						</choose>
+					</when>
+					<otherwise>
+						<if test="locationRegistYn != null and locationRegistYn != ''">
+							AND T3.LOCATION_USE_YN IS NULL
+						</if>
+					</otherwise>
+				</choose>
+				<if test='product != null and product != ""'>
+					<if test='productType == "productId"'>
+					 	AND T1.PRODUCT_ID = #{product}
+					</if>
+					<if test='productType == "productName"'>
+					 	AND T1.NAME LIKE #{product} || '%'
+					</if>
+				</if>
+			</where>
+			ORDER BY T2.INS_DT DESC, T2.PRODUCT_ID, T2.SALEPRODUCT_ID
+		<include refid="ccs.common.pagingPost" />	
+	</select>
+	
+	<resultMap type="pmsSaleproduct" id="locationMappingResultMap" autoMapping="true">
+		<id property="storeId"              column="STORE_ID"/>
+		<id property="saleproductId"        column="SALEPRODUCT_ID"/>
+		<result property="name"             column="SALEPRODUCT_NAME"/>
+		
+		<association property="pmsProduct"  javaType="pmsProduct">
+			<id property="storeId"          column="STORE_ID"/>
+			<id property="productId"        column="PRODUCT_ID"/>
+			<result property="name"         column="PRODUCT_NAME"/>
+		</association>
+		
+		<association property="pmsWarehouselocation"   javaType="pmsWarehouselocation">
+			<id property="warehouseId"        column="WAREHOUSE_ID"/>
+			<id property="locationId"         column="LOCATION_ID"/>
+			<result property="locationUseYn"  column="LOCATION_USE_YN"/>
+		</association>
+	</resultMap>
+	
+	<!-- 상품 로케이션 매핑 개별수정 단품 조회 -->
+	<select id="getMappingSaleproductList" resultType="pmsSaleproduct" parameterType="omsLogisticsSearch">
+		/* [oms.logistics.getMappingSaleproductList][brad][2016. 8. 23.] */
+		SELECT T1.STORE_ID,
+		       T1.NAME AS PRODUCT_NAME,
+		       T2.PRODUCT_ID,
+		       T2.SALEPRODUCT_ID,
+		       T2.NAME,
+		       T2.ERP_SALEPRODUCT_ID,
+		       T2.INS_ID,
+		       T2.INS_DT,
+		       T2.UPD_ID,
+		       T2.UPD_DT,
+		       T2.LOCATION_ID
+		FROM PMS_PRODUCT T1
+		INNER JOIN PMS_SALEPRODUCT T2 ON T1.PRODUCT_ID = T2.PRODUCT_ID
+		WHERE T1.STORE_ID = #{storeId}
+		AND EXISTS ( 
+						SELECT 1 
+	       				FROM (
+								 <foreach collection="pmsSaleproductList" item="item" index="index" separator="UNION ALL">
+								 	SELECT #{item.productId} AS PRODUCT_ID, #{item.saleproductId} AS SALEPRODUCT_ID FROM DUAL 
+							     </foreach>
+							  ) A 
+					    WHERE A.PRODUCT_ID = T2.PRODUCT_ID
+					    AND A.SALEPRODUCT_ID = T2.SALEPRODUCT_ID
+			   	   )
+		ORDER BY T2.INS_DT DESC, T2.PRODUCT_ID, T2.SALEPRODUCT_ID
+	</select>
+	
+	<!-- 상품 로케이션 매핑 일괄 업데이트 -->
+	<update id="updateLocationWithProductId" parameterType="pmsSaleproduct">
+		UPDATE PMS_SALEPRODUCT 
+		SET WAREHOUSE_ID = #{warehouseId},
+			LOCATION_ID = #{locationId}, 
+		    UPD_DT = SYSDATE,
+		    UPD_ID = #{updId}
+		    <if test="deliveryTogetherQty != null and deliveryTogetherQty != ''">
+				, DELIVERY_TOGETHER_QTY = #{deliveryTogetherQty}
+			</if>
+		WHERE STORE_ID = #{storeId} 
+		AND PRODUCT_ID = #{productId}
+	</update>
+	
+	<!-- 사이트 리스트 조회 -->
+	<select id="getSiteList" resultType="ccsSite">
+		/* [oms.logistics.getsiteList][brad][2016. 8. 8.] */
+			SELECT * FROM CCS_SITE WHERE STORE_ID = #{storeId}
+			AND USE_YN = 'Y'
+			ORDER BY NAME
+	</select>
+	
+	<!-- 물류창고 리스트 조회 -->
+	<select id="getWarehouseList" resultType="pmsWarehouse">
+		/* [oms.logistics.getWarehouseList][brad][2016. 8. 10.] */
+			SELECT * FROM PMS_WAREHOUSE
+	</select>
+	
+	<!-- 출고완료 처리 리스트 조회 -->
+	<select id="getShippingProcessList" parameterType="omsLogisticsSearch" resultMap="shippingProcessListResultMap" fetchSize="1000">
+		/* [oms.logistics.getShippingProcessList][brad][2016. 7. 8.] */
+		SELECT X.*,
+			   CASE
+                  WHEN WEAR_PRODUCT_YN = 'Y' AND ERP_PRODUCT_ID IS NOT NULL
+                  THEN
+                     ORDER_PRODUCT_NAME || '_' || ERP_PRODUCT_ID
+                  ELSE
+                     ORDER_PRODUCT_NAME
+               END
+                  AS PRODUCT_NAME,	
+			   COUNT (*) OVER () AS TOTAL_COUNT,
+			   COUNT (DISTINCT ORDER_ID) OVER () AS TOTAL_ORDER_COUNT
+     	FROM (
+				SELECT /*+ INDEX ( T6 IDX_OMS_LOGISTICS_INSDT ) */
+					   T1.ORDER_TYPE_CD,
+					   T1.NAME1 AS ORDERER_NM,
+					   T1.PHONE2 AS ORDERER_MOBILE,
+					   T1.MEMBER_ID AS ORDERER_ID,
+					   T2.NAME1 AS RECEIVER_NM,
+		       		   T2.PHONE1 AS RECEIVER_PHONE,
+		       		   T2.PHONE2 AS RECEIVER_MOBILE,
+					   T2.ZIP_CD,
+					   T2.ADDRESS1||CHR(32)||T2.ADDRESS2 AS DELIVERY_ADDRESS,
+				 	   TO_CHAR(T4.DELIVERY_RESERVE_DT, 'YYYY/MM/DD') AS ORDER_DATE,
+					   T4.ORDER_ID,
+					   T4.ORDER_PRODUCT_NO,
+					   T4.PRODUCT_ID,
+					   T4.PRODUCT_NAME AS ORDER_PRODUCT_NAME,
+					   T4.ERP_PRODUCT_ID,
+					   T4.SALEPRODUCT_NAME,
+					   T4.ERP_SALEPRODUCT_ID,
+					   T4.SALE_TYPE_CD,
+					   T4.LP_NO,
+	                   T4.WRAP_YN,
+	                   T4.WRAP_VOLUME,     
+					   T5.NAME AS SITE_NAME,
+					   T6.INS_DT,
+					   T6.LOGISTICS_INOUT_NO,
+					   T6.DELIVERY_SERVICE_CD,
+					   T6.INVOICE_NO,
+					   T6.INVOICE_DT,
+					   T6.OUT_RESERVE_QTY,
+					   DECODE(NVL(T6.OUT_QTY, 0), 0, T6.OUT_RESERVE_QTY) AS OUT_QTY,
+					   CASE
+                          WHEN EXISTS
+                                  (SELECT 1
+                                     FROM DUAL
+                                    WHERE T4.BRAND_ID IN
+                                             (SELECT NAME
+                                                FROM CCS_CODE
+                                               WHERE CD_GROUP_CD =
+                                                        'WEAR_BRAND_CD'))
+                          THEN
+                             'Y'
+                          ELSE
+                             'N'
+                       END
+                          AS WEAR_PRODUCT_YN,
+					   CASE
+		                   WHEN EXISTS
+		                           (SELECT 1
+		                              FROM DUAL
+		                             WHERE T4.CATEGORY_ID IN
+		                                      (SELECT NAME
+		                                         FROM CCS_CODE
+		                                        WHERE CD_GROUP_CD =
+		                                                 'DUAL_WRAP_CATEGORY_CD'))
+		                   THEN
+		                      'Y'
+		                   ELSE
+		                      'N'
+		                END
+		                   AS DUAL_WRAP_YN,
+		               RANK ()
+		                 OVER (ORDER BY
+		                    		T6.LOGISTICS_INOUT_NO,
+			                        T6.ORDER_ID,
+			                        DECODE (T4.ORDER_PRODUCT_TYPE_CD, 'ORDER_PRODUCT_TYPE_CD.WRAP', 0, 1),
+			                        T6.ORDER_PRODUCT_NO) AS ORDER_SEQ    
+		   		FROM OMS_ORDER T1
+					 INNER JOIN OMS_DELIVERYADDRESS T2 ON T1.ORDER_ID = T2.ORDER_ID
+                     INNER JOIN OMS_ORDERPRODUCT T4 ON T1.ORDER_ID = T4.ORDER_ID AND T2.DELIVERY_ADDRESS_NO = T4.DELIVERY_ADDRESS_NO
+					 INNER JOIN CCS_SITE T5 ON T1.SITE_ID = T5.SITE_ID AND T1.STORE_ID = T5.STORE_ID
+					 INNER JOIN OMS_LOGISTICS T6 ON T4.ORDER_ID = T6.ORDER_ID AND T4.ORDER_PRODUCT_NO = T6.ORDER_PRODUCT_NO
+				WHERE T4.STORE_ID = #{storeId}
+				AND T4.SALE_TYPE_CD = 'SALE_TYPE_CD.PURCHASE'
+				AND T6.LOGISTICS_STATE_CD = 'LOGISTICS_STATE_CD.INVOICE'
+				<if test="startDate != null and startDate != ''">
+					<if test="endDate != null and endDate != ''">
+						AND T6.INS_DT BETWEEN TO_DATE (#{startDate}, 'YYYY-MM-DD HH24:MI:SS') AND TO_DATE (#{endDate}, 'YYYY-MM-DD HH24:MI:SS')
+					</if>
+				</if>
+				<if test="orderType != null and orderType != ''">
+					AND T1.ORDER_TYPE_CD IN (${orderType})
+				</if>
+				<if test="chinaMallYn != null and chinaMallYn != ''">
+					<if test='chinaMallYn == "Y"'>
+						AND T1.SITE_TYPE_CD = 'SITE_TYPE_CD.CHINA'
+					</if>
+					<if test='chinaMallYn == "N"'>
+						AND T1.SITE_TYPE_CD &lt;&gt; 'SITE_TYPE_CD.CHINA'
+					</if>
+				</if>
+				<if test="siteId != null and siteId != ''">
+					AND T1.SITE_ID = #{siteId}
+				</if>
+				<if test='orderer != null and orderer != ""'>
+					<if test='ordererType == "name"'>
+					 	AND T1.NAME1 like #{orderer} || '%'
+					</if>
+					<if test='ordererType == "id"'>
+					 	AND T1.MEMBER_ID like #{orderer} || '%'
+					</if>
+					<if test='ordererType == "mobile"'>
+						AND T1.PHONE2 like #{orderer} || '%'
+					</if>
+				</if>
+				<if test='receiver != null and receiver != ""'>
+					<if test='receiverType == "name"'>
+					 	AND T2.NAME1 like #{receiver} || '%'
+					</if>
+					<if test='receiverType == "mobile"'>
+						AND T2.PHONE2 like #{receiver} || '%'
+					</if>
+				</if>
+				<if test='orderId != null and orderId != ""'>
+					AND T1.ORDER_ID = #{orderId}			
+				</if>
+				<if test="lpNo != null and lpNo != ''">
+					AND T4.LP_NO = #{lpNo}
+				</if>
+			) X
+			ORDER BY ORDER_SEQ
+	</select>
+	
+	<resultMap type="omsLogistics" id="shippingProcessListResultMap" autoMapping="true">
+		<id property="orderId"           column="ORDER_ID"/>
+		<id property="orderProductNo"    column="ORDER_PRODUCT_NO"/>
+		<id property="logisticsInoutNo"  column="LOGISTICS_INOUT_NO"/>
+		
+		<association property="omsOrderproduct"  javaType="omsOrderproduct">
+			<id property="orderId"               column="ORDER_ID"/>
+			<id property="orderProductNo"        column="ORDER_PRODUCT_NO"/>
+			
+			<result property="deliveryReserveDt" column="DELIVERY_RESERVE_DT"/>
+			<result property="productId"         column="PRODUCT_ID"/>
+			<result property="productName"       column="PRODUCT_NAME"/>
+			<result property="saleproductName"   column="SALEPRODUCT_NAME"/>
+			<result property="lpNo"              column="LP_NO"/>
+			<result property="siteName"          column="SITE_NAME"/>
+			<result property="erpSaleproductId"  column="ERP_SALEPRODUCT_ID"/>
+			<result property="dualWrapYn"        column="DUAL_WRAP_YN"/>
+			<result property="orderDate"         column="ORDER_DATE"/>
+			<result property="outQty"            column="PRODUCT_OUT_QTY"/>
+			
+			<association property="omsOrder"   javaType="gcp.oms.model.OmsOrder">
+				<result property="orderTypeCd" column="ORDER_TYPE_CD"/>
+				<result property="name1"       column="ORDERER_NM"/>
+				<result property="phone2"      column="ORDERER_MOBILE"/>
+			</association>
+			<association property="omsDeliveryaddress" javaType="omsDeliveryaddress">
+				<result property="name1"       column="RECEIVER_NM"/>
+				<result property="phone1"      column="RECEIVER_PHONE"/>
+				<result property="phone2"      column="RECEIVER_MOBILE"/>
+				<result property="zipCd"       column="ZIP_CD"/>
+				<result property="address1"    column="ADDRESS1"/>
+				<result property="address2"    column="ADDRESS2"/>
+				<result property="deliveryAddress"   column="DELIVERY_ADDRESS"/>
+			</association>
+		</association>
+	</resultMap>
+	
+	<!-- 출고완료 처리 업데이트 -->
+	<update id="updateShippingConfirm" parameterType="omsLogistics">
+		/* [oms.logistics.updateShippingConfirm][brad][2016. 9. 30.] */
+		UPDATE OMS_LOGISTICS SET LOGISTICS_STATE_CD = #{logisticsStateCd}
+			  ,OUT_QTY = #{outQty}
+			  ,CANCEL_DELIVERY_QTY = #{cancelDeliveryQty}
+			  ,CANCEL_DELIVERY_REASON_CD = #{cancelDeliveryReasonCd}
+			  ,INVOICE_NO = #{invoiceNo}
+			  ,DELIVERY_SERVICE_CD = #{deliveryServiceCd}
+			  ,COMPLETE_DT = TO_DATE (#{completeDt}, 'YYYY-MM-DD HH24:MI:SS')
+		      ,UPD_ID = #{updId}
+		      ,UPD_DT = #{updDt}
+			  ,INVOICE_DT = #{invoiceDt}
+      	WHERE ORDER_ID = #{orderId}
+      	AND ORDER_PRODUCT_NO = #{orderProductNo}
+      	AND LOGISTICS_INOUT_NO = #{logisticsInoutNo}
+      	AND EXISTS (
+				SELECT 1 FROM OMS_LOGISTICS
+				WHERE ORDER_ID = #{orderId}
+				AND ORDER_PRODUCT_NO = #{orderProductNo}
+				AND LOGISTICS_INOUT_NO = #{logisticsInoutNo}
+				AND LOGISTICS_STATE_CD = 'LOGISTICS_STATE_CD.INVOICE'
+			)
+	</update>
+	
+	<!-- 출고처리시 주문상품의 배송수량 확인 -->
+	<select id="selectOrderproduct" resultType="omsOrderproduct" parameterType="omsLogistics">
+		/* [oms.logistics.selectOneOrderproduct][brad][2016. 9. 30.] */
+		SELECT STORE_ID,
+			   ORDER_ID,
+			   ORDER_PRODUCT_NO,
+			   OUT_QTY,
+			   ORDER_DELIVERY_TYPE_CD,
+			   ORDER_PRODUCT_TYPE_CD,
+			   UPPER_ORDER_PRODUCT_NO,
+			   CLAIM_NO,
+			   PRODUCT_NAME,
+			   PHONE2,
+			   CASE
+		          WHEN (ORDER_QTY-CANCEL_QTY-OUT_QTY = 0)
+		          THEN
+		             'ORDER_PRODUCT_STATE_CD.SHIP'
+		          WHEN ((ORDER_QTY-CANCEL_QTY-OUT_QTY &lt;&gt; 0) AND OUT_QTY &gt; 0)
+		          THEN
+		             'ORDER_PRODUCT_STATE_CD.PARTIALDELIVERY'
+		          ELSE
+		             'ORDER_PRODUCT_STATE_CD.CANCELDELIVERY'
+		       END
+		          AS ORDER_PRODUCT_STATE_CD
+		FROM
+		(
+			SELECT T2.STORE_ID, 
+				   T2.ORDER_ID,
+				   T2.ORDER_PRODUCT_NO,
+				   T2.PRODUCT_NAME,
+				   T2.ORDER_QTY,
+				   T2.CANCEL_QTY,
+				   T2.OUT_QTY + ${outQty} AS OUT_QTY,
+				   T2.ORDER_DELIVERY_TYPE_CD,
+				   T2.ORDER_PRODUCT_TYPE_CD,
+				   T2.UPPER_ORDER_PRODUCT_NO,
+				   T2.CLAIM_NO,
+				   T1.PHONE2
+			FROM OMS_ORDER T1
+			INNER JOIN OMS_ORDERPRODUCT T2 ON T1.STORE_ID = T2.STORE_ID AND T1.ORDER_ID = T2.ORDER_ID
+			WHERE T2.STORE_ID = #{storeId} 
+			AND T2.ORDER_ID = #{orderId} 
+			AND T2.ORDER_PRODUCT_NO = #{orderProductNo}
+		)
+	</select>
+	
+	<!-- 주문상품의 모든 물류데이터가 출고처리 되지 않았을때 상품의 출고 수량 업데이트 -->
+	<update id="updateOutQty" parameterType="omsOrderproduct">
+		UPDATE OMS_ORDERPRODUCT
+		SET OUT_QTY = #{outQty}
+	        ,UPD_DT = #{updDt}
+	        ,UPD_ID = #{updId}
+      	WHERE STORE_ID = #{storeId} 
+      	AND ORDER_ID = #{orderId}
+      	AND ORDER_PRODUCT_NO = #{orderProductNo}
+	</update>
+	
+	<!-- 출고처리시 출고완료가 되지 않은 물류데이터 확인 -->
+	<select id="selectInvoiceLogistics" resultType="int">
+		/* [oms.logistics.selectInvoiceLogistics][brad][2016. 9. 26.] */
+		SELECT COUNT(*) 
+		FROM OMS_ORDERPRODUCT T1
+		INNER JOIN OMS_LOGISTICS T2 ON T1.ORDER_ID = T2.ORDER_ID AND T1.ORDER_PRODUCT_NO = T2.ORDER_PRODUCT_NO
+		WHERE T1.STORE_ID = #{storeId}
+		AND T1.ORDER_ID = #{orderId}
+		AND T1.ORDER_PRODUCT_NO = ${orderProductNo}
+		AND T2.WAREHOUSE_INOUT_TYPE_CD = 'WAREHOUSE_INOUT_TYPE_CD.OUT'
+        AND T2.LOGISTICS_STATE_CD &lt;&gt; 'LOGISTICS_STATE_CD.CONFIRM'
+	</select>
+	
+	<!-- 출고/미출고 리스트 조회 -->
+	<select id="getShippingList" parameterType="omsLogisticsSearch" resultMap="shippingListResultMap" fetchSize="1000">
+		/* [oms.logistics.getShippingList][brad][2016. 7. 8.] */
+		WITH DATA
+     	AS (
+     		SELECT *
+     		FROM
+     		(
+	     		SELECT X.*,
+     				   CASE
+	                      WHEN WEAR_PRODUCT_YN = 'Y' AND ERP_PRODUCT_ID IS NOT NULL
+	                      THEN
+	                         ORDER_PRODUCT_NAME || '_' || ERP_PRODUCT_ID
+	                      ELSE
+	                         ORDER_PRODUCT_NAME
+	                   END
+	                      AS PRODUCT_NAME,
+	     			   DECODE (CANCEL_LOGISTICS_NO, MAX (CANCEL_LOGISTICS_NO) OVER (PARTITION BY ORDER_ID, ORDER_PRODUCT_NO), 'Y', 'N') AS LAST_YN
+	     		FROM
+	     		(	   	
+					SELECT /*+ INDEX ( T6 IDX_OMS_LOGISTICS_COMPLETE_DT ) */
+						   T1.NAME1 AS ORDERER_NM,
+						   T1.PHONE2 AS ORDERER_MOBILE,
+						   T1.MEMBER_ID AS ORDERER_ID,
+						   T2.NAME1 AS RECEIVER_NM,
+			       		   T2.PHONE1 AS RECEIVER_PHONE,
+			       		   T2.PHONE2 AS RECEIVER_MOBILE,
+						   T2.ZIP_CD,
+						   T2.ADDRESS1||CHR(32)||T2.ADDRESS2 AS DELIVERY_ADDRESS,
+						   TO_CHAR(T4.DELIVERY_RESERVE_DT, 'YYYY/MM/DD') AS ORDER_DATE,
+						   T4.ORDER_ID,
+						   T4.ORDER_PRODUCT_NO,
+						   T4.PRODUCT_ID,
+						   T4.PRODUCT_NAME AS ORDER_PRODUCT_NAME,
+						   T4.SALEPRODUCT_NAME,
+						   T4.ERP_PRODUCT_ID,
+						   T4.ERP_SALEPRODUCT_ID,
+						   T4.LP_NO,
+						   T4.BUSINESS_NAME,
+						   DECODE(T4.SALE_TYPE_CD, 'SALE_TYPE_CD.PURCHASE', '센터배송', '업체배송') AS DELIVERY_METHOD,
+						   T4.PERSONAL_CUSTOMS_CODE,
+						   T4.ORDER_PRODUCT_STATE_CD,
+						   T4.WRAP_YN,
+			               T4.WRAP_VOLUME,
+			               T4.SALE_TYPE_CD,
+			               T4.OUT_QTY AS P_OUT_QTY,
+                           T4.ORDER_QTY - T4.CANCEL_QTY AS P_RESERVE_QTY,
+                           T4.ORDER_QTY - T4.CANCEL_QTY - T4.OUT_QTY AS P_CANCEL_DELIVERY_QTY,
+						   T5.NAME AS SITE_NAME,
+						   TO_CHAR(T6.COMPLETE_DT, 'YYYY/MM/DD') AS COMPLETE_DT,
+						   T6.LOGISTICS_INOUT_NO,
+						   T6.INVOICE_NO,
+						   T6.OUT_RESERVE_QTY AS L_OUT_RESERVE_QTY,
+                           T6.OUT_QTY AS L_OUT_QTY,
+						   NVL(T6.CANCEL_DELIVERY_QTY, 0) AS L_CANCEL_DELIVERY_QTY,
+						   T6.WRAP_QTY,
+						   T6.CANCEL_DELIVERY_REASON_CD,
+						   T6.DELIVERY_SERVICE_CD,
+						   CASE
+                              WHEN EXISTS
+                                      (SELECT 1
+                                         FROM DUAL
+                                        WHERE T4.BRAND_ID IN
+                                                 (SELECT NAME
+                                                    FROM CCS_CODE
+                                                   WHERE CD_GROUP_CD =
+                                                            'WEAR_BRAND_CD'))
+                              THEN
+                                 'Y'
+                              ELSE
+                                 'N'
+                           END
+                              AS WEAR_PRODUCT_YN,
+						   RANK ()
+				               OVER (
+				                  ORDER BY
+				                     T6.COMPLETE_DT,
+				                     T6.ORDER_ID DESC,
+				                     DECODE (T4.ORDER_PRODUCT_TYPE_CD, 'ORDER_PRODUCT_TYPE_CD.WRAP', 0, 1),
+				                     T6.ORDER_PRODUCT_NO,
+				                     T6.LOGISTICS_INOUT_NO)
+				                  AS ORDER_SEQ,
+						   CASE
+		                      WHEN T6.CANCEL_DELIVERY_QTY > 0
+		                      THEN
+		                         T6.LOGISTICS_INOUT_NO
+		                      ELSE
+		                         0
+		                   END
+		                      AS CANCEL_LOGISTICS_NO
+			   		FROM OMS_ORDER T1
+						 INNER JOIN OMS_DELIVERYADDRESS T2 ON T1.ORDER_ID = T2.ORDER_ID
+						 INNER JOIN OMS_DELIVERY T3 ON T2.ORDER_ID = T3.ORDER_ID AND T2.DELIVERY_ADDRESS_NO = T3.DELIVERY_ADDRESS_NO
+						 INNER JOIN OMS_ORDERPRODUCT T4 ON T1.ORDER_ID = T4.ORDER_ID AND T2.DELIVERY_ADDRESS_NO = T4.DELIVERY_ADDRESS_NO AND T3.DELIVERY_POLICY_NO = T4.DELIVERY_POLICY_NO
+						 INNER JOIN CCS_SITE T5 ON T1.SITE_ID = T5.SITE_ID AND T1.STORE_ID = T5.STORE_ID
+						 INNER JOIN OMS_LOGISTICS T6 ON T4.ORDER_ID = T6.ORDER_ID AND T4.ORDER_PRODUCT_NO = T6.ORDER_PRODUCT_NO
+					WHERE T1.STORE_ID = #{storeId}
+					AND T6.WAREHOUSE_INOUT_TYPE_CD = 'WAREHOUSE_INOUT_TYPE_CD.OUT'
+					AND T6.LOGISTICS_STATE_CD = 'LOGISTICS_STATE_CD.CONFIRM'
+					AND T4.ORDER_PRODUCT_STATE_CD IN ('ORDER_PRODUCT_STATE_CD.SHIP', 'ORDER_PRODUCT_STATE_CD.PARTIALDELIVERY', 'ORDER_PRODUCT_STATE_CD.CANCELDELIVERY')
+			    	<if test="deliveryMethod != null and deliveryMethod != ''">
+			    		<if test="deliveryMethod == 'PURCHASE'">
+							AND T4.SALE_TYPE_CD = 'SALE_TYPE_CD.PURCHASE'
+						</if>
+						<if test="deliveryMethod == 'CONSIGN'">
+							AND T4.SALE_TYPE_CD = 'SALE_TYPE_CD.CONSIGN'
+						</if>
+			    	</if>
+					<if test="startDate != null and startDate != ''">
+						<if test="endDate != null and endDate != ''">
+							AND T6.COMPLETE_DT BETWEEN TO_DATE (#{startDate}, 'YYYY-MM-DD HH24:MI:SS') AND TO_DATE (#{endDate}, 'YYYY-MM-DD HH24:MI:SS')
+						</if>
+					</if>
+					<if test="siteId != null and siteId != ''">
+						AND T1.SITE_ID = #{siteId}
+					</if>
+					<if test=" businessId != null and businessId != '' ">
+						AND T4.BUSINESS_ID = #{ businessId }
+					</if>
+					<if test='orderer != null and orderer != ""'>
+						<if test='ordererType == "name"'>
+						 	AND T1.NAME1 like #{orderer} || '%'
+						</if>
+						<if test='ordererType == "id"'>
+						 	AND T1.USERID like #{orderer} || '%'
+						</if>
+						<if test='ordererType == "mobile"'>
+							AND T1.PHONE2 like #{orderer} || '%'
+						</if>
+					</if>
+					<if test='receiver != null and receiver != ""'>
+						<if test='receiverType == "name"'>
+						 	AND T2.NAME1 like #{receiver} || '%'
+						</if>
+						<if test='receiverType == "mobile"'>
+							AND T2.PHONE2 like #{receiver} || '%'
+						</if>
+					</if>
+					<if test='orderId != null and orderId != ""'>
+						AND T1.ORDER_ID = #{orderId}			
+					</if>
+					<if test="lpNo != null and lpNo != ''">
+						AND T4.LP_NO = #{lpNo}
+					</if>
+				) X
+			)
+			WHERE ((ORDER_PRODUCT_STATE_CD = 'ORDER_PRODUCT_STATE_CD.SHIP' AND L_OUT_QTY > 0)
+                 	OR (ORDER_PRODUCT_STATE_CD &lt;&gt; 'ORDER_PRODUCT_STATE_CD.SHIP' AND LAST_YN = 'Y'))
+		)
+		<include refid="ccs.common.pagingPre" />
+		SELECT B.*,
+			   COUNT (DISTINCT B.ORDER_ID) OVER () AS TOTAL_ORDER_COUNT
+		FROM
+		(	   
+			SELECT A.*,
+			       CASE
+                       WHEN A.ORDER_PRODUCT_STATE_CD =
+                               'ORDER_PRODUCT_STATE_CD.SHIP'
+                       THEN
+                          A.L_OUT_RESERVE_QTY
+                       ELSE
+                          TO_CHAR (A.P_RESERVE_QTY)
+                    END
+                       AS OUT_RESERVE_QTY,
+                    CASE
+                       WHEN A.ORDER_PRODUCT_STATE_CD =
+                               'ORDER_PRODUCT_STATE_CD.SHIP'
+                       THEN
+                          A.L_OUT_QTY
+                       ELSE
+                          A.P_OUT_QTY
+                    END
+                       AS OUT_QTY,
+                    CASE
+                       WHEN A.ORDER_PRODUCT_STATE_CD =
+                               'ORDER_PRODUCT_STATE_CD.SHIP'
+                       THEN
+                          A.L_CANCEL_DELIVERY_QTY
+                       ELSE
+                          TO_CHAR (A.P_CANCEL_DELIVERY_QTY)
+                    END
+                       AS CANCEL_DELIVERY_QTY
+			  FROM DATA A
+		) B
+		<where>
+			<if test='confirmYnCds != null and confirmYnCds != ""'>
+				AND B.ORDER_PRODUCT_STATE_CD IN (${confirmYnCds})			
+			</if>
+		</where>
+		ORDER BY B.ORDER_SEQ
+		<include refid="ccs.common.pagingPost" />
+	</select>
+	
+	<resultMap type="omsLogistics" id="shippingListResultMap" autoMapping="true">
+		<id property="orderId"           column="ORDER_ID"/>
+		<id property="orderProductNo"    column="ORDER_PRODUCT_NO"/>
+		<id property="logisticsInoutNo"  column="LOGISTICS_INOUT_NO"/>
+		
+		<association property="omsOrderproduct"  javaType="omsOrderproduct">
+			<id property="orderId"               column="ORDER_ID"/>
+			<id property="orderProductNo"        column="ORDER_PRODUCT_NO"/>
+			
+			<result property="deliveryReserveDt"   column="DELIVERY_RESERVE_DT"/>
+			<result property="productId"           column="PRODUCT_ID"/>
+			<result property="productName"         column="PRODUCT_NAME"/>
+			<result property="saleproductName"     column="SALEPRODUCT_NAME"/>
+			<result property="erpSaleproductId"    column="ERP_SALEPRODUCT_ID"/>
+			<result property="lpNo"                column="LP_NO"/>
+			<result property="businessName"        column="BUSINESS_NAME"/>
+			<result property="deliveryMethod"      column="DELIVERY_METHOD"/>
+			<result property="siteName"            column="SITE_NAME"/>
+			<result property="personalCustomsCd"   column="PERSONAL_CUSTOMS_CD"/>
+			<result property="orderDate"           column="ORDER_DATE"/>
+			<result property="orderProductStateCd" column="ORDER_PRODUCT_STATE_CD"/>
+			
+			<association property="omsOrder"   javaType="gcp.oms.model.OmsOrder">
+				<result property="name1"       column="ORDERER_NM"/>
+				<result property="phone2"      column="ORDERER_MOBILE"/>
+				<result property="memberId"    column="ORDERER_ID"/>
+			</association>
+			
+			<association property="omsDeliveryaddress" javaType="omsDeliveryaddress">
+				<result property="name1"       column="RECEIVER_NM"/>
+				<result property="phone1"      column="RECEIVER_PHONE"/>
+				<result property="phone2"      column="RECEIVER_MOBILE"/>
+				<result property="zipCd"       column="ZIP_CD"/>
+				<result property="deliveryAddressNo" column="DELIVERY_ADDRESS_NO"/>
+				<result property="deliveryAddress"   column="DELIVERY_ADDRESS"/>
+			</association>
+		</association>
+	</resultMap>
+	
+	<!-- 배송의뢰서_협력사 리스트 조회 -->
+	<select id="getPartnerDelivery" parameterType="omsLogisticsSearch" resultMap="partnerDeliveryResultMap">
+		/* [oms.logistics.getPartnerDelivery][brad][2016. 8. 10.] */
+		SELECT /*+ INDEX ( T3 IDX_OMS_ORDERPRODUCT_DRDT ) */ 
+			   T1.NAME1 AS ORDERER_NM,
+			   T1.PHONE2 AS ORDERER_MOBILE,
+			   T2.NAME1 AS RECEIVER_NM,
+       		   T2.PHONE1 AS RECEIVER_PHONE,
+       		   T2.PHONE2 AS RECEIVER_MOBILE,
+			   T2.ZIP_CD,
+			   T2.ADDRESS1||CHR(32)||T2.ADDRESS2 AS DELIVERY_ADDRESS, 
+			   T2.DELIVERY_ADDRESS_NO,
+			   T2.NOTE,
+		 	   T3.DELIVERY_RESERVE_DT,
+			   T3.ORDER_ID,
+			   T3.ORDER_PRODUCT_NO,
+			   T3.ORDER_DELIVERY_TYPE_CD,
+			   T3.ORDER_PRODUCT_STATE_CD,
+			   T3.PRODUCT_ID,
+			   T3.PRODUCT_NAME,
+			   T3.SALEPRODUCT_ID,
+			   T3.SALEPRODUCT_NAME,
+			   T3.ORDER_QTY - T3.CANCEL_QTY - T3.OUT_QTY AS OUT_RESERVE_QTY,
+			   T3.BUSINESS_NAME,
+			   T3.TEXT_OPTION_VALUE,
+			   T3.PERSONAL_CUSTOMS_CODE,
+			   T3.DELIVERY_CANCEL_REASON_CD
+   		FROM OMS_ORDER T1
+			 INNER JOIN OMS_DELIVERYADDRESS T2 ON T1.ORDER_ID = T2.ORDER_ID
+			 INNER JOIN OMS_ORDERPRODUCT T3 ON T1.ORDER_ID = T3.ORDER_ID AND T2.DELIVERY_ADDRESS_NO = T3.DELIVERY_ADDRESS_NO
+		WHERE T1.STORE_ID = #{storeId}
+			  AND T3.ORDER_PRODUCT_TYPE_CD &lt;&gt; 'ORDER_PRODUCT_TYPE_CD.SET'
+			  AND T3.SALE_TYPE_CD = 'SALE_TYPE_CD.CONSIGN'
+		<if test="startDate != null and startDate != ''">
+			<if test="endDate != null and endDate != ''">
+			 	AND T3.DELIVERY_RESERVE_DT BETWEEN TO_DATE(#{startDate}, 'YYYY-MM-DD HH24:MI:SS') AND TO_DATE (#{endDate}, 'YYYY-MM-DD HH24:MI:SS')
+			</if>
+		</if>
+		<choose>
+			<when test="orderProductState != null and orderProductState != ''">
+				AND T3.ORDER_PRODUCT_STATE_CD = #{orderProductState}
+			</when>
+			<otherwise>
+				AND T3.ORDER_PRODUCT_STATE_CD IN ('ORDER_PRODUCT_STATE_CD.READY', 'ORDER_PRODUCT_STATE_CD.PARTIALDELIVERY', 'ORDER_PRODUCT_STATE_CD.CANCELAPPROVAL', 'ORDER_PRODUCT_STATE_CD.CANCELDELIVERY')
+			</otherwise>
+		</choose>
+		<if test='orderer != null and orderer != ""'>
+			<if test='ordererType == "name"'>
+			 	AND T1.NAME1 like #{orderer} || '%'
+			</if>
+			<if test='ordererType == "id"'>
+			 	AND T1.MEMBER_ID like #{orderer} || '%'
+			</if>
+			<if test='ordererType == "mobile"'>
+				AND T1.PHONE2 like #{orderer} || '%'
+			</if>
+		</if>
+		<if test='receiver != null and receiver != ""'>
+			<if test='receiverType == "name"'>
+			 	AND T2.NAME1 like #{receiver} || '%'
+			</if>
+			<if test='receiverType == "mobile"'>
+				AND T2.PHONE2 like #{receiver} || '%'
+			</if>
+		</if>
+		<if test="orderDeliveryType != null and orderDeliveryType != ''">
+			AND T3.ORDER_DELIVERY_TYPE_CD IN (${orderDeliveryType})
+		</if>
+		<if test='orderId != null and orderId != ""'>
+			AND T1.ORDER_ID = #{orderId}			
+		</if>
+		<if test='businessId != null and businessId != ""'>
+			AND T3.BUSINESS_ID = #{ businessId }
+		</if>
+		<if test="deliveryCancelReasonCd != null and deliveryCancelReasonCd != ''">
+			AND T3.DELIVERY_CANCEL_REASON_CD = #{deliveryCancelReasonCd}		
+		</if>
+		ORDER BY ORDER_ID DESC, ORDER_PRODUCT_NO
+	</select>
+	
+	<resultMap type="omsOrderproduct" id="partnerDeliveryResultMap" autoMapping="true">
+		<id property="orderId"             column="ORDER_ID"/>
+		<id property="orderProductNo"      column="ORDER_PRODUCT_NO"/>
+		
+		<association property="omsOrder"   javaType="omsOrder">
+			<result property="name1"       column="ORDERER_NM"/>
+			<result property="phone2"      column="ORDERER_MOBILE"/>
+		</association>
+		
+		<association property="omsDeliveryaddress" javaType="omsDeliveryaddress">
+			<result property="name1"    column="RECEIVER_NM"/>
+			<result property="phone1"   column="RECEIVER_PHONE"/>
+			<result property="phone2"   column="RECEIVER_MOBILE"/>
+			<result property="zipCd"    column="ZIP_CD"/>
+			<result property="note"     column="NOTE"/>
+			<result property="deliveryAddress"   column="DELIVERY_ADDRESS"/>
+		</association>
+	</resultMap>
+	
+	<!-- 협력사 배송승인 완료된 주문상품 리스트 -->
+	<select id="getPartnerApprovalProduct" parameterType="java.util.HashMap" resultType="omsOrderproduct">
+		/* [oms.logistics.getPartnerApprovalProduct][brad][2016. 8. 10.] */     
+		SELECT /*+ INDEX ( T4 PK_OMS_ORDERPRODUCT ) */
+			   T2.ORDER_ID,
+			   T2.ORDER_PRODUCT_NO,
+               T2.ORDER_PRODUCT_TYPE_CD,
+               T2.UPPER_ORDER_PRODUCT_NO,
+               T2.ORDER_DELIVERY_TYPE_CD
+   		FROM OMS_ORDER T1
+			 INNER JOIN OMS_ORDERPRODUCT T2 ON T1.ORDER_ID = T2.ORDER_ID
+			 INNER JOIN OMS_LOGISTICS T3 ON T2.ORDER_ID = T3.ORDER_ID AND T2.ORDER_PRODUCT_NO = T3.ORDER_PRODUCT_NO
+		WHERE T1.STORE_ID = #{storeId}
+			  AND T2.ORDER_PRODUCT_TYPE_CD &lt;&gt; 'ORDER_PRODUCT_TYPE_CD.SET'
+			  AND T2.SALE_TYPE_CD = 'SALE_TYPE_CD.CONSIGN'
+			  AND T2.ORDER_PRODUCT_STATE_CD IN ('ORDER_PRODUCT_STATE_CD.READY', 'ORDER_PRODUCT_STATE_CD.PARTIALDELIVERY', 'ORDER_PRODUCT_STATE_CD.CANCELAPPROVAL', 'ORDER_PRODUCT_STATE_CD.CANCELDELIVERY')
+			  AND T3.WAREHOUSE_INOUT_TYPE_CD = 'WAREHOUSE_INOUT_TYPE_CD.OUT'
+              AND T3.LOGISTICS_STATE_CD = 'LOGISTICS_STATE_CD.INVOICE'
+			  AND EXISTS ( 
+							SELECT 1 
+			       			FROM (
+									 <foreach collection="list" item="item" index="index" separator="UNION ALL">
+									 	SELECT #{item.orderId} AS ORDER_ID, #{item.orderProductNo} AS ORDER_PRODUCT_NO FROM DUAL 
+								     </foreach>
+								  ) A 
+							WHERE A.ORDER_ID = T2.ORDER_ID
+							AND A.ORDER_PRODUCT_NO = T2.ORDER_PRODUCT_NO
+					   	 )
+	</select>
+	
+	<!-- 협력사 배송승인 상품 물류데이터 일괄 INSERT -->
+	<update id="insertPartnerLogisticsList" parameterType="java.util.HashMap">
+		/* [oms.logistics.insertPartnerLogisticsList][brad][2016. 8. 10.] */
+		INSERT INTO OMS_LOGISTICS (LOGISTICS_INOUT_NO,
+                           ORDER_ID,
+                           ORDER_PRODUCT_NO,
+                           WAREHOUSE_INOUT_TYPE_CD,
+                           LOGISTICS_STATE_CD,
+                           INS_ID,
+                           INS_DT,
+                           OUT_RESERVE_QTY,
+                           DELIVERY_SERVICE_CD,
+                           TRACKING_IF_YN,
+                           IO_SEQ)
+		SELECT MAX_LOGISTICS_INOUT_NO + GROUP_SEQ,
+			   ORDER_ID,
+			   ORDER_PRODUCT_NO,
+			   'WAREHOUSE_INOUT_TYPE_CD.OUT',
+			   'LOGISTICS_STATE_CD.INVOICE',
+			   #{updId},
+			   SYSDATE,
+			   OUT_RESERVE_QTY,
+			   DELIVERY_SERVICE_CD,
+			   'N',
+			   ZTSSHOP.SQ_OMS_LOGISTICS_IO_SEQ.NEXTVAL
+		FROM
+		(       
+			SELECT /*+ INDEX ( T4 PK_OMS_ORDERPRODUCT ) */
+				   T3.DELIVERY_SERVICE_CD,
+				   T4.ORDER_ID,
+				   T4.ORDER_PRODUCT_NO,
+				   T4.DELIVERY_ADDRESS_NO,
+				   T4.ORDER_QTY - T4.CANCEL_QTY - T4.OUT_QTY AS OUT_RESERVE_QTY,
+				   DENSE_RANK () OVER (ORDER BY T4.ORDER_ID, T4.DELIVERY_ADDRESS_NO) AS GROUP_SEQ,
+				   (SELECT NVL ((SELECT MAX (LOGISTICS_INOUT_NO) FROM OMS_LOGISTICS), 0) FROM DUAL) AS MAX_LOGISTICS_INOUT_NO
+	   		FROM OMS_ORDER T1
+				 INNER JOIN OMS_DELIVERYADDRESS T2 ON T1.ORDER_ID = T2.ORDER_ID
+				 INNER JOIN OMS_DELIVERY T3 ON T2.ORDER_ID = T3.ORDER_ID AND T2.DELIVERY_ADDRESS_NO = T3.DELIVERY_ADDRESS_NO
+				 INNER JOIN OMS_ORDERPRODUCT T4 ON T1.ORDER_ID = T4.ORDER_ID AND T2.DELIVERY_ADDRESS_NO = T4.DELIVERY_ADDRESS_NO AND T3.DELIVERY_POLICY_NO = T4.DELIVERY_POLICY_NO
+			WHERE T1.STORE_ID = #{storeId}
+				  AND T4.ORDER_PRODUCT_TYPE_CD &lt;&gt; 'ORDER_PRODUCT_TYPE_CD.SET'
+				  AND T4.SALE_TYPE_CD = 'SALE_TYPE_CD.CONSIGN'
+				  AND T4.ORDER_PRODUCT_STATE_CD IN ('ORDER_PRODUCT_STATE_CD.READY', 'ORDER_PRODUCT_STATE_CD.PARTIALDELIVERY', 'ORDER_PRODUCT_STATE_CD.CANCELAPPROVAL', 'ORDER_PRODUCT_STATE_CD.CANCELDELIVERY')
+				  AND EXISTS ( 
+								 SELECT 1 
+			       				 FROM (
+										 <foreach collection="list" item="item" index="index" separator="UNION ALL">
+										 	SELECT #{item.orderId} AS ORDER_ID, #{item.orderProductNo} AS ORDER_PRODUCT_NO FROM DUAL 
+									     </foreach>
+									  ) A 
+							     WHERE A.ORDER_ID = T4.ORDER_ID
+							     AND A.ORDER_PRODUCT_NO = T4.ORDER_PRODUCT_NO
+					   	     )
+			ORDER BY GROUP_SEQ 	 
+		)
+	</update>
+	
+	<!-- 출고완료 처리_협력사 리스트 조회 -->
+	<select id="getPartnerShipping" parameterType="omsLogisticsSearch" resultMap="partnerShippingResultMap">
+		/* [oms.logistics.getPartnerShipping][brad][2016. 8. 10.] */
+		<include refid="ccs.common.pagingPre" />
+			SELECT /*+ INDEX ( T6 IDX_OMS_LOGISTICS_INSDT ) */ 
+				   T1.NAME1 AS ORDERER_NM,
+				   T1.PHONE2 AS ORDERER_MOBILE,
+				   T1.MEMBER_ID AS ORDERER_ID,
+				   T1.ORDER_TYPE_CD,
+				   T2.NAME1 AS RECEIVER_NM,
+	       		   T2.PHONE1 AS RECEIVER_PHONE,
+	       		   T2.PHONE2 AS RECEIVER_MOBILE,
+				   T2.ZIP_CD,
+				   T2.ADDRESS1||CHR(32)||T2.ADDRESS2 AS DELIVERY_ADDRESS,
+				   T2.DELIVERY_ADDRESS_NO,
+				   T2.NOTE,
+				   T4.ORDER_ID,
+				   T4.ORDER_PRODUCT_NO,
+				   T4.PRODUCT_ID,
+				   T4.PRODUCT_NAME,
+				   T4.SALEPRODUCT_NAME,
+				   T4.BUSINESS_NAME,
+				   T4.OUT_QTY AS PRODUCT_OUT_QTY,
+				   T4.SALE_TYPE_CD,
+				   T6.LOGISTICS_INOUT_NO,
+				   T6.DELIVERY_SERVICE_CD,
+				   T6.OUT_RESERVE_QTY,
+				   DECODE(NVL(T6.OUT_QTY, 0), 0, T6.OUT_RESERVE_QTY) AS OUT_QTY,
+				   T6.INS_DT
+	   		FROM OMS_ORDER T1
+				 INNER JOIN OMS_DELIVERYADDRESS T2 ON T1.ORDER_ID = T2.ORDER_ID
+				 INNER JOIN OMS_ORDERPRODUCT T4 ON T1.ORDER_ID = T4.ORDER_ID AND T2.DELIVERY_ADDRESS_NO = T4.DELIVERY_ADDRESS_NO
+				 INNER JOIN OMS_LOGISTICS T6 ON T4.ORDER_ID = T6.ORDER_ID AND T4.ORDER_PRODUCT_NO = T6.ORDER_PRODUCT_NO
+			WHERE T1.STORE_ID = #{storeId}
+				  AND T4.SALE_TYPE_CD = 'SALE_TYPE_CD.CONSIGN'
+				  AND T6.LOGISTICS_STATE_CD = 'LOGISTICS_STATE_CD.INVOICE'
+			<if test="startDate != null and startDate != ''">
+				<if test="endDate != null and endDate != ''">
+					AND T6.INS_DT BETWEEN TO_DATE (#{startDate}, 'YYYY-MM-DD HH24:MI:SS') AND TO_DATE (#{endDate}, 'YYYY-MM-DD HH24:MI:SS')
+				</if>
+			</if>
+			<if test='orderer != null and orderer != ""'>
+				<if test='ordererType == "name"'>
+				 	AND T1.NAME1 like #{orderer} || '%'
+				</if>
+				<if test='ordererType == "id"'>
+				 	AND T1.MEMBER_ID like #{orderer} || '%'
+				</if>
+				<if test='ordererType == "mobile"'>
+					AND T1.PHONE2 like #{orderer} || '%'
+				</if>
+			</if>
+			<if test='receiver != null and receiver != ""'>
+				<if test='receiverType == "name"'>
+				 	AND T2.NAME1 like #{receiver} || '%'
+				</if>
+				<if test='receiverType == "mobile"'>
+					AND T2.PHONE2 like #{receiver} || '%'
+				</if>
+			</if>
+			<if test='orderId != null and orderId != ""'>
+				AND T1.ORDER_ID = #{orderId}			
+			</if>
+			<if test='businessId != null and businessId != ""'>
+				AND T4.BUSINESS_ID = #{ businessId }
+			</if>
+			ORDER BY T6.LOGISTICS_INOUT_NO
+		<include refid="ccs.common.pagingPost" />	
+	</select>
+	
+	<resultMap type="omsLogistics" id="partnerShippingResultMap" autoMapping="true">
+		<id property="orderId"               column="ORDER_ID"/>
+		<id property="orderProductNo"        column="ORDER_PRODUCT_NO"/>
+		<id property="logisticsInoutNo"      column="LOGISTICS_INOUT_NO"/>
+		
+		<association property="omsOrderproduct"  javaType="omsOrderproduct">
+			<id property="orderId"               column="ORDER_ID"/>
+			<id property="orderProductNo"        column="ORDER_PRODUCT_NO"/>
+			
+			<result property="productId"        column="PRODUCT_ID"/>
+			<result property="productName"      column="PRODUCT_NAME"/>
+			<result property="saleproductName"  column="SALEPRODUCT_NAME"/>
+			<result property="siteName"         column="SITE_NAME"/>
+			<result property="businessName"     column="BUSINESS_NAME"/>
+			<result property="outQty"           column="PRODUCT_OUT_QTY"/>
+			
+			<association property="omsOrder"   javaType="omsOrder">
+				<result property="orderTypeCd" column="ORDER_TYPE_CD"/>
+				<result property="name1"       column="ORDERER_NM"/>
+				<result property="phone2"      column="ORDERER_MOBILE"/>
+			</association>
+			
+			<association property="omsDeliveryaddress" javaType="omsDeliveryaddress">
+				<result property="name1"       column="RECEIVER_NM"/>
+				<result property="phone1"      column="RECEIVER_PHONE"/>
+				<result property="phone2"      column="RECEIVER_MOBILE"/>
+				<result property="zipCd"       column="ZIP_CD"/>
+				<result property="deliveryAddress"  column="DELIVERY_ADDRESS"/>
+			</association>
+			
+			<association property="omsDelivery"   javaType="omsDelivery">
+				<result property="deliveryServiceCd"  column="DELIVERY_SERVICE_CD"/>
+			</association>
+		</association>
+	</resultMap>
+	
+	<!-- 반품 리스트 조회 -->
+	<select id="getReturnConfirmList" parameterType="omsLogisticsSearch" resultMap="returnListResultMap">
+		/* [oms.logistics.getReturnList][brad][2016. 8. 10.] */
+		<include refid="ccs.common.pagingPre" />
+			SELECT A.*,
+				   CASE
+                      WHEN WEAR_PRODUCT_YN = 'Y' AND ERP_PRODUCT_ID IS NOT NULL
+                      THEN
+                         ORDER_PRODUCT_NAME || '_' || ERP_PRODUCT_ID
+                      ELSE
+                         ORDER_PRODUCT_NAME
+                   END
+                      AS PRODUCT_NAME,
+				   COUNT (DISTINCT A.ORDER_ID) OVER () AS TOTAL_ORDER_COUNT
+			FROM
+			(	   
+				SELECT T1.NAME1 AS ORDERER_NM,
+					   T1.PHONE2 AS ORDERER_MOBILE,
+					   T1.SITE_ORDER_ID,
+					   TO_CHAR(T2.DELIVERY_RESERVE_DT, 'YYYY/MM/DD') AS ORDER_DATE,
+					   T1.STORE_ID,
+					   T2.PRODUCT_ID,
+					   T2.PRODUCT_NAME AS ORDER_PRODUCT_NAME,
+					   T2.ERP_PRODUCT_ID,
+					   T2.SALEPRODUCT_ID,
+					   T2.SALEPRODUCT_NAME,
+					   T2.LP_NO,
+					   T2.LOCATION_ID,
+					   T2.OUT_QTY,
+					   T2.ORDER_DELIVERY_TYPE_CD,
+					   T2.ORDER_PRODUCT_TYPE_CD,
+					   T2.UPPER_ORDER_PRODUCT_NO,
+					   T2.SALE_TYPE_CD,
+					   CASE
+                          WHEN EXISTS
+                                  (SELECT 1
+                                     FROM DUAL
+                                    WHERE T2.BRAND_ID IN
+                                             (SELECT NAME
+                                                FROM CCS_CODE
+                                               WHERE CD_GROUP_CD =
+                                                        'WEAR_BRAND_CD'))
+                          THEN
+                             'Y'
+                          ELSE
+                             'N'
+                       END
+                          AS WEAR_PRODUCT_YN,
+					   T3.ORDER_ID,
+					   T3.ORDER_PRODUCT_NO,
+					   T3.LOGISTICS_INOUT_NO,
+					   T3.IN_RESERVE_QTY,
+					   T3.LOGISTICS_STATE_CD,
+					   NVL(T3.GOOD_IN_QTY, 0) AS GOOD_IN_QTY,
+					   NVL(T3.BAD_IN_QTY, 0) AS BAD_IN_QTY,
+					   NVL(T3.VIRTUAL_IN_QTY, 0) AS VIRTUAL_IN_QTY,
+					   T4.CLAIM_NO,
+					   T4.CLAIM_TYPE_CD,
+					   TO_CHAR(T4.ACCEPT_DT, 'YYYY/MM/DD') AS ACCEPT_DT,
+					   T5.RETURN_NAME,
+					   T5.RETURN_PHONE1,
+					   T5.RETURN_PHONE2,
+					   T5.RETURN_ZIP_CD,
+					   T5.RETURN_ADDRESS1||CHR(32)||T5.RETURN_ADDRESS2 AS DELIVERY_ADDRESS,
+					   T6.CLAIM_REASON_CD,
+			   		   T7.NAME AS SITE_NAME
+				FROM OMS_ORDER T1
+					 INNER JOIN OMS_ORDERPRODUCT T2 ON T1.ORDER_ID = T2.ORDER_ID AND T1.STORE_ID = T2.STORE_ID
+					 INNER JOIN OMS_LOGISTICS T3 ON T2.ORDER_ID = T3.ORDER_ID AND T2.ORDER_PRODUCT_NO = T3.ORDER_PRODUCT_NO
+					 INNER JOIN OMS_CLAIM T4 ON T3.ORDER_ID = T4.ORDER_ID AND T3.CLAIM_NO = T4.CLAIM_NO
+					 LEFT OUTER JOIN OMS_CLAIMDELIVERY T5 ON T4.ORDER_ID = T5.ORDER_ID AND T4.CLAIM_NO = T5.CLAIM_NO
+					 INNER JOIN OMS_CLAIMPRODUCT T6 ON T3.ORDER_ID = T6.ORDER_ID AND T3.CLAIM_NO = T6.CLAIM_NO AND T3.ORDER_PRODUCT_NO = T6.ORDER_PRODUCT_NO
+					 INNER JOIN CCS_SITE T7 ON T1.SITE_ID = T7.SITE_ID AND T1.STORE_ID = T7.STORE_ID
+				WHERE T2.STORE_ID = #{storeId}
+					  AND T3.WAREHOUSE_INOUT_TYPE_CD = 'WAREHOUSE_INOUT_TYPE_CD.IN'
+					  AND T3.CLAIM_NO IS NOT NULL
+					  AND T3.LOGISTICS_STATE_CD &lt;&gt; 'LOGISTICS_STATE_CD.CANCELRETURN'
+				<if test='saleTypeCd != null and saleTypeCd != ""'>
+					AND T2.SALE_TYPE_CD = #{saleTypeCd}			
+				</if>
+				<if test="logisticsStateCds != null and logisticsStateCds != ''">
+					AND T3.LOGISTICS_STATE_CD IN (${logisticsStateCds})
+				</if>
+				<if test="startDate != null and startDate != ''">
+					<if test="endDate != null and endDate != ''">
+						AND T4.ACCEPT_DT BETWEEN TO_DATE (#{startDate}, 'YYYY-MM-DD HH24:MI:SS') AND TO_DATE (#{endDate}, 'YYYY-MM-DD HH24:MI:SS')
+					</if>
+				</if>
+				<if test='orderer != null and orderer != ""'>
+					<if test='ordererType == "name"'>
+					 	AND T1.NAME1 like #{orderer} || '%'
+					</if>
+					<if test='ordererType == "id"'>
+					 	AND T1.MEMBER_ID like #{orderer} || '%'
+					</if>
+					<if test='ordererType == "mobile"'>
+						AND T1.PHONE2 like #{orderer} || '%'
+					</if>
+				</if>
+				<if test='returnSender != null and returnSender != ""'>
+					<if test='returnSenderType == "name"'>
+					 	AND T5.RETURN_NAME like #{receiver} || '%'
+					</if>
+					<if test='returnSenderType == "mobile"'>
+						AND T5.RETURN_PHONE2 like #{receiver} || '%'
+					</if>
+				</if>
+				<if test='orderId != null and orderId != ""'>
+					AND T1.ORDER_ID = #{orderId}			
+				</if>
+				<if test="siteId != null and siteId != ''">
+					AND T1.SITE_ID = #{siteId}
+				</if>
+				<if test='siteOrderId != null and siteOrderId != ""'>
+					AND T1.SITE_ORDER_ID = #{siteOrderId}			
+				</if>
+				<if test="lpNo != null and lpNo != ''">
+					AND T2.LP_NO = #{lpNo}
+				</if>
+				<if test='businessId != null and businessId != ""'>
+					AND T2.BUSINESS_ID = #{ businessId }
+				</if>
+			) A
+			ORDER BY ORDER_ID, CLAIM_NO ASC
+		<include refid="ccs.common.pagingPost" />	
+	</select>
+	
+	<resultMap type="omslogistics" id="returnListResultMap" autoMapping="true">
+		<id property="orderId"               column="ORDER_ID"/>
+		<id property="orderProductNo"        column="ORDER_PRODUCT_NO"/>
+		<id property="logisticsInoutNo"      column="LOGISTICS_INOUT_NO"/>
+		
+		<association property="omsOrderproduct" javaType="omsOrderproduct">
+			<id property="orderId"               column="ORDER_ID"/>
+			<id property="orderProductNo"        column="ORDER_PRODUCT_NO"/>
+			
+			<result property="productId"           column="PRODUCT_ID"/>
+			<result property="productName"         column="PRODUCT_NAME"/>
+			<result property="saleproductId"       column="SALEPRODUCT_ID"/>
+			<result property="saleproductName"     column="SALEPRODUCT_NAME"/>
+			<result property="lpNo"                column="LP_NO"/>
+			<result property="locationId"          column="LOCATION_ID"/>
+			<result property="siteName"            column="SITE_NAME"/>
+			<result property="orderDate"           column="ORDER_DATE"/>
+			<result property="storeId"             column="STORE_ID"/>
+			<result property="outQty"              column="OUT_QTY"/>
+			<result property="orderDeliveryTypeCd" column="ORDER_DELIVERY_TYPE_CD"/>
+			<result property="orderProductTypeCd"  column="ORDER_PRODUCT_TYPE_CD"/>
+			<result property="upperOrderProductNo" column="UPPER_ORDER_PRODUCT_NO"/>
+			
+			<association property="omsOrder"   javaType="omsOrder">
+				<result property="name1"       column="ORDERER_NM"/>
+				<result property="phone2"      column="ORDERER_MOBILE"/>
+				<result property="siteOrderId" column="SITE_ORDER_ID"/>
+			</association>
+		</association>
+		
+		<association property="omsClaimproduct" javaType="omsClaimproduct">
+			<id property="orderId"              column="ORDER_ID"/>
+			<id property="orderProductNo"       column="ORDER_PRODUCT_NO"/>
+			<id property="claimNo"              column="CLAIM_NO"/>
+			
+			<result property="claimReasonCd"    column="CLAIM_REASON_CD"/>
+			
+			<association property="omsClaim"   javaType="omsClaim">
+				<id property="orderId"         column="ORDER_ID"/>
+				<id property="claimNo"         column="CLAIM_NO"/>
+				<result property="acceptDt"    column="ACCEPT_DT"/>
+				<result property="claimTypeCd" column="CLAIM_TYPE_CD"/>
+				
+				<association property="omsClaimdelivery"   javaType="omsClaimdelivery">
+					<id property="orderId"          column="ORDER_ID"/>
+					<id property="claimNo"          column="CLAIN_NO"/>
+				
+					<result property="returnName"      column="RETURN_NAME"/>
+					<result property="returnPhone1"    column="RETURN_PHONE1"/>
+					<result property="returnPhone2"    column="RETURN_PHONE2"/>
+					<result property="returnZipCd"     column="RETURN_ZIP_CD"/>
+					<result property="deliveryAddress" column="DELIVERY_ADDRESS"/>
+				</association>
+			</association>
+		</association>
+	</resultMap>
+	
+	<!-- 반품 처리 업데이트 -->
+	<update id="updateReturnConfirm" parameterType="omsLogistics">
+		UPDATE OMS_LOGISTICS 
+		SET LOGISTICS_STATE_CD = #{logisticsStateCd}
+			  ,GOOD_IN_QTY = #{goodInQty}
+			  ,BAD_IN_QTY = #{badInQty}
+			  ,VIRTUAL_IN_QTY = #{virtualInQty}
+			  ,COMPLETE_DT = TO_DATE (#{completeDt}, 'YYYY-MM-DD HH24:MI:SS')
+		      ,UPD_DT = #{updDt}
+		      ,UPD_ID = #{updId}
+      	WHERE ORDER_ID = #{orderId}
+      	AND ORDER_PRODUCT_NO = #{orderProductNo}
+      	AND LOGISTICS_INOUT_NO = #{logisticsInoutNo}
+      	AND EXISTS (
+				SELECT 1 FROM OMS_LOGISTICS
+				WHERE ORDER_ID = #{orderId}
+				AND ORDER_PRODUCT_NO = #{orderProductNo}
+				AND LOGISTICS_INOUT_NO = #{logisticsInoutNo}
+				AND LOGISTICS_STATE_CD = 'LOGISTICS_STATE_CD.RETURN_READY'
+			)
+	</update>
+	
+	<!-- 주문입출고 엑셀 일괄업로드 데이타 -->
+	<select id="selectShippingLogistics" resultMap="shippingProcessResultMap">
+		/* [oms.logistics.selectShippingLogistics][brad][2016. 9. 28.] */
+			SELECT T1.ORDER_TYPE_CD,
+				   T1.NAME1 AS ORDERER_NM,
+				   T1.PHONE2 AS ORDERER_MOBILE,
+				   T1.MEMBER_ID AS ORDERER_ID,
+				   T2.NAME1 AS RECEIVER_NM,
+	       		   T2.PHONE1 AS RECEIVER_PHONE,
+	       		   T2.PHONE2 AS RECEIVER_MOBILE,
+				   T2.ZIP_CD,
+				   T2.ADDRESS1||CHR(32)||T2.ADDRESS2 AS DELIVERY_ADDRESS,
+				   T2.DELIVERY_ADDRESS_NO,
+				   T3.WRAP_TOGETHER_YN,
+			 	   TO_CHAR(T4.DELIVERY_RESERVE_DT, 'YYYY/MM/DD') AS ORDER_DATE,
+				   T4.ORDER_ID,
+				   T4.ORDER_PRODUCT_NO,
+				   T4.PRODUCT_ID,
+				   T4.PRODUCT_NAME,
+				   T4.ERP_PRODUCT_ID,
+				   T4.SALEPRODUCT_NAME,
+				   T4.ERP_SALEPRODUCT_ID,
+				   T4.LP_NO,
+                   T4.WRAP_YN,
+                   T4.WRAP_VOLUME,
+                   T4.BUSINESS_NAME,    
+				   T5.NAME AS SITE_NAME,
+				   T6.INS_DT,
+				   T6.LOGISTICS_INOUT_NO,
+				   T6.DELIVERY_SERVICE_CD,
+				   T6.INVOICE_NO,
+				   T6.OUT_RESERVE_QTY,
+				   CASE
+	                   WHEN EXISTS
+	                           (SELECT 1
+	                              FROM DUAL
+	                             WHERE T4.CATEGORY_ID IN
+	                                      (SELECT NAME
+	                                         FROM CCS_CODE
+	                                        WHERE CD_GROUP_CD =
+	                                                 'DUAL_WRAP_CATEGORY_CD'))
+	                   THEN
+	                      'Y'
+	                   ELSE
+	                      'N'
+	                END
+	                   AS DUAL_WRAP_YN
+	   		FROM OMS_ORDER T1
+				 INNER JOIN OMS_DELIVERYADDRESS T2 ON T1.ORDER_ID = T2.ORDER_ID
+				 INNER JOIN OMS_DELIVERY T3 ON T2.ORDER_ID = T3.ORDER_ID AND T2.DELIVERY_ADDRESS_NO = T3.DELIVERY_ADDRESS_NO
+                 INNER JOIN OMS_ORDERPRODUCT T4 ON T1.ORDER_ID = T4.ORDER_ID AND T2.DELIVERY_ADDRESS_NO = T4.DELIVERY_ADDRESS_NO AND T3.DELIVERY_POLICY_NO = T4.DELIVERY_POLICY_NO
+				 INNER JOIN CCS_SITE T5 ON T1.SITE_ID = T5.SITE_ID AND T1.STORE_ID = T5.STORE_ID
+				 INNER JOIN OMS_LOGISTICS T6 ON T4.ORDER_ID = T6.ORDER_ID AND T4.ORDER_PRODUCT_NO = T6.ORDER_PRODUCT_NO
+			WHERE T1.STORE_ID = #{storeId}
+			AND T4.SALE_TYPE_CD = #{saleTypeCd}
+			AND T6.LOGISTICS_INOUT_NO = #{logisticsInoutNo}
+			AND T6.ORDER_ID = #{orderId}
+			AND T6.ORDER_PRODUCT_NO = #{orderProductNo}
+	</select>
+	
+	<resultMap type="omsLogistics" id="shippingProcessResultMap" autoMapping="true">
+		<id property="orderId"           column="ORDER_ID"/>
+		<id property="orderProductNo"    column="ORDER_PRODUCT_NO"/>
+		<id property="logisticsInoutNo"  column="LOGISTICS_INOUT_NO"/>
+		
+		<association property="omsOrderproduct"  javaType="omsOrderproduct">
+			<id property="orderId"               column="ORDER_ID"/>
+			<id property="orderProductNo"        column="ORDER_PRODUCT_NO"/>
+			
+			<result property="deliveryReserveDt" column="DELIVERY_RESERVE_DT"/>
+			<result property="productId"         column="PRODUCT_ID"/>
+			<result property="productName"       column="PRODUCT_NAME"/>
+			<result property="saleproductName"   column="SALEPRODUCT_NAME"/>
+			<result property="lpNo"              column="LP_NO"/>
+			<result property="siteName"          column="SITE_NAME"/>
+			<result property="erpSaleproductId"  column="ERP_SALEPRODUCT_ID"/>
+			<result property="dualWrapYn"        column="DUAL_WRAP_YN"/>
+			<result property="orderDate"         column="ORDER_DATE"/>
+			<result property="outQty"            column="PRODUCT_OUT_QTY"/>
+			<result property="businessName"      column="BUSINESS_NAME"/>
+			
+			<association property="omsOrder"   javaType="gcp.oms.model.OmsOrder">
+				<result property="orderTypeCd" column="ORDER_TYPE_CD"/>
+				<result property="name1"       column="ORDERER_NM"/>
+				<result property="phone2"      column="ORDERER_MOBILE"/>
+			</association>
+			<association property="omsDeliveryaddress" javaType="omsDeliveryaddress">
+				<result property="name1"       column="RECEIVER_NM"/>
+				<result property="phone1"      column="RECEIVER_PHONE"/>
+				<result property="phone2"      column="RECEIVER_MOBILE"/>
+				<result property="zipCd"       column="ZIP_CD"/>
+				<result property="address1"    column="ADDRESS1"/>
+				<result property="address2"    column="ADDRESS2"/>
+				<result property="deliveryAddress"   column="DELIVERY_ADDRESS"/>
+			</association>
+		</association>
+	</resultMap>
+	
+	<!-- 출고완료 후 4일이 지난 주문상품 리스트 (배치)-->
+	<select id="selectDeliveryCompleteOrderProductList" parameterType="omsDeliverytracking" resultType="omsOrderproduct" fetchSize="1000">
+		/* [oms.logistics.selectDeliveryCompleteOrderProductList][brad][2016. 10. 31.] */
+		SELECT ORDER_ID, ORDER_PRODUCT_NO
+		FROM OMS_ORDERPRODUCT
+ 		WHERE STORE_ID = #{storeId} 
+ 		AND ORDER_PRODUCT_STATE_CD = 'ORDER_PRODUCT_STATE_CD.SHIP'
+ 		AND SHIP_DT &lt; SYSDATE - 4
+ 		ORDER BY ORDER_ID, ORDER_PRODUCT_NO
+	</select>
+	
+	<!-- 배송완료 처리 대상 주문 리스트 (스윗트래커) -->
+	<select id="selectSweetTrackerOrderProductList" parameterType="omsDeliverytracking" resultType="omsOrderproduct" fetchSize="1000">
+		/* [oms.logistics.selectSweetTrackerOrderProductList][brad][2016. 10. 28.] */
+		SELECT DISTINCT ORDER_ID, 
+			   ORDER_PRODUCT_NO,
+			   ORDER_DELIVERY_TYPE_CD,
+			   UPPER_ORDER_PRODUCT_NO	
+        FROM OMS_LOGISTICS
+        WHERE LOGISTICS_INOUT_NO = #{logisticsInoutNo} AND INVOICE_NO = #{invoiceNo}
+	</select>
+	
+	<!-- 교환상품 입고수량 업데이트 -->
+	<update id="updateReturnQty" parameterType="omsOrderproduct">
+		UPDATE OMS_ORDERPRODUCT SET RETURN_QTY = RETURN_QTY + #{returnQty}
+		      ,UPD_DT = SYSDATE
+		      ,UPD_ID = #{updId}
+		WHERE ORDER_ID = #{orderId}
+		AND ORDER_PRODUCT_NO = #{orderProductNo}
+	</update>
+	
+</mapper>

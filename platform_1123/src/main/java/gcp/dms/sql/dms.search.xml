@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="dms.search">
+	
+	<resultMap id="codeResultMap" type="ccsCode">
+		<result property="cd" column="CD"/>
+		<result property="name" column="NAME"/>
+		<result property="sortNo" column="SORT_NO"/>
+	</resultMap>
+	
+	<select id="getGenderTypeCode" resultMap="codeResultMap">
+		/* [dms.search.getGenderTypeCode][emily][2016. 08. 31] */
+		SELECT SUBSTR(CO.CD,(INSTR(CO.CD, '.', -1))+1)AS CD, CO.NAME
+			FROM CCS_CODE CO
+			WHERE CO.CD_GROUP_CD = 'GENDER_TYPE_CD'
+			AND EXISTS (SELECT 1 FROM CCS_CODEGROUP GP WHERE GP.CD_GROUP_CD = CO.CD_GROUP_CD )
+			ORDER BY CO.SORT_NO
+	</select>
+	
+	<select id="getAgeTypeCode" resultMap="codeResultMap">
+		/* [dms.search.getAgeTypeCode][emily][2016. 08. 31] */
+		SELECT SUBSTR(CO.CD,(INSTR(CO.CD, '.', -1))+1)AS CD, CO.NAME, CO.SORT_NO
+			FROM PMS_PRODUCTAGE AG
+				,CCS_CODE CO
+			WHERE AG.AGE_TYPE_CD = CO.CD
+			GROUP BY CO.CD, CO.NAME, CO.SORT_NO
+			ORDER BY CO.SORT_NO
+	</select>
+</mapper>

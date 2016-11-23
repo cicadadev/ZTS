@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="sps.discount">
+	
+	<select id="getCardPromotionList" parameterType="spsCardPromotionSearch" resultType="spsCardpromotion">
+		/* [sps.discount.getCardPromotionList"][emily][2016. 07. 27.] */
+		<include refid="ccs.common.pagingPre"/>
+		SELECT
+			CARD_PROMOTION_NO
+			, NAME
+			, CARD_PROMOTION_STATE_CD
+			, START_DT
+			, END_DT
+			, (SELECT NAME FROM CCS_USER WHERE USER_ID = CP.INS_ID AND ROWNUM=1)	AS INS_NAME
+			, INS_DT
+			, INS_ID
+			, (SELECT NAME FROM CCS_USER WHERE USER_ID = CP.UPD_ID AND ROWNUM=1)	AS UPD_NAME
+			, UPD_DT
+			, UPD_ID
+		  FROM
+		  	SPS_CARDPROMOTION CP
+		 WHERE
+		 	STORE_ID = #{storeId}
+		 	<if test="startDate != null and startDate != ''">
+		 		<if test="endDate != null and endDate != ''">
+		 			AND (START_DT <![CDATA[<=]]> TO_DATE (#{endDate}, 'YYYY-MM-DD HH24:MI:SS') AND END_DT <![CDATA[>=]]> TO_DATE (#{startDate}, 'YYYY-MM-DD HH24:MI:SS'))
+		 		</if>
+		 	</if>
+		 	<if test="cardPromotionStateCd != null and cardPromotionStateCd != ''">
+		 		<if test="cardPromotionStateCdCds != null and cardPromotionStateCdCds != ''">
+		 			AND CARD_PROMOTION_STATE_CD IN (${cardPromotionStateCdCds})
+		 		</if>
+		 		<if test="cardPromotionStateCdCds == null or cardPromotionStateCdCds == ''">
+		 			AND CARD_PROMOTION_STATE_CD = #{cardPromotionStateCd}
+		 		</if>		
+		 	</if>
+		 	<if test="name != null and name != ''">
+		 		AND NAME LIKE '%' || #{name} || '%'
+		 	</if>
+		<include refid="ccs.common.pagingPost"/>
+	</select>
+	
+	<select id="getApplyCardPromotion" resultType="spsCardpromotion">
+		/* [sps.discount.getApplyCardPromotion][dennis][2016. 9. 8.] */
+		SELECT *
+		  FROM (  SELECT NAME,
+		                 CASE WHEN #{deviceTypeCd} = 'DEVICE_TYPE_CD.PC' THEN HTML1 ELSE HTML2 END HTML1,
+		                 INS_DT
+		            FROM SPS_CARDPROMOTION
+		           WHERE     SYSDATE BETWEEN START_DT AND END_DT
+		                 AND STORE_ID = #{storeId}
+		                 AND CARD_PROMOTION_STATE_CD = 'CARD_PROMOTION_STATE_CD.RUN'
+		        ORDER BY INS_DT DESC)
+		 WHERE ROWNUM = 1           
+	</select>
+	<select id="getCardpromotion" resultType="spsCardpromotion">
+		SELECT *
+		  FROM SPS_CARDPROMOTION
+		 WHERE STORE_ID = #{storeId} AND CARD_PROMOTION_NO = #{cardPromotionNo} 	
+	</select>
+</mapper>

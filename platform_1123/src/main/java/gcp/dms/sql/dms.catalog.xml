@@ -1,0 +1,365 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="dms.catalog">
+
+	<resultMap type="dmsCatalog" id="getCatalogResult" autoMapping="true">
+		<id property="catalogId" column="CATALOG_ID" />
+		<association property="pmsBrand" javaType="pmsBrand">
+			<id property="brandId" column="BRAND_ID" />
+			<result property="name" column="BRAND_NAME" />
+		</association>
+	</resultMap>
+	<select id="getCatalogAll" resultMap="getCatalogResult">
+		/* [dms.catalog.getCatalogAll][stella][2016. 06. 27.] */
+		<include refid="ccs.common.pagingPre" />
+		SELECT
+			STORE_ID
+			, CATALOG_ID
+			, BRAND_ID
+			, (SELECT NAME FROM PMS_BRAND WHERE STORE_ID = C.STORE_ID AND BRAND_ID = C.BRAND_ID)	AS BRAND_NAME
+			, NAME
+			, CATALOG_TYPE_CD
+			, SORT_NO
+			, DISPLAY_YN
+			, IMG1
+			, IMG2	
+			, INS_DT
+			, INS_ID
+			, UPD_ID
+			, (SELECT NAME FROM CCS_USER WHERE STORE_ID = C.STORE_ID AND USER_ID = C.INS_ID)		AS INS_NAME
+			, UPD_DT
+			, (SELECT NAME FROM CCS_USER WHERE STORE_ID = C.STORE_ID AND USER_ID = C.UPD_ID)		AS UPD_NAME
+		 FROM
+		 	DMS_CATALOG C
+		 WHERE
+		 	STORE_ID = #{storeId}
+		 	<if test="startDate != null and startDate != ''">
+		 		<if test="endDate != null and endDate != ''">
+		 			AND INS_DT BETWEEN TO_DATE (#{startDate},
+                                           'YYYY-MM-DD HH24:MI:SS')
+                              AND TO_DATE (#{endDate},
+                                           'YYYY-MM-DD HH24:MI:SS')	   
+		 		</if>
+		 	</if>
+		 	<if test="displayYnCds != null and displayYnCds != ''">
+				AND DISPLAY_YN IN ( ${displayYnCds} )				
+			</if>
+			<if test="catalogTypeCdCds != null and catalogTypeCdCds != ''">
+				AND CATALOG_TYPE_CD IN ( ${catalogTypeCdCds} )
+			</if>
+			<if test="brandId != null and brandId != ''">
+				AND BRAND_ID = #{brandId}
+			</if>
+			<if test="seasonCd != null and seasonCd != ''">
+				AND SEASON_CD = #{seasonCd}
+			</if>
+		 ORDER BY
+		 	TO_NUMBER(SORT_NO)
+		<include refid="ccs.common.pagingPost" />									
+	</select>
+	
+	<select id="getCatalogDetail" resultType="dmsCatalog">
+		/* [dms.catalog.getCatalogDetail][allen][2016. 06. 27.] */
+		SELECT
+				  STORE_ID
+				, CATALOG_ID
+				, BRAND_ID
+				, (SELECT NAME FROM PMS_BRAND WHERE BRAND_ID = T1.BRAND_ID)	AS BRAND_NAME
+				, NAME
+				, CATALOG_TYPE_CD
+				, IMG1
+				, IMG2
+				, DISPLAY_YN
+				, SORT_NO
+				, INS_DT
+				, INS_ID
+				, UPD_DT
+				, UPD_ID
+				, SEASON_CD
+		  FROM DMS_CATALOG T1
+		  WHERE CATALOG_ID = #{catalogId}		
+	</select>
+	
+	<select id="getCatalogImg" resultType="dmsCatalogimg">
+		/* [dms.catalog.getCatalogImg][stella][2016. 06. 29.] */
+		<include refid="ccs.common.pagingPre" />
+		SELECT
+			STORE_ID
+			, CATALOG_ID
+			, CATALOG_IMG_NO
+			, NAME
+			, IMG1
+			, IMG2
+			, SORT_NO
+			, DISPLAY_YN		
+			, INS_DT
+			, INS_ID
+			, UPD_ID
+			, (SELECT NAME FROM CCS_USER WHERE STORE_ID = CI.STORE_ID AND USER_ID = CI.INS_ID)		AS INS_NAME
+			, UPD_DT
+			, (SELECT NAME FROM CCS_USER WHERE STORE_ID = CI.STORE_ID AND USER_ID = CI.UPD_ID)		AS UPD_NAME
+		 FROM
+		 	DMS_CATALOGIMG CI
+		WHERE
+			STORE_ID = #{storeId}
+			AND CATALOG_ID = #{catalogId}
+		ORDER BY
+			TO_NUMBER(SORT_NO)
+		<include refid="ccs.common.pagingPost" />
+	</select>
+	
+	
+	<select id="getCatalogImgDetail" resultType="dmsCatalogimg">
+		/* [dms.catalog.getCatalogImg][stella][2016. 06. 29.] */
+		SELECT
+			  STORE_ID
+			, CATALOG_ID
+			, CATALOG_IMG_NO
+			, NAME
+			, IMG1
+			, IMG2
+			, SORT_NO
+			, DISPLAY_YN		
+			, INS_DT
+			, INS_ID
+			, UPD_ID
+			, (SELECT NAME FROM CCS_USER WHERE STORE_ID = CI.STORE_ID AND USER_ID = CI.INS_ID)		AS INS_NAME
+			, UPD_DT
+			, (SELECT NAME FROM CCS_USER WHERE STORE_ID = CI.STORE_ID AND USER_ID = CI.UPD_ID)		AS UPD_NAME
+		 FROM DMS_CATALOGIMG CI
+		WHERE STORE_ID = #{storeId}
+		  <if test="brandId != null and brandId != ''">
+		  	AND CATALOG_ID = (SELECT CATALOG_ID FROM DMS_CATALOG 
+		  						WHERE STORE_ID = #{storeId} AND BRAND_ID = #{brandId} AND CATALOG_ID = #{catalogId})
+		  </if>
+		  <if test="brandId == null or brandId == ''">
+		  	 AND CATALOG_ID = #{catalogId}
+		  </if>
+		  AND CATALOG_IMG_NO = #{catalogImgNo}
+	</select>
+	
+	<resultMap type="dmsCatalogproduct" id="getCatalogProductResult" autoMapping="true">
+		<id property="catalogId" column="CATALOG_ID" />
+		<id property="catalogImgNo" column="CATALOG_IMG_NO" />
+		<id property="productId" column="PRODUCT_ID" />
+		<association property="pmsProduct" javaType="pmsProduct">
+			<id property="productId" column="PRODUCT_ID" />
+			<result property="name" column="NAME" />
+			<result property="productTypeCd" column="PRODUCT_TYPE_CD" />
+			<result property="saleStateCd" column="SALE_STATE_CD" />
+			<result property="salePrice" column="SALE_PRICE" />
+			<result property="brandName" column="BRAND_NAME" />
+			<result property="saleStartDt" column="SALE_START_DT" />
+			<result property="saleEndDt" column="SALE_END_DT" />
+			<collection property="pmsProductimgs" column="{storeId=STORE_ID,productId=PRODUCt_ID}" javaType="java.util.ArrayList" select="pms.product.getProductImages" />
+		</association>
+	</resultMap>
+	<select id="getCatalogProduct" resultMap="getCatalogProductResult">
+		/* [dms.catalog.getCatalogProduct][stella][2016. 06. 29.] */
+		<include refid="ccs.common.pagingPre" />
+		SELECT
+			  P.STORE_ID
+		    , P.PRODUCT_ID
+		    , P.NAME      AS NAME
+		    , CP.SORT_NO
+		    , CP.CATALOG_ID
+		    , CP.CATALOG_IMG_NO
+		    , P.PRODUCT_TYPE_CD
+		    , P.SALE_STATE_CD
+		    , P.SALE_PRICE
+		    , B.NAME      AS BRAND_NAME
+		    , P.SALE_START_DT
+		    , P.SALE_END_DT
+		    , CP.INS_DT
+		    , CP.INS_ID
+		    , CP.UPD_ID
+		    , (SELECT NAME FROM CCS_USER WHERE STORE_ID = CP.STORE_ID AND USER_ID = CP.INS_ID)		AS INS_NAME
+		    , CP.UPD_DT
+		    , (SELECT NAME FROM CCS_USER WHERE STORE_ID = CP.STORE_ID AND USER_ID = CP.UPD_ID)		AS UPD_NAME
+		FROM
+		    DMS_CATALOGPRODUCT CP
+		    JOIN PMS_PRODUCT P
+		        ON P.STORE_ID = CP.STORE_ID
+		        AND P.PRODUCT_ID = CP.PRODUCT_ID
+		    LEFT OUTER JOIN PMS_BRAND B
+		        ON P.STORE_ID = B.STORE_ID
+		        AND P.BRAND_ID = B.BRAND_ID
+		WHERE
+		    CP.STORE_ID = #{storeId}
+		    AND CP.CATALOG_ID = #{catalogId}
+		    AND CP.CATALOG_IMG_NO = #{catalogImgNo}
+		ORDER BY
+			TO_NUMBER(SORT_NO)
+		<include refid="ccs.common.pagingPost" />
+	</select>
+	
+	<insert id="insertCatalog" parameterType="dmsCatalog">
+		/* [dms.catalog.insertCatalog][stella][2016. 07. 06.] */
+		<selectKey keyProperty="catalogId" order="BEFORE" resultType="String">
+			(SELECT NVL(MAX(TO_NUMBER(CATALOG_ID)), 0) + 1	AS catalogId FROM DMS_CATALOG WHERE STORE_ID = #{storeId})
+		</selectKey>
+		INSERT
+			INTO DMS_CATALOG (	
+				STORE_ID
+				, CATALOG_ID
+				, BRAND_ID
+				, NAME
+				, CATALOG_TYPE_CD
+				, IMG1
+				, IMG2
+				, DISPLAY_YN
+				, SORT_NO
+				, INS_DT
+				, INS_ID
+				, UPD_DT
+				, UPD_ID
+				, SEASON_CD
+			) VALUES (
+				#{storeId}
+				, #{catalogId}
+				, #{brandId}
+				, #{name}
+				, #{catalogTypeCd}
+				, #{img1}
+				, #{img2}
+				, #{displayYn}
+				, #{sortNo}
+				, SYSDATE
+				, #{insId}
+				, SYSDATE
+				, #{updId}
+				, #{seasonCd}
+			)
+	</insert>
+	
+	<insert id="insertCatalogImg" parameterType="dmsCatalogimg">
+		/* [dms.catalog.insertCatalogImg][stella][2016. 07. 01.] */
+		INSERT
+			INTO DMS_CATALOGIMG (
+				STORE_ID
+				, CATALOG_ID
+				, CATALOG_IMG_NO
+				, NAME
+				, IMG1
+				, IMG2
+				, SORT_NO
+				, DISPLAY_YN
+				, INS_DT
+				, INS_ID
+				, UPD_DT
+				, UPD_ID
+			) VALUES (
+				#{storeId}
+				, #{catalogId}
+				, (SELECT NVL(MAX(CATALOG_IMG_NO), 0) + 1	AS CATALOG_IMG_NO 
+					 FROM DMS_CATALOGIMG
+					WHERE STORE_ID = #{storeId} AND CATALOG_ID = #{catalogId})
+				, #{name}
+				, #{img1}
+				, #{img2}
+				, #{sortNo}
+				, #{displayYn}
+				, SYSDATE
+				, #{insId}
+				, SYSDATE
+				, #{updId}
+			)
+	</insert>
+	
+	<insert id="insertCatalogProduct" parameterType="dmsCatalogproduct">
+		/* [dms.catalog.insertCatalogImg][stella][2016. 07. 01.] */
+		INSERT
+			INTO DMS_CATALOGPRODUCT (
+				STORE_ID
+				, CATALOG_ID
+				, CATALOG_IMG_NO
+				, PRODUCT_ID
+				, DISPLAY_YN
+				, SORT_NO
+				, INS_DT
+				, INS_ID
+				, UPD_DT
+				, UPD_ID
+			) VALUES (
+				#{storeId}
+				, #{catalogId}
+				, (SELECT NVL(MAX(CATALOG_IMG_NO), 0) + 1	AS CATALOG_IMG_NO 
+					 FROM DMS_CATALOGPRODUCT
+					WHERE STORE_ID = #{storeId} AND CATALOG_ID = #{catalogId} AND PRODUCT_ID = #{productId})
+				, #{productId}
+				, #{displayYn}
+				, (SELECT NVL(MAX(SORT_NO), 0) +1	AS SORT_NO
+					 FROM DMS_CATALOGPRODUCT
+					WHERE STORE_ID = #{storeId} AND CATALOG_ID = #{catalogId})
+				, SYSDATE
+				, #{insId}
+				, SYSDATE
+				, #{updId}
+			)
+	</insert>
+	
+	<select id="checkCatalogImg" resultType="String">
+		/* [dms.catalog.checkCatalogImg][stella][2016. 07. 04.] */
+		SELECT
+			CATALOG_ID
+		 FROM
+		 	DMS_CATALOGIMG
+		WHERE
+			STORE_ID = #{storeId}
+			AND CATALOG_ID = #{catalogId}
+			AND IMG = #{img}
+	</select>
+	
+	<select id="checkCatalogProduct" resultType="String">
+		/* [dms.catalog.checkCatalogProduct][stella][2016. 07. 04.] */
+		SELECT
+			CATALOG_ID
+		 FROM
+		 	DMS_CATALOGPRODUCT
+		WHERE
+			STORE_ID = #{storeId}
+			AND CATALOG_ID = #{catalogId}
+			AND PRODUCT_ID = #{productId}
+	</select>
+	
+	<resultMap type="dmsCatalog" id="getCatalogItemResult" autoMapping="true">
+		<id property="catalogId" column="CATALOG_ID" />
+		<collection property="dmsCatalogimgs" column="{storeId=STORE_ID,catalogId=CATALOG_ID,pagingYn=PAGING_YN}" javaType="java.util.ArrayList" select="dms.catalog.getCatalogImg" />
+	</resultMap>
+	<select id="getCatalogItem" resultMap="getCatalogItemResult">
+		/* [dms.catalog.getCatalogItem][stella][2016. 09. 30.] */
+		SELECT
+			C.*
+			, #{pagingYn}		AS PAGING_YN
+		  FROM
+		  	DMS_CATALOG C
+		 WHERE
+			STORE_ID = #{storeId}
+			AND CATALOG_ID = #{catalogId}
+			AND BRAND_ID = #{brandId}
+	</select>
+	
+	<select id="getBrandCatalogSeasonCd" resultType="ccsCode">
+		/* [dms.catalog."getBrandCatalogSeasonCd"][stella][2016. 10. 15.] */
+		SELECT
+			CO.CD
+			, CO.NAME
+		 FROM
+		 	DMS_CATALOG CA
+		 	JOIN CCS_CODE CO
+		 		ON CA.SEASON_CD = CO.CD
+		 		AND CO.CD_GROUP_CD = 'SEASON_CD'
+		 WHERE
+		 	CA.STORE_ID = #{storeId}
+			AND CA.BRAND_ID = #{brandId}
+		 GROUP BY
+			CO.CD, CO.NAME								
+	</select>
+
+	<delete id="deleteCatalogImg" parameterType="dmsCatalogimg">
+	/* [dms.catalog.deleteCatalogImg][roy][2016. 11. 07.] */
+		DELETE FROM DMS_CATALOGIMG
+		WHERE CATALOG_ID = #{catalogId}
+			AND STORE_ID = #{storeId}
+	</delete>
+</mapper>

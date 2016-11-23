@@ -1,0 +1,827 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="sps.event">
+	
+	<select id="getEventList" parameterType="spsEventSearch" resultType="spsEvent">
+		/* [sps.event.getEventList][peter][2016. 5. 10.] */
+		<include refid="ccs.common.pagingPre" />
+			SELECT 
+				STORE_ID
+				, EVENT_ID
+				, NAME
+				, EVENT_TYPE_CD
+				, EVENT_DIV_CD
+				, EVENT_STATE_CD
+				, DISPLAY_YN
+				, EVENT_START_DT
+				, EVENT_END_DT
+				, WIN_NOTICE_DATE
+				, INS_ID
+				, INS_DT
+				, UPD_ID
+				, UPD_DT
+				,(SELECT US.NAME FROM CCS_USER US WHERE SPS_EVENT.INS_ID = US.USER_ID AND ROWNUM=1) AS INS_NAME
+			    ,(SELECT US.NAME FROM CCS_USER US WHERE SPS_EVENT.UPD_ID = US.USER_ID AND ROWNUM=1) AS UPD_NAME
+			FROM SPS_EVENT
+			WHERE STORE_ID = #{storeId}
+				<if test="startDate != null and startDate != '' ">
+				  <if test="endDate == null or endDate == '' ">
+				  	 AND EVENT_START_DT &gt;= TO_DATE (#{startDate}, 'YYYY-MM-DD HH24:MI:SS')
+				  </if>
+				  <if test="endDate != null and endDate != '' ">
+				  	 AND (EVENT_START_DT <![CDATA[<=]]> TO_DATE (#{endDate}, 'YYYY-MM-DD HH24:MI:SS')
+				  </if>				  	
+				</if>
+				<if test="endDate != null and endDate != '' ">
+				  <if test="startDate == null or startDate == '' ">
+					AND EVENT_END_DT &lt;= TO_DATE (#{endDate}, 'YYYY-MM-DD HH24:MI:SS')
+				  </if>
+				  <if test="startDate != null and startDate != '' ">
+				  	AND EVENT_END_DT <![CDATA[>=]]> TO_DATE (#{startDate}, 'YYYY-MM-DD HH24:MI:SS'))
+				  </if>
+				</if>
+				<if test="searchKeyword != null and searchKeyword != ''">
+					<if test="searchKeyword == 'name' and name != null and name != '' ">
+						AND NAME LIKE '%' || #{name} || '%'
+					</if>
+					<if test="searchKeyword == 'eventId' and eventIds != null and eventIds != ''">
+						AND EVENT_ID IN ( ${eventIds} )
+					</if>
+				</if>			
+				<if test="eventTypeCds != null and eventTypeCds != '' ">
+					AND EVENT_TYPE_CD IN ( ${eventTypeCds} )
+				</if>
+				<if test="eventStateCds != null and eventStateCds != '' ">
+					AND EVENT_STATE_CD IN ( ${eventStateCds} ) 
+				</if>
+			ORDER BY INS_DT DESC
+		<include refid="ccs.common.pagingPost" />
+	</select>
+
+	<resultMap id="eventDetailMap" type="gcp.sps.model.SpsEvent">
+		<id property="storeId" column="STORE_ID"/>
+		<id property="eventId" column="EVENT_ID" />
+		<result property="name" column="NAME" />
+		<result property="detail" column="DETAIL" />
+		<result property="eventTypeCd" column="EVENT_TYPE_CD" />
+		<result property="eventDivCd" column="EVENT_DIV_CD" />
+		<result property="eventStateCd" column="EVENT_STATE_CD" />
+		<result property="displayYn" column="DISPLAY_YN" />
+		<result property="eventStartDt" column="EVENT_START_DT" />
+		<result property="eventEndDt" column="EVENT_END_DT" />
+		<result property="eventJoinStartDt" column="EVENT_JOIN_START_DT" />
+		<result property="eventJoinEndDt" column="EVENT_JOIN_END_DT" />
+		<result property="winNoticeDate" column="WIN_NOTICE_DATE" />
+		<result property="joinControlCd" column="JOIN_CONTROL_CD" />
+		<result property="controlNo" column="CONTROL_NO" />
+		<result property="html1" column="HTML1" />
+		<result property="html2" column="HTML2" />
+		<result property="img1" column="IMG1" />
+		<result property="img2" column="IMG2" />
+		<result property="text1" column="TEXT1" />
+		<result property="text2" column="TEXT2" />
+		<result property="productId" column="PRODUCT_ID" />
+		<result property="winnerNumber" column="WINNER_NUMBER" />
+		<result property="winnerShowYn" column="WINNER_SHOW_YN" />
+		<result property="psRegisterEndDt" column="PS_REGISTER_END_DT" />
+		<association property="pmsProduct" javaType="pmsProduct">
+	    	<id property="productId" column="PRODUCT_ID"/>
+	    	<result property="name" column="PRODUCT_NAME" />
+	    </association>
+		<collection property="spsEventbrands" ofType="gcp.sps.model.SpsEventbrand" >
+	    	<id property="storeId" column="STORE_ID"/>
+	    	<id property="eventId" column="EVENT_ID"/>
+	    	<id property="brandId" column="BRAND_ID"/>
+	    	<result property="brandName" column="BRAND_NAME"/>
+	    </collection>
+	    <collection property="spsEventprizes" ofType="gcp.sps.model.SpsEventprize" >
+	    	<id property="storeId" column="STORE_ID"/>
+	    	<id property="eventId" column="EVENT_ID"/>
+	    	<id property="eventPrizeNo" column="EVENT_PRIZE_NO"/>
+	    	<result property="joinTypeCd" column="JOIN_TYPE_CD"/>
+	    	<result property="prizeTypeCd" column="PRIZE_TYPE_CD"/>
+	    	<result property="joinStartDt" column="JOIN_START_DT"/>
+	    	<result property="joinEndDt" column="JOIN_END_DT"/>
+	    	<result property="dayValue" column="DAY_VALUE"/>
+	    	<result property="couponId" column="COUPON_ID"/>
+	    	<result property="couponName" column="COUPON_NAME"/>
+	    	<result property="savePoint" column="SAVE_POINT"/>
+	    </collection>
+	</resultMap>
+	<select id="getEventDetailInfo" parameterType="spsEventSearch" resultMap="eventDetailMap">
+		/* [sps.event.getEventDetailInfo][peter][2016. 5. 16.] */
+		SELECT 
+			S1.STORE_ID
+			, S1.EVENT_ID
+			, S1.NAME
+			, S1.DETAIL
+			, S1.EVENT_TYPE_CD
+			, S1.EVENT_DIV_CD
+			, S1.EVENT_STATE_CD
+			, S1.DISPLAY_YN
+			, S1.EVENT_START_DT
+			, S1.EVENT_END_DT
+			, S1.EVENT_JOIN_START_DT
+			, S1.EVENT_JOIN_END_DT
+			, S1.WIN_NOTICE_DATE
+			, S1.JOIN_CONTROL_CD
+			, S1.CONTROL_NO
+			, S1.HTML1
+			, S1.HTML2
+			, S1.IMG1
+			, S1.IMG2
+			, S1.TEXT1
+			, S1.TEXT2
+			, S2.BRAND_ID
+			, (SELECT NAME FROM PMS_BRAND WHERE STORE_ID = S2.STORE_ID AND BRAND_ID = S2.BRAND_ID)	AS BRAND_NAME
+			, S3.EVENT_PRIZE_NO
+			, S3.JOIN_TYPE_CD
+			, S3.JOIN_START_DT
+			, S3.JOIN_END_DT
+			, S3.DAY_VALUE
+			, S3.PRIZE_TYPE_CD
+			, S3.COUPON_ID
+			, (SELECT NAME FROM SPS_COUPON WHERE STORE_ID = S3.STORE_ID AND COUPON_ID = S3.COUPON_ID)	AS COUPON_NAME
+			, S3.SAVE_POINT
+			, S1.PRODUCT_ID
+			, (SELECT NAME FROM PMS_PRODUCT WHERE STORE_ID = S1.STORE_ID AND PRODUCT_ID = S1.PRODUCT_ID)	AS PRODUCT_NAME
+			, S1.WINNER_NUMBER
+			, S1.WINNER_SHOW_YN
+			, S1.PS_REGISTER_END_DT
+		FROM SPS_EVENT S1, SPS_EVENTBRAND S2, SPS_EVENTPRIZE S3
+		WHERE S1.STORE_ID = #{storeId}
+		  AND S1.EVENT_ID = #{eventId}
+		  AND S1.STORE_ID = S2.STORE_ID(+)
+		  AND S1.STORE_ID = S3.STORE_ID(+)
+		  AND S1.EVENT_ID = S2.EVENT_ID(+)
+		  AND S1.EVENT_ID = S3.EVENT_ID(+)
+	</select>
+
+
+	<resultMap id="eventCouponList" autoMapping="true" type="gcp.sps.model.SpsEventcoupon">
+		<id property="storeId" column="STORE_ID"/>
+		<id property="eventId" column="EVENT_ID"/>
+		<id property="couponId" column="COUPON_ID"/>
+		<result property="insId" column="INS_ID" />
+		<result property="insDt" column="INS_DT" />
+		<result property="updId" column="UPD_ID" />
+		<result property="updDt" column="UPD_DT" />
+	 	<association property="spsCoupon" javaType="gcp.sps.model.SpsCoupon" >
+		   	<id property="couponId" column="COUPON_ID"/>
+		   	<result property="name" column="NAME" />
+		   	<result property="couponTypeCd" column="COUPON_TYPE_CD" />
+		   	<result property="dcValue" column="DC_VALUE" />
+		   	<result property="couponStateCd" column="COUPON_STATE_CD" />
+		   	<result property="issueStartDt" column="ISSUE_START_DT" />
+		   	<result property="issueEndDt" column="ISSUE_END_DT" />
+		</association>
+	</resultMap>
+	<select id="getEventCouponList" parameterType="spsEventSearch" resultMap="eventCouponList">
+	/* [sps.event.getEventCouponList][peter][2016. 5. 10.] */
+		<include refid="ccs.common.pagingPre" />
+		SELECT 
+			ECP.STORE_ID
+			, ECP.EVENT_ID
+			, ECP.COUPON_ID
+			, CP.NAME
+			, CP.COUPON_TYPE_CD
+			, CP.DC_VALUE
+			, CP.COUPON_STATE_CD
+			, CP.ISSUE_START_DT
+			, CP.ISSUE_END_DT
+			, ECP.INS_ID
+			, ECP.INS_DT
+			, ECP.UPD_ID
+			, ECP.UPD_DT
+			,(SELECT US.NAME FROM CCS_USER US WHERE ECP.INS_ID = US.USER_ID AND ROWNUM=1) AS INS_NAME
+      	    ,(SELECT US.NAME FROM CCS_USER US WHERE ECP.UPD_ID = US.USER_ID AND ROWNUM=1) AS UPD_NAME
+		FROM SPS_EVENTCOUPON ECP, SPS_COUPON CP
+		WHERE ECP.STORE_ID = #{storeId}
+		  AND ECP.EVENT_ID = #{eventId}
+  		  AND ECP.STORE_ID = CP.STORE_ID
+  		  AND ECP.COUPON_ID = CP.COUPON_ID
+  		  AND CP.COUPON_STATE_CD = 'COUPON_STATE_CD.RUN'
+  		  <include refid="ccs.common.pagingPost" />
+	</select>
+
+	<delete id="deleteEventbrand" parameterType="SpsEventbrand">
+	/* [sps.event.deleteEventbrand][peter][2016. 6. 15.] */
+		DELETE SPS_EVENTBRAND
+		 WHERE STORE_ID = #{storeId}
+		   AND EVENT_ID = #{eventId}
+	</delete>
+
+	<delete id="deleteEventcoupon" parameterType="SpsEventcoupon">
+		/* [sps.event.deleteEventcoupon][peter][2016. 6. 15.] */
+		DELETE SPS_EVENTCOUPON
+		 WHERE STORE_ID = #{storeId}
+		   AND EVENT_ID = #{eventId}
+	</delete>
+
+	<delete id="deleteEventprize" parameterType="SpsEventprize">
+		/* [sps.event.deleteEventprize][peter][2016. 6. 18.] */
+		DELETE SPS_EVENTPRIZE
+		 WHERE STORE_ID = #{storeId}
+		   AND EVENT_ID = #{eventId}
+	</delete>
+
+	<delete id="deleteEventjoin" parameterType="SpsEventjoin">
+		/* [sps.event.deleteEventjoin][stella][2016. 7. 25.] */
+		DELETE SPS_EVENTJOIN
+		 WHERE STORE_ID = #{storeId}
+		   AND EVENT_ID = #{eventId}
+	</delete>
+	
+	<delete id="deleteEventGift" parameterType="SpsEventGift">
+		/* [sps.event.deleteEventGift][stella][2016. 8. 17.] */
+		DELETE SPS_EVENTGIFT
+		 WHERE STORE_ID = #{storeId}
+		   AND EVENT_ID = #{eventId}
+	</delete>	
+	
+	<resultMap id="eventJoinList" autoMapping="true" type="gcp.sps.model.SpsEventjoin">
+		<id property="storeId" column="STORE_ID"/>
+		<id property="eventId" column="EVENT_ID"/>
+		<id property="joinNo" column="JOIN_NO"/>
+	    <result property="memName" column="MEM_NAME" />
+	    <result property="phone1" column="PHONE1" />
+	    <result property="phone2" column="PHONE2" />
+	    <result property="winHist" column="WIN_HIST" />
+	    <result property="joinHist" column="JOIN_HIST" />
+	    <result property="insDt" column="INS_DT" />
+	    <result property="memAddress" column="MEM_ADDRESS" />
+	 	<association property="mmsMember" javaType="gcp.mms.model.MmsMember" >
+		   	<id property="memberNo" column="MEMBER_NO"/>
+		</association>
+	</resultMap>
+	<select id="getEventJoinList" parameterType="spsEventSearch" resultMap="eventJoinList">
+		/* [sps.event.getEventJoinList][peter][2016. 5. 16.] */
+		<include refid="ccs.common.pagingPre" />
+			SELECT
+				EVNT.STORE_ID
+				, EVNT.EVENT_ID
+				, EVNT.JOIN_NO
+				, MEMB.MEMBER_NO
+				, '이력보기'		AS WIN_HIST
+				, MEMB.MEMBER_NAME || '(' || MEMB.MEMBER_ID || ')'	AS MEM_NAME
+				, MEMB.PHONE1	AS PHONE1
+				, MEMB.PHONE2	AS PHONE2
+				, EVNT.INS_DT
+				, '정보보기'		AS JOIN_HIST
+				, EVNT.WIN_YN
+				, EVNT.URL
+				, EVNT.NAVERBLOG_URL
+				, EVNT.INSTAGRAM_URL
+				, EVNT.FACEBOOK_URL
+				, EVNT.KAKAOSTORY_URL
+				, EVNT.DETAIL
+				, (SELECT ADDRESS1 FROM MMS_ADDRESS WHERE MEMBER_NO = EVNT.MEMBER_NO AND ADDRESS_NO = '1')	AS MEM_ADDRESS
+			FROM SPS_EVENTJOIN EVNT, MMS_MEMBER MEMB
+			WHERE EVNT.STORE_ID = #{storeId}
+			  AND EVNT.EVENT_ID = #{eventId}
+			  AND EVNT.MEMBER_NO = MEMB.MEMBER_NO
+		<include refid="ccs.common.pagingPost" />
+	</select>
+
+	<resultMap id="eventWinHistory" autoMapping="true" type="gcp.sps.model.SpsEventjoin">
+		<id property="storeId" column="STORE_ID"/>
+		<id property="eventId" column="EVENT_ID"/>
+		<result property="insDt" column="INS_DT"/>
+		<result property="winYn" column="WIN_YN"/>
+	 	<association property="spsEvent" javaType="gcp.sps.model.SpsEvent" >
+	 		<id property="storeId" column="STORE_ID"/>
+		   	<id property="eventId" column="EVENT_ID"/>
+		   	<result property="name" column="NAME" />
+		</association>
+	</resultMap>
+	<select id="getEventWinhistory" parameterType="spsEventSearch" resultMap="eventWinHistory">
+	/* [sps.event.getEventWinhistory][peter][2016. 6. 13.] */
+		SELECT
+			EVNT.STORE_ID
+			, EVNT.EVENT_ID
+			, EVNT.NAME
+			, JOIN.INS_DT
+			, JOIN.WIN_YN
+		FROM SPS_EVENTJOIN JOIN, SPS_EVENT EVNT
+		WHERE JOIN.STORE_ID = #{storeId}
+		  AND JOIN.MEMBER_NO = #{memberNo}
+		  AND JOIN.STORE_ID = EVNT.STORE_ID
+		  AND JOIN.EVENT_ID = EVNT.EVENT_ID
+	</select>
+	
+	<select id="getEventJoinDetail" parameterType="spsEventSearch" resultType="spsEventjoin">
+		/* [sps.event.getEventJoinDetail][peter][2016. 6. 13.] */
+		SELECT
+			STORE_ID
+			, EVENT_ID
+			, URL
+			, DETAIL
+		FROM SPS_EVENTJOIN
+		WHERE STORE_ID = #{storeId}
+		  AND EVENT_ID = #{eventId}
+		  AND MEMBER_NO = #{memberNo}
+	</select>
+	
+	<update id="updateEventProduct" parameterType="spsEvent">
+		/* [sps.event.updateEventProduct][stella][2016. 7. 22.] */
+		UPDATE
+			SPS_EVENT
+		  SET
+		  	PRODUCT_ID = #{productId}
+		WHERE
+			STORE_ID = #{storeId}
+			AND EVENT_ID = #{eventId}		
+	</update>
+	
+	<select id="checkExistEventType" resultType="spsEvent">
+		/* [sps.event.checkExistEventType][stella][2016. 8. 9.] */
+		SELECT
+		    (CASE WHEN EC.EVENT_ID IS NOT NULL THEN 'Y' ELSE 'N' END)       AS couponExistYn
+		    , (CASE WHEN EP.EVENT_ID IS NOT NULL THEN 'Y' ELSE 'N' END)         AS prizeExistYn
+		    , (CASE WHEN EJ.EVENT_ID IS NOT NULL THEN 'Y' ELSE 'N' END)         AS joinExistYn
+		  FROM
+		    SPS_EVENT E
+		    LEFT OUTER JOIN SPS_EVENTCOUPON EC
+		        ON E.STORE_ID = EC.STORE_ID
+		        AND E.EVENT_ID = EC.EVENT_ID
+		    LEFT OUTER JOIN SPS_EVENTPRIZE EP
+		        ON E.STORE_ID = EP.STORE_ID
+		        AND E.EVENT_ID = EP.EVENT_ID
+		    LEFT OUTER JOIN SPS_EVENTJOIN EJ
+		        ON E.STORE_ID = EJ.STORE_ID
+		        AND E.EVENT_ID = EJ.EVENT_ID
+		WHERE
+		    E.STORE_ID = #{storeId}
+		    AND E.EVENT_ID = #{eventId}	
+	</select>
+	
+	<select id="getEventGiftList" resultType="spsEventGift">
+		/* [sps.event.getEventGiftList][stella][2016. 8. 17.] */
+		<include refid="ccs.common.pagingPre" />
+		SELECT
+			GIFT_NO
+			, NAME
+			, WINNER_NUMBER
+		  FROM
+		  	SPS_EVENTGIFT
+		 WHERE
+		 	STORE_ID = #{storeId}
+		 	AND EVENT_ID = #{eventId}
+		 <include refid="ccs.common.pagingPost" />	
+	</select>
+	
+	<update id="updateEventStatus">
+	/* [sps.event.updateEventStatus][allen][2016. 8. 22.] */
+		UPDATE SPS_EVENT
+		   SET 
+       			  EVENT_STATE_CD = #{eventStateCd}
+       			, UPD_DT           = SYSDATE
+       			, UPD_ID           = #{updId}
+		 WHERE STORE_ID = #{storeId}
+		   AND EVENT_ID = #{eventId}
+	</update>
+
+	<resultMap type="spsEventgift" id="eventWinnerList" autoMapping="true">
+		<id property="storeId" 		column="STORE_ID"/>
+		<id property="eventId" 		column="EVENT_ID"/>
+		<id property="giftNo" 		column="GIFT_NO"/>
+		<result property="name" 	column="NAME"/>
+		<collection property="spsEventjoins" ofType="spsEventjoin">
+			<id property="storeId" column="STORE_ID"/>
+		   	<id property="eventId" column="EVENT_ID"/>
+		   	<id property="joinNo"  column="JOIN_NO"/>
+		    <result property="memName" column="MEM_NAME" />
+		</collection>
+	</resultMap>
+	
+	<select id="getEventWinnerList" parameterType="spsEventSearch" resultMap="eventWinnerList">
+		/* [sps.event.getEventWinnerList][roy][2016. 8. 31.] */
+		<include refid="ccs.common.pagingPre" />
+			SELECT EVNT.EVENT_ID,
+				   EVNT.STORE_ID,
+				   EVNT.JOIN_NO,
+			       MEMB.MEMBER_NAME || '(' || MEMB.MEMBER_ID || ')' AS MEM_NAME,
+			       EVNT.WIN_YN,
+			       EVNJ.GIFT_NO,
+			       EVNJ.NAME
+			          
+			  FROM SPS_EVENTJOIN EVNT LEFT OUTER JOIN MMS_MEMBER MEMB ON EVNT.MEMBER_NO = MEMB.MEMBER_NO
+			  		LEFT OUTER JOIN SPS_EVENTGIFT EVNJ ON EVNT.STORE_ID = EVNJ.STORE_ID AND EVNT.EVENT_ID = EVNJ.EVENT_ID AND EVNT.GIFT_NO = EVNJ.GIFT_NO
+			 WHERE EVNT.STORE_ID = #{storeId}
+			  		AND EVNT.EVENT_ID = #{eventId}
+			  		AND MEMB.MEMBER_NO = #{memberNo}
+			        AND EVNT.WIN_YN = 'Y'
+			              
+			 ORDER BY EVNJ.GIFT_NO, MEM_NAME, MEMB.MEMBER_ID
+		<include refid="ccs.common.pagingPost" />
+	</select>
+	
+	<select id="checkExistEvent" resultType="int">
+		/* [sps.event.checkExistEvent][roy][2016. 9. 5.] */
+		SELECT COUNT(*)
+		  	FROM SPS_EVENT
+			WHERE
+		    	STORE_ID = #{storeId}
+		    	AND EVENT_ID = #{eventId}	
+	</select>
+	
+	<select id="getEventjoinCntInfo" resultType="spsEventjoin">
+		/* [sps.event.getEventjoinCntInfo][stella][2016. 9. 9.] */
+		SELECT
+			SUM(NVL(E.EVENT_COUNT, 0)) OVER()	AS TOTAL_COUNT
+			, (CASE WHEN E.EVENT_STATE_CD IS NOT NULL AND E.EVENT_STATE_CD = 'EVENT_STATE_CD.RUN'
+						THEN SUM(EVENT_COUNT) OVER() ELSE 0 END)	AS RUN_EVENT_COUNT			
+			, (CASE WHEN E.EVENT_STATE_CD IS NOT NULL AND E.EVENT_STATE_CD = 'EVENT_STATE_CD.STOP'
+						THEN SUM(EVENT_COUNT) OVER() ELSE 0 END)	AS STOP_EVENT_COUNT
+		  FROM
+		  	(SELECT
+		  		(CASE WHEN EJ.EVENT_ID IS NULL THEN 0 ELSE COUNT(EJ.EVENT_ID) OVER() END)		AS EVENT_COUNT
+		  		, E.EVENT_STATE_CD
+		  	  FROM
+		  	  	SPS_EVENTJOIN EJ
+		  	  	JOIN SPS_EVENT E
+		  	  		ON E.STORE_ID = EJ.STORE_ID
+		  	  		AND E.EVENT_ID = EJ.EVENT_ID
+		  	 WHERE
+		  	 	EJ.STORE_ID = #{storeId}
+		  	 	AND EJ.MEMBER_NO = #{memberNo}
+		  	 	AND E.EVENT_STATE_CD = 'EVENT_STATE_CD.RUN'
+		  	 	AND (E.EVENT_START_DT <![CDATA[<=]]> TO_DATE (#{endDate}, 'YYYY-MM-DD HH24:MI:SS') 
+				 			AND E.EVENT_END_DT <![CDATA[>=]]> TO_DATE (#{startDate}, 'YYYY-MM-DD HH24:MI:SS'))
+		  	 GROUP BY
+		  		EJ.EVENT_ID, E.EVENT_STATE_CD
+		  	UNION
+		  	SELECT
+		  		 (CASE WHEN EJ.EVENT_ID IS NULL THEN 0 ELSE COUNT(EJ.EVENT_ID) OVER() END)		AS EVENT_COUNT
+		  		, E.EVENT_STATE_CD
+		  	  FROM
+		  	  	SPS_EVENTJOIN EJ
+		  	  	JOIN SPS_EVENT E
+		  	  		ON E.STORE_ID = EJ.STORE_ID
+		  	  		AND E.EVENT_ID = EJ.EVENT_ID
+		  	 WHERE
+		  	 	EJ.STORE_ID = #{storeId}
+		  	 	AND EJ.MEMBER_NO = #{memberNo}
+		  	 	AND E.EVENT_STATE_CD = 'EVENT_STATE_CD.STOP'
+		  	 	AND (E.EVENT_START_DT <![CDATA[<=]]> TO_DATE (#{endDate}, 'YYYY-MM-DD HH24:MI:SS') 
+				 			AND E.EVENT_END_DT <![CDATA[>=]]> TO_DATE (#{startDate}, 'YYYY-MM-DD HH24:MI:SS'))
+		  	 GROUP BY
+		  		EJ.EVENT_ID, E.EVENT_STATE_CD) E
+	</select>
+	
+	<resultMap type="spsEventjoin" id="getEventjoinResult" autoMapping="true">
+		<id property="eventId" column="EVENT_ID" />
+		<association property="spsEvent" javaType="spsEvent" resultMap="getEventInfoMap" />
+	</resultMap>
+	<resultMap type="spsEvent" id="getEventInfoMap" autoMapping="true">
+		<id property="eventId" column="EVENT_ID" />
+	</resultMap>		
+	<select id="getEventjoinHistory" resultMap="getEventjoinResult">
+		/* [sps.event.getEventjoinHistory][stella][2016. 9. 9.] */
+		<include refid="ccs.common.pagingPre" />
+			SELECT
+				E.*
+				, (CASE WHEN E.EVENT_TYPE_CD = 'EVENT_TYPE_CD.EXP' AND E.WIN_YN = 'Y' THEN 'EXP' 
+						ELSE (CASE WHEN E.EVENT_STATE_CD = 'EVENT_STATE_CD.RUN' THEN 'RUN'
+									WHEN E.EVENT_STATE_CD = 'EVENT_STATE_CD.STOP' THEN 'STOP'						
+								END) END)		AS GUBUN
+			  FROM
+			  	(SELECT
+					E.EVENT_ID
+					, E.NAME
+					, E.EVENT_TYPE_CD
+					, E.EVENT_STATE_CD
+					, TO_CHAR(E.EVENT_START_DT, 'YYYY/MM/DD')		AS EVENT_START_DT
+					, TO_CHAR(E.EVENT_END_DT, 'YYYY/MM/DD')		AS EVENT_END_DT
+					, EJ.WIN_YN
+					, E.WIN_NOTICE_DATE
+				  FROM
+				  	SPS_EVENTJOIN EJ
+				  	JOIN SPS_EVENT E
+				  		ON E.STORE_ID = EJ.STORE_ID
+				  		AND E.EVENT_ID = EJ.EVENT_ID
+				 WHERE
+				 	E.STORE_ID = #{storeId}
+				 	AND EJ.MEMBER_NO = #{memberNo}
+				 	<if test="eventStateCd != null and eventStateCd != ''">
+				 		AND E.EVENT_STATE_CD = #{eventStateCd}
+				 	</if>
+				 	<if test="eventStateCd == null or eventStateCd == ''">
+				 		AND E.EVENT_STATE_CD IN ('EVENT_STATE_CD.RUN', 'EVENT_STATE_CD.STOP')
+				 	</if>
+				 	<if test="startDate != null and startDate != ''">
+				 		<if test="endDate != null and endDate != ''">
+				 			AND (EVENT_START_DT <![CDATA[<=]]> TO_DATE (#{endDate}, 'YYYY-MM-DD HH24:MI:SS') 
+				 			AND EVENT_END_DT <![CDATA[>=]]> TO_DATE (#{startDate}, 'YYYY-MM-DD HH24:MI:SS'))
+				 		</if> 		
+				 	</if>
+				 GROUP BY
+					E.EVENT_ID
+					, E.NAME
+					, E.EVENT_TYPE_CD
+					, E.EVENT_STATE_CD
+					, E.EVENT_START_DT
+					, E.EVENT_END_DT
+					, EJ.WIN_YN
+					, E.WIN_NOTICE_DATE) E
+		<include refid="ccs.common.pagingPost" />	
+	</select>
+	
+	<insert id="insertEvent" parameterType="spsEvent">
+		/* [sps.event.insertEvent][stella][2016. 9. 21.] */
+		<selectKey keyProperty="eventId" resultType="String" order="BEFORE">
+			SELECT NVL(MAX(TO_NUMBER(EVENT_ID)) + 1, 1) AS eventId FROM SPS_EVENT WHERE STORE_ID = #{storeId}
+		</selectKey>
+		INSERT
+			INTO SPS_EVENT (
+				STORE_ID
+				, EVENT_ID
+				, NAME
+				, DETAIL
+				, EVENT_TYPE_CD
+				, PRODUCT_ID
+				, EVENT_DIV_CD
+				, EVENT_START_DT
+				, EVENT_END_DT
+				, EVENT_JOIN_START_DT
+				, EVENT_JOIN_END_DT
+				, LOTTERY_TYPE_CD
+				, JOIN_CONTROL_CD
+				, CONTROL_NO
+				, DISPLAY_YN
+				, IMG1
+				, IMG2
+				, TEXT1
+				, TEXT2
+				, HTML1
+				, HTML2
+				, WIN_NOTICE_DATE
+				, EVENT_STATE_CD
+				, INS_DT
+				, INS_ID
+				, UPD_DT
+				, UPD_ID
+				, WINNER_NUMBER
+				, WINNER_SHOW_YN
+				, PS_REGISTER_END_DT
+			) VALUES (
+				#{storeId}
+				, #{eventId}
+				, #{name}
+				, #{detail}
+				, #{eventTypeCd}
+				, #{productId}
+				, #{eventDivCd}
+				, TO_DATE(#{eventStartDt}, 'YYYY-MM-DD HH24:MI:SS')
+				, TO_DATE(#{eventEndDt}, 'YYYY-MM-DD HH24:MI:SS')
+				, TO_DATE(#{eventJoinStartDt}, 'YYYY-MM-DD HH24:MI:SS')
+				, TO_DATE(#{eventJoinEndDt}, 'YYYY-MM-DD HH24:MI:SS')
+				, #{lotteryTypeCd}
+				, #{joinControlCd}
+				, #{controlNo}
+				, #{displayYn}
+				, #{img1}
+				, #{img2}
+				, #{text1}
+				, #{text2}
+				, #{html1}
+				, #{html2}
+				, TO_DATE(#{winNoticeDate}, 'YYYY-MM-DD HH24:MI:SS')
+				, #{eventStateCd}
+				, SYSDATE 
+				, #{insId}
+				, SYSDATE
+				, #{updId}
+				, #{winnerNumber}
+				, #{winnerShowYn}
+				<if test="psRegisterEndDt != null and psRegisterEndDt != ''">
+					, TO_DATE(#{psRegisterEndDt}, 'YYYY-MM-DD HH24:MI:SS') 
+				</if>
+				<if test="psRegisterEndDt == null or psRegisterEndDt == ''">
+					, NULL
+				</if>
+			)
+	</insert>
+	
+	<update id="updateEventInfo" parameterType="spsEvent">
+		/* [sps.event.updateEventInfo][stella][2016. 9. 21.] */
+		UPDATE
+			SPS_EVENT
+		  SET
+		  	NAME = #{name}
+		  	, DETAIL = #{detail}
+		  	, EVENT_TYPE_CD = #{eventTypeCd}
+		  	, EVENT_DIV_CD = #{eventDivCd}
+		  	, EVENT_START_DT = TO_DATE(#{eventStartDt}, 'YYYY-MM-DD HH24:MI:SS')
+		  	, EVENT_END_DT = TO_DATE(#{eventEndDt}, 'YYYY-MM-DD HH24:MI:SS')
+		  	, EVENT_JOIN_START_DT = TO_DATE(#{eventJoinStartDt}, 'YYYY-MM-DD HH24:MI:SS')
+		  	, EVENT_JOIN_END_DT = TO_DATE(#{eventJoinEndDt}, 'YYYY-MM-DD HH24:MI:SS')
+		  	, JOIN_CONTROL_CD = #{joinControlCd}
+		  	, DISPLAY_YN = #{displayYn}
+		  	, IMG1 = #{img1}
+		  	, IMG2 = #{img2}
+		  	, HTML1 = #{html1}
+		  	, HTML2 = #{html2}
+		  	, WIN_NOTICE_DATE = TO_DATE(#{winNoticeDate}, 'YYYY-MM-DD HH24:MI:SS')
+		  	, EVENT_STATE_CD = #{eventStateCd}
+		  	, WINNER_NUMBER = #{winnerNumber}
+		  	, WINNER_SHOW_YN = #{winnerShowYn}
+		  	, UPD_DT = SYSDATE
+		  	, UPD_ID = #{updId}
+		WHERE
+			STORE_ID = #{storeId}
+			AND EVENT_ID = #{eventId}
+	</update>
+	
+	<select id="getBrandEventInfo" resultMap="eventDetailMap">
+		/* [sps.event.getBrandEventInfo][stella][2016. 9. 30.] */
+		SELECT
+			E.*
+		  FROM
+		  	SPS_EVENT E
+		  	JOIN SPS_EVENTBRAND EB
+		  		ON E.STORE_ID = EB.STORE_ID
+		  		AND E.EVENT_ID = EB.EVENT_ID
+		  		AND EB.BRAND_ID = #{brandId}
+		 WHERE
+		 	E.STORE_ID = #{storeId}
+		 	AND (E.EVENT_START_DT <![CDATA[<=]]> SYSDATE AND E.EVENT_END_DT <![CDATA[>=]]> SYSDATE)
+		 	AND E.DISPLAY_YN = 'Y'
+		 	AND E.EVENT_STATE_CD = 'EVENT_STATE_CD.RUN'
+		 ORDER BY
+		 	E.EVENT_START_DT DESC, E.INS_DT DESC
+	</select>
+	
+	<!-- FO 이벤트 -->
+	<select id="getRunAllEventList" resultType="spsEvent">
+		/* [sps.event.getRunAllEventList][stella][2016. 9. 30.] */
+		SELECT
+			E.*
+		 FROM
+		 	(SELECT
+		 		*
+			   FROM
+			 	SPS_EVENT E
+			  WHERE
+				E.STORE_ID = #{storeId}
+				AND E.EVENT_TYPE_CD NOT IN ('EVENT_TYPE_CD.EXP')
+				AND E.DISPLAY_YN = 'Y'
+				AND (E.EVENT_START_DT <![CDATA[<=]]> SYSDATE AND E.EVENT_END_DT <![CDATA[>=]]> SYSDATE)
+				AND EXISTS (SELECT CONTROL_NO 
+							  FROM CCS_CONTROLDEVICE 
+							 WHERE STORE_ID = E.STORE_ID 
+							 		AND CONTROL_NO = E.CONTROL_NO 
+							 		AND DEVICE_TYPE_CD = #{controlDeviceTypeCd})
+			UNION
+			SELECT
+				*
+			  FROM
+			 	SPS_EVENT
+			 WHERE
+				STORE_ID = #{storeId}
+				AND EVENT_TYPE_CD NOT IN ('EVENT_TYPE_CD.EXP')
+				AND DISPLAY_YN = 'Y'
+				AND (EVENT_START_DT <![CDATA[<=]]> SYSDATE AND EVENT_END_DT <![CDATA[>=]]> SYSDATE)
+				AND	CONTROL_NO IS NULL) E
+		ORDER BY
+			E.INS_DT DESC	
+	</select>
+	
+	<resultMap id="expEventResult" type="spsEvent" autoMapping="true">
+		<id property="eventId" column="EVENT_ID" />
+		<association property="pmsProduct" javaType="pmsProduct">
+			<id property="productId" column="PRODUCT_ID" />
+			<result property="name" column="PRODUCT_NAME" />
+			<result property="detail" column="PRODUCT_DETAIL" />
+		</association>
+		<collection property="spsEventbrands" column="{storeId=STORE_ID,eventId=EVENT_ID}" javaType="java.util.ArrayList" select="sps.event.getEventBrands" />
+	</resultMap>
+	<select id="getExpEventList" resultMap="expEventResult">
+		/* [sps.event.getExpEventList][stella][2016. 11. 14.] */
+		SELECT
+			E.EVENT_ID
+			, E.STORE_ID
+			, (SELECT NAME 
+				 FROM PMS_BRAND 
+				WHERE STORE_ID = E.STORE_ID 
+					  AND BRAND_ID = (SELECT BRAND_ID 
+					  					FROM SPS_EVENTBRAND 
+					  				   WHERE STORE_ID = E.STORE_ID 
+					  				   		 AND EVENT_ID = E.EVENT_ID))   AS EVENT_BRAND
+			, E.NAME
+			, P.NAME	AS PRODUCT_NAME
+			, E.DETAIL
+			, P.DETAIL		AS PRODUCT_DETAIL
+			, E.EVENT_JOIN_START_DT
+			, E.EVENT_JOIN_END_DT
+			, E.IMG1
+			, E.IMG2
+			, E.TEXT1
+			, E.TEXT2
+			, E.HTML1
+			, E.HTML2
+			, E.WIN_NOTICE_DATE
+			, E.WINNER_NUMBER
+			, (SELECT COUNT(EVENT_ID) FROM SPS_EVENTJOIN WHERE STORE_ID= E.STORE_ID AND EVENT_ID = E.EVENT_ID GROUP BY EVENT_ID)        AS JOIN_NUMBER
+			, E.PS_REGISTER_END_DT
+			, (CASE WHEN SUBSTR(TO_CHAR(E.EVENT_START_DT, 'YYYYMMDD HH24:MI:SS'), 0, 8) = SUBSTR(TO_CHAR(SYSDATE, 'YYYYMMDD HH24:MI:SS'), 0, 8) THEN 'NEW' 
+                    WHEN SUBSTR(TO_CHAR(E.WIN_NOTICE_DATE, 'YYYYMMDD HH24:MI:SS'), 0, 8) = SUBSTR(TO_CHAR(SYSDATE, 'YYYYMMDD HH24:MI:SS'), 0, 8) THEN 'PSING' 
+                    WHEN E.EVENT_JOIN_END_DT <![CDATA[<=]]> SYSDATE THEN 'JOINEND' END)     AS EXP_BADGE
+		 FROM
+		 	SPS_EVENT E
+		 	JOIN PMS_PRODUCT P
+		 		ON P.STORE_ID = E.STORE_ID
+		 		AND P.PRODUCT_ID = E.PRODUCT_ID
+		WHERE
+			E.STORE_ID = #{storeId}
+			<if test="eventId != null and eventId != ''">
+				AND E.EVENT_ID = #{eventId}
+			</if>
+			AND E.DISPLAY_YN = 'Y'
+			AND E.EVENT_TYPE_CD = 'EVENT_TYPE_CD.EXP'
+			AND (E.EVENT_START_DT <![CDATA[<=]]> SYSDATE AND E.EVENT_END_DT <![CDATA[>=]]> SYSDATE)
+		ORDER BY
+			E.INS_DT DESC
+	</select>
+	
+	<select id="getEventBrands" resultType="spsEventbrand">
+		SELECT
+			NAME		AS BRAND_NAME
+		  FROM
+		  	PMS_BRAND
+		 WHERE
+		 	STORE_ID = #{storeId}
+		 	AND BRAND_ID = (SELECT BRAND_ID
+		 					  FROM SPS_EVENTBRAND
+		 					 WHERE STORE_ID = #{storeId}
+		 					 	   AND EVENT_ID = #{eventId})
+	</select>
+	
+	<select id="getVividityEventDetail" resultType="spsEventjoin">
+		/* [sps.event.getVividityEventDetail][stella][2016. 11. 14.] */
+		<include refid="ccs.common.pagingPre" />
+		SELECT
+			E.EVENT_ID
+            , (SELECT MEMBER_ID FROM MMS_MEMBER WHERE MEMBER_NO = EJ.MEMBER_NO)     AS MEM_NAME
+            , MEMBER_NO
+            , EJ.DETAIL
+            , EJ.INS_DT
+		 FROM
+		 	SPS_EVENT E
+		 	JOIN SPS_EVENTJOIN EJ
+		 		ON EJ.STORE_ID = E.STORE_ID
+		 		AND EJ.EVENT_ID = E.EVENT_ID
+		WHERE
+			E.STORE_ID = #{storeId}
+			AND E.EVENT_ID = #{eventId}
+		ORDER BY
+			EJ.INS_DT DESC
+		<include refid="ccs.common.pagingPost" />
+	</select>
+	
+	<insert id="insertEventJoin" parameterType="spsEventjoin">
+		/* [sps.event.insertEventJoin][stella][2016. 11. 18.] */
+		<selectKey keyProperty="joinNo" order="BEFORE" resultType="int">
+			SELECT NVL (JOIN_NO, 1) AS joinNo
+		  		FROM (SELECT MAX (JOIN_NO) + 1 AS JOIN_NO FROM SPS_EVENTJOIN WHERE STORE_ID = #{storeId} AND EVENT_ID = #{eventId}) DUAL
+		</selectKey>
+		INSERT
+			INTO SPS_EVENTJOIN (
+				STORE_ID
+				, EVENT_ID
+				, JOIN_NO
+				, URL
+				, DETAIL
+				, WIN_YN
+				, GIFT_NO
+				, NOTE
+				, MEMBER_NO
+				, NAVERBLOG_URL
+				, INSTAGRAM_URL
+				, FACEBOOK_URL
+				, KAKAOSTORY_URL
+				, INS_DT
+				, INS_ID
+				, UPD_DT
+				, UPD_ID
+			) VALUES (
+				#{storeId}
+				, #{eventId}
+				, #{joinNo}
+				, #{url}
+				, #{detail}
+				, #{winYn}
+				, #{giftNo}
+				, #{note}
+				, #{memberNo}
+				, #{naverblogUrl}
+				, #{instagramUrl}
+				, #{facebookUrl}
+				, #{kakaostoryUrl}
+				, SYSDATE
+				, #{insId}
+				, SYSDATE
+				, #{updId}
+			)
+	</insert>
+</mapper>

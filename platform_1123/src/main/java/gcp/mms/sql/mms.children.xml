@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="mms.children">
+	
+	<select id="getChildrenCardList" resultType="mmsChildrencard">
+		/* [member.getChildrenCardList][allen][2016. 7. 17.] */
+		<include refid="ccs.common.pagingPre"/>
+		SELECT 
+				  ACCOUNT_NO
+				, CHILDRENCARD_TYPE_CD
+				, START_DT
+				, END_DT
+				, REG_YN
+				, MEMBER_NO
+				, NAME
+				, INS_DT
+				, INS_ID
+				, UPD_DT
+				, UPD_ID
+				, ACCOUNT_NO AS BEFORE_ACCOUNT_NO
+				,(SELECT US.NAME FROM CCS_USER US WHERE MMS_CHILDRENCARD.INS_ID = US.USER_ID AND ROWNUM=1) AS INS_NAME
+			    ,(SELECT US.NAME FROM CCS_USER US WHERE MMS_CHILDRENCARD.UPD_ID = US.USER_ID AND ROWNUM=1) AS UPD_NAME
+		  FROM MMS_CHILDRENCARD
+		  WHERE 1=1
+		  <if test="cardNos != null and cardNos != ''">
+		  	AND ACCOUNT_NO IN (#{cardNos})
+		  </if>
+		  <if test="cardNos == null or cardNos == ''">
+			  <if test="childrencardTypeCd != null and childrencardTypeCd != ''">
+			  	AND CHILDRENCARD_TYPE_CD = #{childrencardTypeCd}
+			  </if>
+			  <if test="startDate != null and startDate != ''">
+	   	 	     <if test="endDate != null and endDate != ''">
+	   	 			AND	INS_DT &gt;= TO_DATE (#{startDate}, 'YYYY-MM-DD HH24:MI:SS') 
+					AND INS_DT &lt;= TO_DATE (#{endDate}, 'YYYY-MM-DD HH24:MI:SS')
+	   	 		 </if> 
+		      </if>
+		  </if>
+		<include refid="ccs.common.pagingPost"/>
+	</select>
+	
+	<select id="getChildrenCardInfo" resultType="mmsChildrencard">
+	/* [member.getChildrenCardInfo][allen][2016. 10. 27.] */
+		SELECT 
+				  ACCOUNT_NO
+				, CHILDRENCARD_TYPE_CD
+				, START_DT
+				, END_DT, REG_YN, MEMBER_NO
+				, INS_DT
+				, INS_ID
+				, UPD_DT
+				, UPD_ID
+				, NAME
+		  FROM MMS_CHILDRENCARD
+		  WHERE 1=1
+		  	<if test="memberName != null and memberName != ''">
+		  		AND NAME = #{memberName}
+		  	</if>
+		  	<if test="accountNo != null and accountNo != ''">
+		    	AND ACCOUNT_NO = #{accountNo}
+		  	</if>
+		  	<if test="childrencardTypeCd != null and childrencardTypeCd != ''">
+		    	AND CHILDRENCARD_TYPE_CD = #{childrencardTypeCd}
+		  	</if>
+	</select>
+	
+	<!-- 다자녀카드 인증 등록 -->
+	<update id="updateChildrencardInfo">
+	/* [member.updateChildrencardInfo][allen][2016. 10. 27.] */
+		UPDATE MMS_CHILDRENCARD
+		   SET 
+		         REG_YN    = #{regYn}
+		       , MEMBER_NO = #{memberNo}
+		       , UPD_DT    = SYSDATE
+		       , UPD_ID    = #{updId}
+		WHERE ACCOUNT_NO  = #{accountNo}
+		  AND NAME = #{name}
+		  AND CHILDRENCARD_TYPE_CD = #{childrencardTypeCd}
+	</update>
+	
+	<!-- 다자녀 카드 등록 -->
+	<insert id="insertChildrencard">
+		INSERT 
+		  INTO MMS_CHILDRENCARD (
+			   	 ACCOUNT_NO
+			   , CHILDRENCARD_TYPE_CD
+			   , START_DT
+			   , END_DT
+			   , REG_YN
+			   , MEMBER_NO
+			   , INS_DT
+			   , INS_ID
+			   , UPD_DT
+			   , UPD_ID
+			   , NAME) 
+		VALUES (  #{accountNo}
+				, #{childrencardTypeCd}
+				, SYSDATE
+				, SYSDATE + (INTERVAL '3' YEAR)
+				, 'N'  
+				, ''
+				, SYSDATE
+				, #{insId} 
+				, SYSDATE
+				, #{updId} 
+				, #{name}) 
+	</insert>
+	
+	<!-- 다자녀카드 정보 수정 -->
+	<update id="updateChildrencard">
+	/* [member.updateChildrencard][allen][2016. 10. 27.] */
+		UPDATE MMS_CHILDRENCARD
+		   SET 
+		         ACCOUNT_NO 			= #{accountNo}
+		       , NAME 					= #{name}
+		       , CHILDRENCARD_TYPE_CD 	= #{childrencardTypeCd}
+		       , UPD_DT    				= SYSDATE
+		       , UPD_ID    				= #{updId}
+		WHERE ACCOUNT_NO = #{beforeAccountNo}
+	</update>
+	
+</mapper>

@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="pms.brand">
+	<select id="getBrandPopupList" resultType="pmsBrand">
+		/* [pms.brand.getBrandPopupList][dennis][2016. 5. 25.] */
+		<include refid="ccs.common.pagingPre"/>
+		  			SELECT A.NAME,
+		                   A.BRAND_ID,
+		                   A.TEMPLATE_ID,
+		                   A.DISPLAY_YN,
+		                   A.INS_DT,
+		                   A.INS_ID,
+		                   A.UPD_DT,
+		                   A.UPD_ID
+		                   ,(SELECT US.NAME FROM CCS_USER US WHERE A.INS_ID = US.USER_ID AND ROWNUM=1) AS INS_NAME
+			  			   ,(SELECT US.NAME FROM CCS_USER US WHERE A.UPD_ID = US.USER_ID AND ROWNUM=1) AS UPD_NAME
+		              FROM PMS_BRAND A
+		             WHERE A.STORE_ID = #{storeId}
+		            <if test="displayYn != null and displayYn != ''">
+		            	AND A.DISPLAY_YN = #{displayYn}
+		            </if>	
+		             <if test="searchName != null and searchName != ''">
+							AND A.NAME LIKE '%' || #{searchName} || '%'
+					</if>
+					 <if test="searchBrandId != null and searchBrandId != ''">
+						AND A.BRAND_ID = #{searchBrandId}
+					</if>             
+		            <if test="type != null and type != '' and searchKeyword != null and searchKeyword != ''">
+						<if test="type == 'NAME'">
+							AND A.NAME LIKE '%' || #{searchKeyword} || '%'
+						</if>
+						<if test="type == 'ID'">
+							AND A.BRAND_ID = #{searchKeyword}
+						</if>
+					</if>
+		 <include refid="ccs.common.pagingPost"/>
+	</select>
+	
+	<select id="getCouponBrandList" parameterType="brandSearch" resultType="pmsBrand" >
+	/* [pms.brand.getCouponBrandList][allen][2016. 5. 17.] */
+		<include refid="ccs.common.pagingPre" />
+			SELECT 
+				PB.* 
+				<if test="storeId!=null and storeId!=''">
+					<if test="loginId!=null and loginId!=''">
+					, CONCAT((SELECT NAME1 FROM MMS_MEMBER WHERE MEM_ID = #{loginId} AND STORE_ID = #{storeId} ) AS INS_NAME
+					, CONCAT((SELECT NAME1 FROM MMS_MEMBER WHERE MEM_ID = #{loginId} AND STORE_ID = #{storeId} ) AS UPD_NAME
+					</if>
+				</if>
+			  FROM PMS_BRAND PB 
+<!-- 			  WHERE DISPLAY_YN = 'Y' -->
+			    <if test="storeId!=null and storeId!=''">
+			    	WHERE STORE_ID = #{storeId}
+			    </if>
+			  ORDER BY TO_NUMBER(SORT_NO)
+		<include refid="ccs.common.pagingPost" />
+	</select>
+	
+	<resultMap type="pmsBrand" id="getBrandResult">
+		<id property="brandId" column="BRAND_ID" />
+		<result property="name" column="NAME" />
+		<result property="displayYn" column="DISPLAY_YN" />
+		<result property="insId" column="INS_ID" />
+		<result property="insDt" column="INS_DT" />
+		<result property="updId" column="UPD_ID" />
+		<result property="updDt" column="UPD_DT" />
+		<result property="insName" column="INS_NAME" />
+		<result property="updName" column="UPD_NAME" />
+		<result property="totalCount" column="TOTAL_COUNT" />
+		<association property="dmsTemplate" javaType="dmsTemplate">
+			<id property="templateId" column="TEMPLATE_ID" />
+			<result property="templateTypeCd" column="TEMPLATE_TYPE_CD" />
+		</association>						
+	</resultMap>
+	<select id="getBrandList" resultMap="getBrandResult">
+		/* [pms.brand.getBrandList][stella][2016.07.14] */
+		<include refid="ccs.common.pagingPre" />
+			SELECT
+				B.BRAND_ID
+				, B.NAME
+				, B.DISPLAY_YN
+				, T.TEMPLATE_ID
+				, T.NAME		AS TEMPLATE_TYPE_CD
+				, B.INS_ID
+				, (SELECT CU.NAME FROM CCS_USER CU WHERE CU.USER_ID = B.INS_ID)     AS INS_NAME
+			    , B.INS_DT
+			    , B.UPD_ID  
+			    , (SELECT CU.NAME FROM CCS_USER CU WHERE CU.USER_ID = B.UPD_ID)     AS UPD_NAME
+			    , B.UPD_DT
+			 FROM
+			 	PMS_BRAND B
+			 	LEFT OUTER JOIN DMS_TEMPLATE T
+			 		ON B.STORE_ID = T.STORE_ID
+			 		AND B.TEMPLATE_ID = T.TEMPLATE_ID
+			WHERE
+				B.STORE_ID = #{storeId}
+				AND B.BRAND_ID NOT IN '0'
+				<if test="startDate != null and startDate != ''">
+					<if test="endDate != null and endDate != ''">
+						AND B.INS_DT <![CDATA[<=]]> TO_DATE (#{endDate}, 'YYYY-MM-DD HH24:MI:SS') 
+						AND B.INS_DT <![CDATA[>=]]> TO_DATE (#{startDate}, 'YYYY-MM-DD HH24:MI:SS')
+					</if>
+				</if>
+				<if test="displayYnCds != null and displayYnCds != ''">
+					AND B.DISPLAY_YN IN (${displayYnCds})
+				</if>
+				<if test="templateId != null and templateId != ''">
+					AND B.TEMPLATE_ID = #{templateId}
+				</if>
+				<if test="searchKeyword != null and searchKeyword != ''">					
+					<if test="searchKeyword == 'name'">
+						<if test="brand != null and brand != ''">
+							AND B.NAME LIKE '%' || #{brand} || '%'
+						</if>	
+					</if>
+					<if test="searchKeyword == 'brandId'">
+						<if test="brandIds != null and brandIds != ''">
+							AND B.BRAND_ID IN (${brandIds})
+						</if>
+						
+					</if>						
+				</if>
+			ORDER BY
+				B.INS_DT DESC
+		<include refid="ccs.common.pagingPost" />
+	</select>
+	
+	<select id="getBrandDetail" resultType="pmsBrand">
+		/* [pms.brand.getBrandDetail][stella][2016.07.14] */
+		SELECT
+			BRAND_ID
+			, NAME
+			, TEMPLATE_ID
+			, ERP_BRAND_ID
+			, DETAIL
+			, LOGO_IMG
+			, IMG1
+			, IMG2
+		 FROM
+		 	PMS_BRAND
+		WHERE
+			STORE_ID = #{storeId}
+			AND BRAND_ID = #{brandId}
+	</select>
+
+	<insert id="insertBrand">
+		<selectKey keyProperty="brandId" resultType="String" order="BEFORE">
+		/* [pms.brand.insertBrand][eddie][2016.05.04] */
+		SELECT NVL (BRAND_ID, 1) BRAND_ID
+		  FROM (SELECT MAX (TO_NUMBER (BRAND_ID)) + 1 BRAND_ID FROM PMS_BRAND WHERE STORE_ID= #{storeId}) DUAL
+		</selectKey>	
+		INSERT INTO PMS_BRAND (STORE_ID,
+		                         BRAND_ID,
+		                         ERP_BRAND_ID,
+		                         NAME,
+		        				 LOGO_IMG,
+		                         TEMPLATE_ID,
+		                         SORT_NO,
+		                         DISPLAY_YN,
+		                         INS_DT,
+		                         INS_ID,
+		                         UPD_DT,
+		                         UPD_ID)
+		     VALUES (#{storeId},
+		             #{brandId},
+		             #{erpBrandId},
+		             #{name},
+		             #{logoImg},
+		             #{templateId},
+		             #{sortNo},
+		             #{displayYn},
+		             SYSDATE,
+		             #{insId},
+		             SYSDATE,
+		             #{updId}
+		             )		             	
+	</insert>
+			
+	<select id="checkChildBrandExist" resultType="string">
+	    /* [psm.brand.checkChildBrandExist][eddie][2016.05.04] */
+		SELECT 1
+		  FROM PMS_BRAND
+			WHERE STORE_ID = #{storeId}
+		   AND ROWNUM &lt; 2
+	</select>
+		
+	<select id="checkBrandProductMap" resultType="string">
+	/* [psm.brand.checkBrandProductMap][eddie][2016.05.04] */
+		SELECT 1
+		  FROM PMS_PRODUCT
+		 WHERE BRAND_ID = #{brandId} AND STORE_ID= #{storeId} AND ROWNUM &lt; 2	
+	</select>
+	
+	<select id="getBrandByErpBrandId" resultType="pmsBrand">
+	/* [psm.brand.getBrandByErpBrandId][eddie][2016.05.04] */
+		SELECT *
+		  FROM PMS_BRAND
+		 WHERE ERP_BRAND_ID = #{erpBrandId} AND STORE_ID= #{storeId}
+	</select>
+	
+	<select id="checkExhibitBrandMap" resultType="string">
+	/* [psm.brand.checkExhibitBrandMap][eddie][2016.05.04] */
+		SELECT 1
+		  FROM DMS_EXHIBITBRAND
+		 WHERE BRAND_ID = #{brandId} AND STORE_ID = #{storeId} AND ROWNUM &lt; 2	
+	</select>
+	
+	<select id="checkEventBrandMap" resultType="string">
+	/* [psm.brand.checkEventBrandMap][eddie][2016.05.04] */
+		SELECT 1
+		  FROM SPS_EVENTBRAND
+		 WHERE BRAND_ID = #{brandId} AND STORE_ID = #{storeId} AND ROWNUM &lt; 2
+	</select>
+	
+	<select id="getBrandNameList" resultType="pmsBrand">
+		SELECT
+			BRAND_ID
+			, NAME
+		  FROM
+		  	PMS_BRAND
+		WHERE
+			STORE_ID = #{storeId}
+		ORDER BY
+			TO_NUMBER(SORT_NO)
+	</select>
+	
+	<select id="getBrandCodeList" resultType="pmsBrand">
+		/*[psm.brand.getBrandCodeList][emily][2016. 11. 01.]*/
+		SELECT  PB.*
+			FROM CCS_CODEGROUP GP, 
+			    CCS_CODE CO,
+			    PMS_BRAND PB
+			WHERE GP.CD_GROUP_CD = CO.CD_GROUP_CD
+			    AND CO.CD = PB.BRAND_ID
+			    AND GP.CD_GROUP_CD = 'BRAND_CD'
+			    AND CO.USE_YN = 'Y'
+			    AND PB.DISPLAY_YN = 'Y'
+			    <if test="brandId != null and brandId !=''">
+			    	AND PB.BRAND_ID = #{brandId}
+			    </if>
+			ORDER BY PB.SORT_NO
+	</select>
+	
+	<resultMap type="pmsBrand" id="getRecommendBrandResultMap" autoMapping="true">
+		<result property="corporateYn" column="CORPORATE_YN"/>
+	</resultMap>
+	<select id="getRecommendBrand" resultMap="getRecommendBrandResultMap">
+		/*[psm.brand.getRecommendBrand][emily][2016. 11. 01.]*/
+		SELECT B.*,
+				(CASE 
+				    WHEN B.CD = 'Y'AND (B.TEMPLATE_ID IS NOT NULL OR B.TEMPLATE_ID <![CDATA[<>]]>'')
+				    THEN 'Y'
+				    ELSE 'N'
+				END)CORPORATE_YN
+		FROM ( SELECT PB.*, NVL2(C.CD,'Y','N')CD
+				FROM PMS_BRAND PB
+				LEFT OUTER JOIN (SELECT CO.CD
+							FROM CCS_CODEGROUP GP,CCS_CODE CO
+							WHERE GP.CD_GROUP_CD = CO.CD_GROUP_CD
+							AND GP.CD_GROUP_CD = 'BRAND_CD'
+							AND CO.USE_YN = 'Y'
+				)C
+				ON (PB.BRAND_ID = C.CD)
+				WHERE  PB.DISPLAY_YN = 'Y'
+				AND NAME LIKE #{searchKeyword} ||'%'              
+				ORDER BY PB.SORT_NO
+		)B
+		WHERE ROWNUM <![CDATA[<]]> 4 
+	</select>
+</mapper>

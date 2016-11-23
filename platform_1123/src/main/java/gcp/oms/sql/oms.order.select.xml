@@ -1,0 +1,1047 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="oms.order.select">
+
+	<!-- 1. default resultmap -->
+	<resultMap type="omsOrder" id="omsOrderMap" autoMapping="true">
+		<id property="orderId" column="order_id" />
+		<result property="siteName" column="site_name" />
+		<result property="deliveryAmt" column="delivery_amt" javaType="bigDecimal" />
+		<result property="wrappingAmt" column="wrapping_amt" javaType="bigDecimal" />
+		<result property="totalPoint" column="total_point" javaType="string" />
+		<result property="orderQty" column="order_qty" javaType="string" />
+		<result property="cancelQty" column="cancel_qty" javaType="string" />
+		<result property="returnQty" column="return_qty" javaType="string" />
+		<result property="exchangeQty" column="exchange_qty" javaType="string" />
+		<result property="outQty" column="out_qty" javaType="string" />
+		<result property="pgShopId" column="pg_shop_id" />
+		<result property="receiver" column="receiver" />
+		<result property="receiverMobile" column="receiver_mobile" />
+		<result property="memoCnt" column="memo_cnt" javaType="int" />
+		<result property="name1" column="orderer_name1" />
+		<result property="phone1" column="orderer_phone1" />
+		<result property="phone2" column="orderer_phone2" />
+		<result property="email" column="orderer_email" />
+		<result property="cancelAllYn" column="cancel_all_yn" />
+		
+		<association property="mmsMemberZts" resultMap="mmsMemberZtsMap" />
+		<association property="mmsMember" resultMap="mmsMemberMap" />
+	</resultMap>
+	<resultMap type="omsDeliveryaddress" id="omsDeliveryaddressMap" autoMapping="true">
+		<id property="orderId" column="order_id"/>	
+		<id property="deliveryAddressNo" column="delivery_address_no"/>
+		<collection property="omsDeliverys" column="{orderId=order_id,deliveryAddressNo=delivery_address_no}" resultMap="omsDeliveryMap"/>
+	</resultMap>
+	<resultMap type="omsDelivery" id="omsDeliveryMap" autoMapping="true">
+		<id property="orderId" column="order_id"/>	
+		<id property="deliveryAddressNo" column="delivery_address_no"/>
+		<id property="deliveryPolicyNo" column="delivery_policy_no"/>
+		
+		<result property="name" column="delivery_name" />
+				
+		<association property="ccsDeliverypolicy" javaType="ccsDeliverypolicy">
+			<id property="deliveryPolicyNo" column="delivery_policy_no"/>
+			<result property="address1" column="business_address1" />		
+			<result property="address2" column="business_address2" />		
+			<result property="address3" column="business_address3" />		
+			<result property="address4" column="business_address4" />		
+			<result property="zipCd" column="business_zip_cd" />		
+		</association>
+	</resultMap>
+	<resultMap type="omsOrderproduct" id="omsOrderproductMap" autoMapping="true">
+		<id property="orderId" column="order_id" />
+		<id property="orderProductNo" column="order_product_no" />
+		<!-- for front claim -->
+		<result property="wrapTogetherYn" column="wrap_together_yn" />		
+		<result property="deliveryChangeYn" column="delivery_change_yn" />
+		<result property="optionChangeYn" column="option_change_yn" />		
+		<result property="cancelYn" column="cancel_yn" />
+		<result property="returnYn" column="return_yn" />
+		<result property="reviewYn" column="review_yn" />
+		<result property="trackingYn" column="tracking_yn" />
+	</resultMap>
+	
+	<resultMap type="omsOrdercoupon" id="omsOrdercouponMap" autoMapping="true">
+		<id property="storeId" column="store_id" />
+		<id property="couponId" column="coupon_id" />
+		<id property="couponIssueNo" column="coupon_issue_no" />
+		<id property="orderId" column="order_id" />
+		<result property="period" column="period" />
+		<result property="refundCouponAmt" column="refund_coupon_amt" />
+	</resultMap>
+	<resultMap type="omsPresentproduct" id="omsPresentproductMap" autoMapping="true">
+		<id property="orderId" column="order_id"/>	
+		<id property="orderProductNo" column="order_product_no"/>
+		<id property="presentId" column="present_id"/>
+		<result property="orderProductNos" column="order_product_nos" />
+		<result property="presentTargetAmt" column="present_target_amt" />
+		<result property="presentClaimAmt" column="present_claim_amt" />
+		<result property="presentMinOrderAmt" column="present_min_order_amt" />
+		<result property="presentMaxOrderAmt" column="present_max_order_amt" />
+	</resultMap>	
+	<resultMap type="mmsMemberZts" id="mmsMemberZtsMap" autoMapping="true">
+		<id property="memberNo" column="member_no" />
+	</resultMap>
+	<resultMap type="mmsMember" id="mmsMemberMap" autoMapping="true">
+		<id property="memberNo" column="member_no" />
+	</resultMap>
+	<resultMap type="omsClaim" id="omsClaimMap" autoMapping="true">
+		<id property="orderId" column="order_id" />
+		<id property="claimNo" column="claim_no" />
+	</resultMap>
+	
+	
+	<!-- 2. extends resultmap -->
+	<resultMap type="omsOrder" id="omsOrderExtendsMap" extends="omsOrderMap" autoMapping="true">
+		<collection property="omsDeliveryaddresss" column="{orderId=order_id}" resultMap="omsDeliveryaddressMap"/>
+		<collection property="omsOrderproducts" column="{orderId=order_id}" resultMap="omsOrderproductMap"/>
+		
+		<collection property="omsClaims" column="{orderId=order_id}" resultMap="omsClaimMap"/>
+		
+	</resultMap>
+	<resultMap type="omsOrderproduct" id="omsOrderproductExtendsMap" extends="omsOrderproductMap" autoMapping="true">
+		<association property="omsOrder" resultMap="omsOrderMap"/>
+	</resultMap>
+
+<!-- 		        ,LISTAGG (t2.name1, ',') WITHIN GROUP (ORDER BY t2.name1) as receiver --><!--  distinct 가 안됨. -->
+<!-- 		        ,LISTAGG (t2.phone2, ',') WITHIN GROUP (ORDER BY t2.phone2) as receiver_mobile -->
+<!-- 				,WM_CONCAT (DISTINCT t2.name1) as receiver -->
+<!-- 				,WM_CONCAT (DISTINCT t2.phone2) as receiver_mobile -->
+<!-- 		        ,SUM (t3.apply_delivery_fee) OVER (PARTITION BY t1.order_id) as delivery_amt배송비합계 -->
+<!-- 		        ,SUM (t3.apply_wrap_fee) OVER (PARTITION BY t1.order_id) as wrapping_amt	포장비합계 -->
+
+<!-- 		        ,SUM (DISTINCT t3.apply_delivery_fee) as delivery_amt배송비합계 -->
+<!-- 		        ,SUM (DISTINCT t3.apply_wrap_fee) as wrapping_amt	포장비합계 -->
+
+	<sql id="product_columns">
+	   t4.add_point
+      ,t4.add_sale_price
+      ,t4.alipay_trans_id
+      ,t4.box_delivery_yn
+      ,t4.box_unit_cd
+      ,t4.box_unit_qty
+      ,t4.brand_id
+      ,t4.business_id
+      ,t4.business_name
+      ,t4.business_phone
+      ,t4.business_product_id
+      ,t4.business_saleproduct_id
+      ,t4.cancel_dt
+      ,t4.cancel_qty
+      ,t4.category_id
+<!--  ,t4.claim_no -->
+      ,t4.commission_rate
+      ,t4.confirm_dt
+      ,t4.currency_cd
+      ,t4.currency_price
+      ,t4.deal_id
+      ,t4.deal_name
+      ,t4.deal_product_no
+      ,t4.deal_type_cd
+<!--       ,t4.delivery_address_no -->
+      ,t4.delivery_cancel_reason_cd
+      ,t4.delivery_dt
+      ,t4.delivery_fee_free_yn
+      ,t4.delivery_order_dt
+<!--       ,t4.delivery_policy_no -->
+      ,t4.delivery_reserve_dt
+      ,t4.delivery_together_qty
+      ,t4.ems_no
+      ,t4.erp_business_id
+      ,t4.erp_color_id
+      ,t4.erp_product_id
+      ,t4.erp_saleproduct_id
+      ,t4.erp_size_id
+      ,t4.exchange_qty
+      ,t4.export_erp_product_id
+      ,t4.fixed_delivery_yn
+<!--  ,t4.ins_dt -->
+<!--  ,t4.ins_id -->
+      ,t4.list_price
+      ,t4.local_delivery_yn
+      ,t4.location_id
+      ,t4.lp_no
+      ,t4.offshop_id
+      ,t4.option_yn
+      ,t4.order_coupon_dc_amt + NVL(t4.calibrate_order_dc_amt, 0) as order_coupon_dc_amt
+      ,t4.order_coupon_id
+      ,t4.order_coupon_issue_no
+      ,t4.order_delivery_type_cd
+<!--  ,t4.order_dt -->
+ 	  ,t4.order_id
+      ,t4.order_product_no
+      ,t4.order_product_state_cd
+      ,t4.order_product_type_cd
+      ,t4.order_qty
+      ,t4.origin_order_product_no
+      ,t4.out_qty
+      ,t4.overseas_purchase_yn
+      ,t4.partner_trans_id
+      ,t4.payment_amt
+      ,t4.personal_customs_code
+      ,t4.plus_coupon_dc_amt + NVL(t4.calibrate_plus_dc_amt, 0) as plus_coupon_dc_amt
+      ,t4.plus_coupon_id
+      ,t4.plus_coupon_issue_no
+      ,t4.plus_single_apply_yn
+      ,t4.point_name
+      ,t4.point_save_id
+      ,t4.point_save_rate
+      ,t4.point_type_cd
+      ,t4.point_value
+      ,t4.present_id
+      ,t4.present_max_order_amt
+      ,t4.present_min_order_amt
+      ,t4.present_name
+      ,t4.product_coupon_dc_amt + NVL(t4.calibrate_product_dc_amt, 0) as product_coupon_dc_amt
+      ,t4.product_coupon_id
+      ,t4.product_coupon_issue_no
+      ,t4.product_single_apply_yn
+      ,t4.product_id
+      ,t4.product_name
+      ,t4.product_notice_type_cd
+      ,t4.product_point
+      ,t4.purchase_yn
+      ,t4.redelivery_qty
+      ,t4.reserve_yn
+      ,t4.return_qty
+      ,t4.sabang_order_id
+      ,t4.sabang_product_id
+      ,t4.sabang_saleproduct_id
+      ,t4.saleproduct_id
+      ,t4.saleproduct_name
+      ,t4.sale_price + NVL(t4.calibrate_sale_price, 0) as sale_price
+      ,t4.sale_type_cd
+      ,t4.save_dt
+      ,t4.send_error_reason_cd
+      ,t4.send_error_yn
+      ,t4.set_qty
+      ,t4.ship_dt
+      ,t4.site_product_id
+	  ,t4.store_id
+      ,t4.supply_price
+      ,t4.tax
+      ,t4.tax_type_cd
+      ,t4.text_option_name
+      ,t4.text_option_value
+      ,t4.text_option_yn
+      ,t4.total_point + NVL(t4.calibrate_point, 0) as total_point
+      ,t4.total_sale_price
+<!--  ,t4.upd_dt -->
+<!--  ,t4.upd_id -->
+      ,t4.upper_order_product_no
+      ,t4.warehouse_id
+      ,t4.waybill_url
+      ,t4.wrap_volume
+      ,t4.wrap_yn	
+	</sql>
+	
+	
+	<sql id="order_columns">
+<!-- 		 t1.order_id  -->
+<!--         , -->
+         t1.order_type_cd
+        ,t1.order_state_cd
+        ,t1.order_delivery_state_cd
+        ,t1.order_amt						<!-- 주문상품합계  -->
+        ,t1.payment_amt	as order_payment_amt<!-- 결제합계 -->
+        ,t1.dc_amt							<!-- 할인합계 -->
+<!--   		,t1.cancel_dt -->
+		,t1.channel_id
+<!-- 		,t1.country_no -->
+		,t1.device_type_cd
+		,t1.email as orderer_email
+		,t1.gift_img_type_cd
+		,t1.gift_msg
+		,t1.gift_name
+		,t1.gift_phone
+		,t1.member_id
+		,t1.member_no
+		,t1.mem_grade_cd
+		,t1.name1 as orderer_name1
+		,t1.order_dt
+		,t1.order_pwd
+		,t1.phone1 as orderer_phone1
+		,t1.phone2 as orderer_phone2
+		,t1.site_id
+		,t1.site_mem_id
+		,t1.site_order_id
+		,t1.site_type_cd
+	</sql>
+	
+	<sql id="address_columns">
+		 t2.address1
+		,t2.address2
+		,t2.address3
+		,t2.address4
+		,t2.country_no
+<!-- 		,t2.delivery_address_no -->
+		,t2.email
+		,t2.name1
+		,t2.name2
+		,t2.name3
+		,t2.name4
+		,t2.note
+		,t2.phone1
+		,t2.phone2
+		,t2.phone3
+		,t2.zip_cd
+	</sql>
+	<sql id="delivery_columns">
+		 t3.apply_delivery_fee
+		,t3.apply_wrap_fee
+		,t3.delivery_address_no
+		,t3.delivery_coupon_dc_amt
+		,t3.delivery_coupon_id
+		,t3.delivery_coupon_issue_no
+		,t3.delivery_fee
+		,t3.delivery_policy_no
+		,t3.delivery_service_cd
+		,t3.min_delivery_free_amt
+		,t3.name as delivery_name
+		,t3.order_delivery_fee
+		,t3.order_wrap_fee
+		,t3.wrap_coupon_dc_amt
+		,t3.wrap_coupon_id
+		,t3.wrap_coupon_issue_no
+		,t3.wrap_together_yn
+	</sql>
+
+	<sql id="itemsBo">
+  		 t1.order_id
+        ,t1.order_dt
+        ,t1.order_type_cd
+        ,t1.order_state_cd
+        ,t1.order_delivery_state_cd
+        ,t1.site_id
+        ,t1.site_order_id
+        
+        ,t1.device_type_cd
+        
+        ,t1.order_amt	<!-- 주문상품합계  -->
+        ,t1.payment_amt	<!-- 결제합계 -->
+        ,t1.dc_amt		<!-- 할인합계 -->
+        
+        ,t1.member_no
+        ,t1.member_id
+        ,t1.name1
+        ,t1.phone1
+        ,t1.phone2
+        ,t1.email
+        ,t1.zip_cd
+        ,t1.address1
+        ,t1.address2
+        
+        <!-- 배송비합계 
+        ,SUM (DISTINCT t3.order_delivery_fee) as delivery_amt
+        -->
+        <!-- 포장비합계 
+        ,SUM (DISTINCT t3.order_wrap_fee) as wrapping_amt
+        -->
+        ,(SELECT SUM (MAX (order_delivery_fee)) AS delivery_amt FROM oms_delivery WHERE order_id = t1.order_id GROUP BY delivery_address_no, delivery_policy_no) as delivery_amt
+        <!--
+        ,(SELECT SUM (MAX (order_wrap_fee)) apply_wrap_fee FROM oms_delivery WHERE order_id = t1.order_id GROUP BY delivery_address_no, delivery_policy_no) as wrapping_amt
+        -->
+        ,SUM (DECODE(t4.order_product_type_cd,'ORDER_PRODUCT_TYPE_CD.WRAP',t4.total_sale_price,0)) as wrapping_amt
+        
+        <!-- TODO : check 20161112 포장지 상품??? -->
+        ,SUM (DECODE(t4.order_product_type_cd,'ORDER_PRODUCT_TYPE_CD.GENERAL',t4.total_point,'ORDER_PRODUCT_TYPE_CD.SET',t4.total_point,0)) as total_point
+        ,SUM (DECODE(t4.order_product_type_cd,'ORDER_PRODUCT_TYPE_CD.GENERAL',t4.order_qty,'ORDER_PRODUCT_TYPE_CD.SET',t4.order_qty,0)) as order_qty
+        ,SUM (DECODE(t4.order_product_type_cd,'ORDER_PRODUCT_TYPE_CD.GENERAL',t4.cancel_qty,'ORDER_PRODUCT_TYPE_CD.SET',t4.cancel_qty,0)) as cancel_qty
+        ,SUM (DECODE(t4.order_product_type_cd,'ORDER_PRODUCT_TYPE_CD.GENERAL',t4.return_qty,'ORDER_PRODUCT_TYPE_CD.SET',t4.return_qty,0)) as return_qty
+        ,SUM (DECODE(t4.order_product_type_cd,'ORDER_PRODUCT_TYPE_CD.GENERAL',t4.exchange_qty,'ORDER_PRODUCT_TYPE_CD.SET',t4.exchange_qty,0)) as exchange_qty
+        ,SUM (DECODE(t4.order_product_type_cd,'ORDER_PRODUCT_TYPE_CD.GENERAL',t4.out_qty,'ORDER_PRODUCT_TYPE_CD.SET',t4.out_qty,0)) as out_qty
+        
+<!--         ,SUM (t4.order_qty) as order_qty -->
+<!--         ,SUM (t4.cancel_qty) as cancel_qty -->
+<!--         ,SUM (t4.return_qty) as return_qty -->
+<!--         ,SUM (t4.exchange_qty) as exchange_qty -->
+<!--         ,SUM (t4.out_qty) as out_qty -->
+        ,s.name as site_name
+	</sql>
+	
+	<!-- BO 주문리스트, 주문상세팝업, 회원온라인주문 내역조회 -->
+	<select id="boList" parameterType="omsOrderSearch" resultMap="omsOrderMap">
+		/* [oms.order.select.boList][victor][2016. 04. 19.] */
+		<include refid="ccs.common.pagingPre" />		
+		  SELECT 
+				<include refid="oms.order.select.itemsBo" />
+				,t2.name1 as receiver
+				,t2.phone2 as receiver_mobile
+		        
+		        ,t5.pg_shop_id
+		        ,(SELECT COUNT (1) FROM oms_ordermemo memo WHERE memo.order_id = t1.order_id) as memo_cnt
+		    FROM oms_order t1
+		         INNER JOIN oms_deliveryaddress t2
+		            ON t1.order_id = t2.order_id
+<!-- 		         INNER JOIN oms_delivery t3 -->
+<!-- 		            ON t2.order_id = t3.order_id -->
+<!-- 		           AND t2.delivery_address_no = t3.delivery_address_no -->
+		         INNER JOIN oms_orderproduct t4
+		            ON t2.order_id = t4.order_id
+		           AND t2.delivery_address_no = t4.delivery_address_no
+<!-- 		           AND t3.delivery_policy_no = t4.delivery_policy_no -->
+		         INNER JOIN oms_payment t5
+		            ON t1.order_id = t5.order_id
+		         INNER JOIN ccs_site s
+		            ON t1.site_id = s.site_id
+		           AND t1.store_id = s.store_id
+		   WHERE 1 = 1
+           	 AND t5.payment_type_cd = 'PAYMENT_TYPE_CD.PAYMENT'
+           	 
+			<if test='orderIds != null and orderIds != ""'>
+			 AND t1.order_id IN (${orderIds})			
+			</if>
+			<if test='orderIds == null or orderIds == ""'>
+				<if test='startDate != null and startDate != ""' >
+					<if test='endDate != null and endDate != ""'>
+				 AND t1.order_dt BETWEEN TO_DATE(#{startDate},'YYYY-MM-DD HH24:MI:SS') AND TO_DATE(#{endDate},'YYYY-MM-DD HH24:MI:SS')
+					</if>
+				</if>
+				<if test='orderTypeCds != null and orderTypeCds != ""'>	 
+				 AND t1.order_type_cd IN (${orderTypeCds})
+				</if>
+				<if test='orderStateCds != null and orderStateCds != ""'>	 
+				 AND t1.order_state_cd IN (${orderStateCds})
+				</if>
+				<if test='orderDeliveryStateCds != null and orderDeliveryStateCds != ""'>	 
+				 AND t1.order_delivery_state_cd IN (${orderDeliveryStateCds})
+				</if>
+				<if test='deviceTypeCds != null and deviceTypeCds != ""'>	 
+				 AND t1.device_type_cd IN (${deviceTypeCds})
+				</if>
+				<if test='orderer != null and orderer != ""'>
+					<if test='ordererType == "name"'>
+				 AND t1.name1 like #{orderer} || '%'
+					</if>
+					<if test='ordererType == "id"'>
+				 AND t1.member_id like #{orderer} || '%'
+					</if>
+					<if test='ordererType == "mobile"'>
+				 AND t1.phone2 like '%' || #{orderer}
+					</if>
+				</if>
+				<if test='receiver != null and receiver != ""'>
+					<if test='receiverType == "name"'>
+				 AND t2.name1 like #{receiver} || '%'
+					</if>
+					<if test='receiverType == "mobile"'>
+				 AND t2.phone2 like '%' || #{receiver}
+					</if>
+				</if>
+				<if test='siteId != null and siteId != ""'>
+				 AND t1.site_id = #{siteId}
+				</if>
+				<if test='siteOrderId != null and siteOrderId != ""'>
+				 AND t1.site_order_id = #{siteOrderId}
+				</if>
+				<if test='memberNo != null and memberNo != ""'>
+				 AND t1.member_no = #{memberNo}
+				</if>
+				<if test='productId != null and productId != ""'>
+				 AND t4.product_id = #{productId}
+				</if>
+				<if test='pgShopId != null and pgShopId != ""'>
+				 AND t5.pg_shop_id = #{pgShopId}
+				</if>
+			</if>
+		GROUP BY t1.order_id,t1.order_dt,t1.order_type_cd,t1.order_state_cd,t1.order_delivery_state_cd
+        		,t1.site_id,t1.site_order_id,t1.device_type_cd,t1.order_amt,t1.payment_amt,t1.dc_amt
+        		,t1.member_no,t1.member_id,t1.name1,t1.phone1,t1.phone2,t1.email,t1.zip_cd,t1.address1,t1.address2
+		        ,t2.name1,t2.phone2,t5.pg_shop_id,s.name
+		ORDER BY t1.order_id DESC
+		<include refid="ccs.common.pagingPost" />
+	</select>
+	
+	<!-- BO 주문상세 주문자 정보 -->
+	<select id="one" parameterType="omsOrder" resultMap="omsOrderMap">
+		/* [oms.order.select.one][victor][2016. 09. 08.] */
+		  SELECT 
+		        <include refid="oms.order.select.itemsBo" />
+		        ,m.account_auth_dt
+		        ,m.account_holder_name
+		        ,m.account_no
+		        ,m.b2e_yn
+		        ,m.bank_cd
+		        ,m.bank_name
+		        ,m.children_yn
+		        ,m.mem_grade_cd
+		        ,m.membership_yn
+		        ,m1.employee_yn
+		        ,m1.premium_yn
+		    FROM oms_order t1
+<!-- 		         INNER JOIN oms_delivery t3 -->
+<!-- 		            ON t1.order_id = t3.order_id -->
+		         INNER JOIN oms_orderproduct t4
+		            ON t1.order_id = t4.order_id
+<!-- 		           AND t3.delivery_address_no = t4.delivery_address_no -->
+<!-- 		           AND t3.delivery_policy_no = t4.delivery_policy_no -->
+		         INNER JOIN ccs_site s
+		            ON t1.site_id = s.site_id
+		           AND t1.store_id = s.store_id
+		    LEFT OUTER JOIN mms_member_zts m
+		            ON t1.member_no = m.member_no
+		    LEFT OUTER JOIN mms_member m1
+		            ON m.member_no = m1.member_no
+		   WHERE t1.order_id = #{orderId}
+		GROUP BY t1.order_id,t1.order_dt,t1.order_type_cd,t1.order_state_cd,t1.order_delivery_state_cd
+        		,t1.site_id,t1.site_order_id,t1.device_type_cd,t1.order_amt,t1.payment_amt,t1.dc_amt
+        		,t1.member_no,t1.member_id,t1.name1,t1.phone1,t1.phone2,t1.email,t1.zip_cd,t1.address1,t1.address2
+		        ,s.name
+		        ,m.mem_grade_cd,m.membership_yn,m.b2e_yn,m.children_yn,m.bank_cd,m.bank_name,m.account_no
+		        ,m.account_holder_name,m.account_auth_dt,m1.employee_yn,m1.premium_yn
+	</select>
+		
+	<!-- FO 주문리스트 -->
+	<select id="foList" parameterType="omsOrderSearch" resultMap="omsOrderExtendsMap">
+		/* [oms.order.select.foList][victor][2016. 09. 23.] */
+		  SELECT
+				 t1.order_id
+		        ,t1.order_type_cd
+		        ,t1.order_state_cd
+		        ,t1.order_delivery_state_cd
+		        ,t1.order_amt						<!-- 주문상품합계  -->
+		        ,t1.payment_amt						<!-- 결제합계 -->
+		        ,t1.dc_amt							<!-- 할인합계 -->
+		  		,<include refid="oms.order.select.product_columns"/>
+				,CASE 
+					WHEN REPLACE(t4.order_product_state_cd,'ORDER_PRODUCT_STATE_CD.', '') IN ('REQ', 'READY', 'CANCELAPPROVAL', 'CANCELDELIVERY', 'CANCEL')
+					THEN 'Y'
+					ELSE 'N'
+				 END as delivery_change_yn
+				,CASE 
+					WHEN REPLACE(t4.order_product_type_cd,'ORDER_PRODUCT_TYPE_CD.', '') IN ('GENERAL', 'SET')
+					THEN 
+						CASE 
+							WHEN REPLACE(t4.order_product_state_cd,'ORDER_PRODUCT_STATE_CD.', '') IN ('REQ', 'READY', 'CANCELAPPROVAL', 'CANCELDELIVERY', 'PARTIALDELIVERY')
+							THEN 'Y'
+							ELSE 'N'
+						END
+					ELSE 'Y'
+				 END as option_change_yn
+				,CASE 
+					WHEN REPLACE(t4.order_product_state_cd,'ORDER_PRODUCT_STATE_CD.', '') IN ('REQ', 'READY', 'CANCELAPPROVAL', 'CANCELDELIVERY', 'PARTIALDELIVERY')
+					THEN 'Y'
+					ELSE 'N'
+				 END as cancel_yn
+				,CASE 
+					WHEN REPLACE(t4.order_product_state_cd,'ORDER_PRODUCT_STATE_CD.', '') IN ('DELIVERY','CONFIRMED')
+					THEN 'Y'
+					ELSE 'N'
+				 END as return_yn
+				,CASE 
+					WHEN REPLACE(t4.order_product_state_cd,'ORDER_PRODUCT_STATE_CD.', '') IN ('SHIP','DELIVERY','CONFIRMED') 
+					THEN 'Y'
+					ELSE 'N'
+				 END as tracking_yn
+<!-- 						 AND TO_DATE (TO_CHAR (t1.order_dt, 'YYYY-MM-DD'), 'YYYY-MM-DD') &gt;= TO_DATE (TO_CHAR (SYSDATE - 90, 'YYYY-MM-DD'), 'YYYY-MM-DD') -->
+				,CASE 
+					WHEN REPLACE(t4.order_product_state_cd,'ORDER_PRODUCT_STATE_CD.', '') IN ('SHIP','DELIVERY','CONFIRMED') 
+						 AND TRUNC (SYSDATE - CAST (t1.order_dt AS DATE)) &lt;= 90
+						 AND (t9.order_id is null AND t9.product_id is null)
+					THEN 'Y'
+					ELSE 'N'
+				 END as review_yn
+				 
+		        ,TO_CHAR (t1.order_dt, 'YYYY-MM-DD') as order_dt
+        		,(SELECT MAX(partial_cancel_yn) FROM oms_payment WHERE order_id = t1.order_id) as part_cancel_yn		        
+		        
+		        
+             FROM oms_order t1
+                  INNER JOIN oms_orderproduct t4
+                     ON t1.order_id = t4.order_id
+					AND t1.member_no = #{memberNo}
+				<if test='orderTypeCds != null and orderTypeCds != ""'>	 
+					AND t1.order_type_cd = #{orderTypeCds}
+				</if>
+				<if test='orderTypeCds == null or orderTypeCds == ""'>	 
+					AND t1.order_type_cd != 'ORDER_TYPE_CD.REGULARDELIVERY'
+				</if>
+				<if test='startDate != null and startDate != ""' >
+					AND t1.order_dt &gt;= TO_DATE(#{startDate},'YYYY-MM-DD HH24:MI:SS')
+				</if>
+				<if test='endDate != null and endDate != ""'>
+					AND t1.order_dt &lt;= TO_DATE(#{endDate},'YYYY-MM-DD HH24:MI:SS')
+				</if>
+				<if test='product != null and product != ""'>
+					<if test='productType == "id"'>
+				 	AND t4.product_id = #{product}
+					</if>
+					<if test='productType == "name"'>
+				 	AND t4.product_name like '%' || #{product} || '%'
+					</if>
+				</if>
+                  LEFT OUTER JOIN pms_review t9
+                     ON t4.order_id = t9.order_id 
+                    AND t4.product_id = t9.product_id
+                    AND t4.store_id = t9.store_id
+       START WITH (t4.upper_order_product_no IS NULL AND t4.origin_order_product_no IS NULL)
+               OR t4.upper_order_product_no IS NOT NULL
+               OR t4.origin_order_product_no IS NOT NULL
+       CONNECT BY PRIOR t4.order_id = t4.order_id
+              AND PRIOR t4.order_product_no = NVL (t4.origin_order_product_no, t4.upper_order_product_no)
+ORDER SIBLINGS BY t1.order_dt DESC
+<!--                  ,t4.delivery_address_no -->
+<!--                  ,t4.delivery_policy_no -->
+                 ,t4.order_product_no
+<!--
+		    FROM oms_order t1
+		         INNER JOIN oms_orderproduct t4
+		            ON t1.order_id = t4.order_id
+			LEFT OUTER JOIN pms_review t9
+		            ON t4.order_id = t9.order_id
+		           AND t4.product_id = t9.product_id
+		   WHERE t1.member_no = #{memberNo}
+			<if test='orderTypeCds != null and orderTypeCds != ""'>	 
+			 AND t1.order_type_cd = #{orderTypeCds}
+			</if>
+			<if test='orderTypeCds == null or orderTypeCds == ""'>	 
+			 AND t1.order_type_cd != 'ORDER_TYPE_CD.REGULARDELIVERY'
+			</if>
+			<if test='startDate != null and startDate != ""' >
+			 AND t1.order_dt &gt;= TO_DATE(#{startDate},'YYYY-MM-DD HH24:MI:SS')
+			</if>
+			<if test='endDate != null and endDate != ""'>
+			 AND t1.order_dt &lt;= TO_DATE(#{endDate},'YYYY-MM-DD HH24:MI:SS')
+			</if>
+			<if test='product != null and product != ""'>
+				<if test='productType == "id"'>
+			 AND t4.product_id = #{product}
+				</if>
+				<if test='productType == "name"'>
+			 AND t4.product_name like '%' || #{product} || '%'
+				</if>
+			</if>
+		ORDER BY t1.order_dt DESC
+-->		        
+	</select>
+
+	<!-- FO 주문상세 -->
+	<select id="fodetail" parameterType="omsOrderSearch" resultMap="omsOrderExtendsMap">
+		/* [oms.order.select.fodetail][victor][2016. 09. 23.] */
+		  SELECT
+				 t1.order_id
+		        ,t1.order_type_cd
+		        ,t1.order_state_cd
+		        ,t1.order_delivery_state_cd
+		        ,t1.order_amt						<!-- 주문상품합계  -->
+		        ,t1.payment_amt						<!-- 결제합계 -->
+		        ,t1.dc_amt							<!-- 할인합계 -->
+		  		,<include refid="oms.order.select.product_columns"/>
+				,CASE 
+					WHEN REPLACE(t4.order_product_state_cd,'ORDER_PRODUCT_STATE_CD.', '') IN ('REQ', 'READY', 'CANCELAPPROVAL', 'CANCELDELIVERY', 'CANCEL')
+					THEN 'Y'
+					ELSE 'N'
+				 END as delivery_change_yn
+				,CASE 
+					WHEN REPLACE(t4.order_product_type_cd,'ORDER_PRODUCT_TYPE_CD.', '') IN ('GENERAL', 'SET')
+					THEN 
+						CASE 
+							WHEN REPLACE(t4.order_product_state_cd,'ORDER_PRODUCT_STATE_CD.', '') IN ('REQ', 'READY', 'CANCELAPPROVAL', 'CANCELDELIVERY', 'PARTIALDELIVERY')
+							THEN 'Y'
+							ELSE 'N'
+						END
+					ELSE 'Y'
+				 END as option_change_yn
+				,CASE 
+					WHEN REPLACE(t4.order_product_state_cd,'ORDER_PRODUCT_STATE_CD.', '') IN ('REQ', 'READY', 'CANCELAPPROVAL', 'CANCELDELIVERY', 'PARTIALDELIVERY')
+					THEN 'Y'
+					ELSE 'N'
+				 END as cancel_yn
+				,CASE 
+					WHEN REPLACE(t4.order_product_state_cd,'ORDER_PRODUCT_STATE_CD.', '') IN ('DELIVERY','CONFIRMED')
+					THEN 'Y'
+					ELSE 'N'
+				 END as return_yn
+				,CASE 
+					WHEN REPLACE(t4.order_product_state_cd,'ORDER_PRODUCT_STATE_CD.', '') IN ('SHIP','DELIVERY','CONFIRMED')
+					THEN 'Y'
+					ELSE 'N'
+				 END as tracking_yn
+				 
+				,CASE 
+					WHEN REPLACE(t4.order_product_state_cd,'ORDER_PRODUCT_STATE_CD.', '') IN ('SHIP','DELIVERY','CONFIRMED') 
+						 AND TRUNC (SYSDATE - CAST (t1.order_dt AS DATE)) &lt;= 90
+						 AND (t9.order_id is null AND t9.product_id is null)
+					THEN 'Y'
+					ELSE 'N'
+				 END as review_yn
+				 
+		  		,t1.cancel_dt
+				,t1.channel_id
+				,t1.country_no
+				,t1.device_type_cd
+				,t1.email as orderer_email
+				,t1.gift_img_type_cd
+				,t1.gift_msg
+				,t1.gift_name
+				,t1.gift_phone
+				,t1.member_id
+				,t1.member_no
+				,t1.mem_grade_cd
+				,t1.name1 as orderer_name1
+				,t1.order_dt
+				,t1.order_pwd
+				,t1.phone1 as orderer_phone1
+				,t1.phone2 as orderer_phone2
+				,t1.site_id
+				,t1.site_mem_id
+				,t1.site_order_id
+				,t1.site_type_cd
+				
+				,CASE 
+					WHEN REPLACE(t1.order_state_cd,'ORDER_STATE_CD.', '') IN ('REQ', 'PAYED', 'COMPLETE')
+					THEN
+						 CASE 
+							WHEN REPLACE(t1.order_delivery_state_cd,'ORDER_DELIVERY_STATE_CD.', '') IN ('REQ', 'READY')
+							THEN 'Y'
+							ELSE 'N'
+						 END
+					ELSE 'N'
+				 END as cancel_all_yn
+				
+				,t2.address1
+				,t2.address2
+				,t2.address3
+				,t2.address4
+				,t2.country_no
+				,t2.delivery_address_no
+				,t2.email
+				,t2.name1
+				,t2.note
+				,t2.phone1
+				,t2.phone2
+				,t2.zip_cd
+				
+				,t3.apply_delivery_fee
+				,t3.apply_wrap_fee
+				,t3.delivery_address_no
+				,t3.delivery_coupon_dc_amt
+				,t3.delivery_coupon_id
+				,t3.delivery_coupon_issue_no
+				,t3.delivery_fee
+				,t3.delivery_policy_no
+				,t3.delivery_service_cd
+				,t3.min_delivery_free_amt
+<!-- 				,t3.name -->
+				,t3.order_delivery_fee
+				,t3.order_wrap_fee
+				,t3.wrap_coupon_dc_amt
+				,t3.wrap_coupon_id
+				,t3.wrap_coupon_issue_no
+				,t3.wrap_together_yn
+				
+				
+				,c3.address1 as business_address1
+				,c3.address2 as business_address2
+				,c3.address3 as business_address3
+				,c3.address4 as business_address4
+				,c3.zip_cd as business_zip_cd
+				
+				
+		        ,m.account_auth_dt
+		        ,m.account_holder_name
+		        ,m.account_no
+		        ,m.b2e_yn
+		        ,m.bank_cd
+		        ,m.bank_name
+		        ,m.children_yn
+		        ,m.mem_grade_cd
+		        ,m.membership_yn
+		        ,level - 1 as tree_level
+		        
+		        ,t5.claim_no
+		        ,t5.claim_state_cd
+<!-- 		        ,(select max(claim_no) from oms_claim where order_id = t1.order_id and claim_state_cd != 'CLAIM_STATE_CD.COMPLETE') as claim_no -->
+		        
+		    FROM oms_order t1
+		         INNER JOIN oms_deliveryaddress t2
+		            ON t1.order_id = t2.order_id
+		           AND t1.order_id = #{orderId}
+		         INNER JOIN oms_delivery t3
+		            ON t2.order_id = t3.order_id
+		           AND t2.delivery_address_no = t3.delivery_address_no
+		         INNER JOIN ccs_deliverypolicy c3
+		            ON t3.delivery_policy_no = c3.delivery_policy_no
+		            
+		         INNER JOIN oms_orderproduct t4
+		            ON t2.order_id = t4.order_id
+		           AND t2.delivery_address_no = t4.delivery_address_no
+		           AND t3.delivery_policy_no = t4.delivery_policy_no
+			   <if test='orderProductNo != null and orderProductNo != ""'>
+				   AND (
+				   		t4.order_product_no = #{orderProductNo} 
+				   		OR t4.upper_order_product_no = #{orderProductNo} 
+				   		OR t4.present_id is not null
+				    	)
+			   </if>
+		    LEFT OUTER JOIN oms_claim t5
+		            ON t5.order_id = t1.order_id
+		           AND t5.claim_state_cd != 'CLAIM_STATE_CD.COMPLETE'
+		    LEFT OUTER JOIN oms_claimproduct t7
+		            ON t7.order_id = t5.order_id
+		           AND t7.claim_no = t5.claim_no
+		           AND t7.order_product_no = t4.order_product_no
+		           
+			LEFT OUTER JOIN pms_review t9
+		            ON t4.order_id = t9.order_id
+		           AND t4.product_id = t9.product_id
+			   
+		    LEFT OUTER JOIN mms_member_zts m
+		            ON t1.member_no = m.member_no
+		    LEFT OUTER JOIN mms_member m1
+		            ON m.member_no = m1.member_no
+<!--        START WITH t4.upper_order_product_no IS NULL AND t4.origin_order_product_no IS NULL -->
+       START WITH (t4.upper_order_product_no IS NULL AND t4.origin_order_product_no IS NULL)
+               OR t4.upper_order_product_no IS NOT NULL
+               OR t4.origin_order_product_no IS NOT NULL
+       CONNECT BY PRIOR t4.order_id = t4.order_id
+              AND PRIOR t4.order_product_no = NVL (t4.origin_order_product_no, t4.upper_order_product_no)
+<!-- ORDER SIBLINGS BY t4.delivery_address_no, t4.delivery_policy_no, t4.order_product_no		    -->
+ORDER SIBLINGS BY t4.delivery_address_no, t4.order_product_no		   
+		   
+		   
+		   
+<!-- 		ORDER BY t2.delivery_address_no, t4.order_product_no -->
+	</select>
+	
+	<!-- BO 주문상품 검색팝업 -->
+	<select id="productList" parameterType="omsOrderSearch" resultMap="omsOrderproductExtendsMap">
+		/* [oms.order.select.productList][victor][2016. 08. 23.] */
+		SELECT t2.order_id		
+		      ,t2.order_product_no		
+		      ,t2.product_id
+		      ,t2.product_name
+		      ,t2.saleproduct_id
+		      ,t2.saleproduct_name
+		      ,t1.name1
+		      ,t1.order_dt		      
+		      ,t1.member_id
+		      ,COUNT(*) OVER () as total_count
+		  FROM oms_order t1 
+		  	   INNER JOIN oms_orderproduct t2 
+		  	   	  ON t1.order_id = t2.order_id
+	     WHERE t1.store_id = #{storeId}
+		<if test='orderIds != null and orderIds != ""'>
+		   AND t1.order_id IN (${orderIds})			
+		</if>
+		<if test='orderIds == null or orderIds == ""'>
+			<if test='startDate != null and startDate != ""' >
+				<if test='endDate != null and endDate != ""'>
+			   AND t1.order_dt BETWEEN TO_DATE(#{startDate},'YYYY-MM-DD HH24:MI:SS') AND TO_DATE(#{endDate},'YYYY-MM-DD HH24:MI:SS')
+				</if>
+			</if>
+			<if test='memberNo != null and memberNo != ""'>
+			   AND t1.member_no = #{memberNo}			
+			</if>
+			<if test='orderer != null and orderer != ""'>
+				<if test='ordererType == "name"'>
+			   AND t1.name1 like #{orderer} || '%'
+				</if>
+				<if test='ordererType == "id"'>
+			   AND t1.member_id like #{orderer} || '%'
+				</if>
+				<if test='ordererType == "mobile"'>
+			   AND t1.phone2 like '%' || #{orderer}
+				</if>
+			</if>
+			<if test='product != null and product != ""'>
+				<if test='productType == "name"'>
+			   AND t2.product_id = #{product}
+				</if>
+				<if test='productType == "id"'>
+			   AND t2.product_name like '%' || #{product} || '%'
+				</if>
+			</if>
+			<if test='saleProduct != null and saleProduct != ""'>
+				<if test='saleProductType == "name"'>
+			   AND t2.saleproduct_id = #{saleProduct}
+				</if>
+				<if test='saleProductType == "id"'>
+			   AND t2.saleproduct_name like '%' || #{saleProduct} || '%'
+				</if>
+			</if>
+		</if>
+		 ORDER BY t1.order_id DESC, t2.order_product_no ASC
+	</select>
+
+	<!-- 상품할인, 포장비할인,배송비할인 -->
+	<select id="coupon" resultType="omsOrdercoupon">
+		/* [oms.order.select.coupon][victor][2016. 08. 23.] */
+	    SELECT CASE
+	              WHEN coupon_type_cd = 'COUPON_TYPE_CD.DELIVERY' THEN 'DELIVERY'
+	              ELSE 'PRODUCT'
+	           END as coupon_type_cd
+	          ,SUM (coupon_dc_amt) as coupon_dc_amt
+	      FROM oms_ordercoupon
+	     WHERE order_id = #{orderId}
+	  GROUP BY CASE 
+	              WHEN coupon_type_cd = 'COUPON_TYPE_CD.DELIVERY' THEN 'DELIVERY'
+	              ELSE 'PRODUCT'
+	           END
+	</select>
+	
+	<!-- 주문메모 -->
+	<select id="memo" parameterType="omsOrderMemo" resultType="omsOrderMemo">
+		/* [oms.order.select.memo][victor][2016. 08. 23.] */
+		SELECT t1.detail
+		      ,t1.order_id
+		      ,t1.order_product_no
+		      ,t1.order_memo_no
+		      ,t1.ins_dt
+		      ,t1.ins_id
+		      ,t1.upd_dt
+		      ,t1.upd_id
+		      ,t2.name as ins_name
+		  FROM oms_ordermemo t1
+		  	   LEFT OUTER JOIN ccs_user t2
+		  	   	 ON t1.ins_id = t2.user_id
+		 WHERE order_id = #{orderId}
+		   AND order_product_no = #{orderProductNo}
+		 ORDER BY ins_dt desc
+	</select>
+	
+	<!-- 주문에 사용된 전체 쿠폰 리스트 -->
+	<select id="couponList" parameterType="omsOrderSearch" resultMap="omsOrdercouponMap">
+		/* [oms.order.select.couponList][victor][2016. 08. 23.] */
+		SELECT t1.affiliate_yn
+		      ,t1.business_burden_rate
+		      ,t1.business_id
+		      ,t1.coupon_dc_amt
+		      ,NVL(t1.coupon_dc_cancel_amt, 0) as coupon_dc_cancel_amt
+		      ,t1.coupon_id
+		      ,t1.coupon_issue_no
+		      ,t1.coupon_state_cd
+		      ,t1.coupon_type_cd
+		      ,t1.dc_apply_type_cd
+		      ,t1.dc_value
+		      ,t1.fee_limit_apply_yn
+		      ,t1.max_dc_amt
+		      ,t1.min_order_amt
+		      ,t1.name
+		      ,t1.order_id
+		      ,t1.store_id
+		      ,t1.single_apply_yn
+<!-- 		      ,TO_CHAR (t2.use_start_dt, 'YYYY-MM-DD HH24:MI:SS') || '~' || TO_CHAR (t2.use_end_dt, 'YYYY-MM-DD HH24:MI:SS') as period -->
+		      ,TO_CHAR (t2.use_start_dt, 'YYYY-MM-DD') || ' ~ ' || TO_CHAR (t2.use_end_dt, 'YYYY-MM-DD') as period
+		      ,COUNT(*) OVER () AS TOTAL_COUNT 
+		      ,0 as refund_coupon_amt
+		  FROM oms_ordercoupon t1 
+		  	   INNER JOIN sps_couponissue t2
+				  ON t1.store_id = t2.store_id
+				 AND t1.coupon_id = t2.coupon_id
+				 AND t1.coupon_issue_no = t2.coupon_issue_no
+		 WHERE t1.order_id = #{orderId}
+		<if test='couponStateCd != null and couponStateCd != ""'>
+		   AND t1.coupon_state_cd = #{couponStateCd}
+		</if>
+		<if test='couponTypeCds != null and couponTypeCds != ""'>
+		   AND t1.coupon_type_cd IN (${couponTypeCds})
+		</if>
+		<if test='searchCoupons != null and searchCoupons.size > 0'>
+		   AND (t1.coupon_id, t1.coupon_issue_no) IN
+			<foreach collection="searchCoupons" item="coupon" separator="," open="(" close=")">
+				(${coupon})
+			</foreach>
+		</if>
+	  ORDER BY t1.coupon_id, t1.coupon_issue_no
+<!-- 		   AND t1.store_id = #{storeId} -->
+	</select>
+	
+	<!-- 주문사은품 리스트 -->
+	<select id="presentList" parameterType="omsOrderSearch" resultMap="omsPresentproductMap">
+		/* [oms.order.select.presentList][victor][2016. 09. 01.] */
+		SELECT t1.present_id
+		      ,WM_CONCAT (DISTINCT t1.order_product_no) AS order_product_nos
+		      ,SUM (t2.total_sale_price * (
+		      		CASE WHEN t2.order_product_state_cd = 'ORDER_PRODUCT_STATE_CD.SHIP' 
+						 THEN t2.out_qty - t2.return_qty
+		      			 WHEN t2.order_product_state_cd = 'ORDER_PRODUCT_STATE_CD.DELIVERY' 
+						 THEN t2.out_qty - t2.return_qty
+		      			 WHEN t2.order_product_state_cd = 'ORDER_PRODUCT_STATE_CD.CONFIRMED' 
+						 THEN t2.out_qty - t2.return_qty
+						 ELSE t2.order_qty - t2.cancel_qty
+					END
+		      	)) AS present_target_amt
+		      ,0 as present_claim_amt
+		      ,0 as present_min_order_amt
+		      ,9999999 as present_max_order_amt
+		  FROM oms_presentproduct t1
+		       INNER JOIN oms_orderproduct t2
+		       	  ON t1.order_id = t2.order_id 
+		       	 AND t1.order_product_no = t2.order_product_no
+		 WHERE t2.order_id = #{orderId}
+		   AND t2.order_product_state_cd != 'ORDER_PRODUCT_STATE_CD.CANCEL'
+	  GROUP BY t1.order_id, t1.present_id
+	</select>
+	
+	<select id="pointif" parameterType="omsPointif" resultType="omsPointif">
+		/* [oms.order.select.pointif][victor][2016. 09. 01.] */
+		SELECT t1.acml_pint
+		      ,t1.acml_tgt_amt
+		      ,t1.mmb_cert_dv_cd
+		      ,t1.mmb_cert_dv_vlu
+		      ,t1.org_apv_dt
+		      ,t1.org_apv_no
+		      ,t1.org_uniq_rcgn_no
+		      ,t1.pint_acml_typ_cd
+		      ,t1.pint_use_typ_cd
+		      ,t1.point_if_no
+		      ,t1.point_if_req_data
+		      ,t1.point_if_return_data
+		      ,t1.tot_sel_amt
+		      ,t1.trsc_dt
+		      ,t1.trsc_hr
+		      ,t1.uniq_rcgn_no
+		      ,t1.use_pint
+		  FROM oms_pointif t1
+		 WHERE t1.uniq_rcgn_no = #{uniqRcgnNo}
+		   AND t1.trsc_typ_cd = #{trscTypCd}
+		   AND t1.trsc_biz_dv_cd = #{trscBizDvCd}
+		   AND t1.mmb_cert_dv_vlu = #{mmbCertDvVlu}
+		   AND t1.mmb_cert_dv_cd = '2'
+		   AND t1.pint_use_typ_cd = '11'
+	     ORDER BY t1.point_if_no
+	</select>
+	
+	<select id="exchangeTarget" parameterType="omsClaim" resultType="omsOrderproduct">
+		/* [oms.order.select.exchangeTarget][victor][2016. 09. 01.] */
+		           SELECT s.*
+		             FROM (SELECT t4.*
+		                     FROM oms_orderproduct t4
+		                    WHERE t4.order_id = #{orderId}) s
+		       START WITH s.claim_no = #{claimNo}
+		       CONNECT BY s.order_product_no = PRIOR s.origin_order_product_no
+		ORDER SIBLINGS BY s.order_product_no desc
+	</select>
+	
+	
+	<select id="products" parameterType="omsOrderSearch" resultMap="omsOrderproductMap">
+		/* [oms.order.select.products][victor][2016. 09. 08.] */
+		  SELECT t4.*
+		  		,'/image/pms/product/' || t4.product_id || '/' || t4.product_id || '_0.jpg' as img_url
+		    FROM oms_orderproduct t4
+		   WHERE t4.order_id = #{orderId}		
+		     AND (t4.order_product_no = #{orderProductNo} 
+		      OR t4.upper_order_product_no = #{orderProductNo})		
+	</select>	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+</mapper>

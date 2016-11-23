@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="oms.regular.update">
+
+	<update id="delivery" parameterType="omsRegulardelivery">
+		/* [oms.regular.update.delivery][victor][2016. 08. 23.] */
+		UPDATE oms_regulardelivery
+		   SET upd_dt = TO_DATE(#{updDt},'YYYY-MM-DD HH24:MI:SS')
+		      ,upd_id = #{updId}
+		      ,delivery_zip_cd = #{deliveryZipCd}
+		      ,delivery_address1 = #{deliveryAddress1}
+		      ,delivery_address2 = #{deliveryAddress2}
+		      <if test='deliveryAddress3 != null and deliveryAddress3 != ""'>
+		      ,delivery_address3 = #{deliveryAddress3}
+		      </if>
+		      <if test='deliveryAddress4 != null and deliveryAddress4 != ""'>
+		      ,delivery_address4 = #{deliveryAddress4}
+		      </if>
+		 WHERE regular_delivery_id = #{regularDeliveryId}
+	</update>
+	
+	<update id="product" parameterType="omsRegulardeliveryproduct">
+		/* [oms.regular.update.product][victor][2016. 08. 23.] */
+		UPDATE oms_regulardeliveryproduct
+		   SET upd_dt = TO_DATE(#{updDt},'YYYY-MM-DD HH24:MI:SS')
+		      ,upd_id = #{updId}
+		      ,delivery_product_state_cd = #{deliveryProductStateCd}
+		 WHERE regular_delivery_id = #{regularDeliveryId} 
+		   AND delivery_product_no = #{deliveryProductNo}
+	</update>
+	
+	<update id="schedule" parameterType="omsRegulardeliveryschedule">
+		/* [oms.regular.update.schedule][victor][2016. 08. 23.] */
+		UPDATE oms_regulardeliveryschedule
+		   SET upd_dt = TO_DATE(#{updDt},'YYYY-MM-DD HH24:MI:SS')
+		      ,upd_id = #{updId}
+		      <if test='deliveryScheduleStateCd != null and deliveryScheduleStateCd != ""'>
+		      ,delivery_schedule_state_cd = #{deliveryScheduleStateCd}
+		      </if>
+		      <if test='regularDeliveryDt != null and regularDeliveryDt != ""'>
+		      ,regular_delivery_dt = TO_DATE(#{regularDeliveryDt},'YYYY-MM-DD HH24:MI:SS')
+		      </if>
+		 WHERE regular_delivery_id = #{regularDeliveryId} 
+		   AND delivery_product_no = #{deliveryProductNo}
+	      <if test='regularDeliveryOrder != null and regularDeliveryOrder != ""'>
+		   AND regular_delivery_order = #{regularDeliveryOrder}
+	      </if>
+	      <if test='cancelAll == "Y"'>
+			   AND (delivery_schedule_state_cd = 'DELIVERY_SCHEDULE_STATE_CD.REQ'
+		    		OR delivery_schedule_state_cd = 'DELIVERY_SCHEDULE_STATE_CD.INFO')
+	      </if>
+<!-- 		   AND (delivery_schedule_state_cd = 'DELIVERY_SCHEDULE_STATE_CD.REQ' -->
+<!-- 		    OR delivery_schedule_state_cd = 'DELIVERY_SCHEDULE_STATE_CD.INFO') -->
+	</update>
+
+
+	<update id="delaySchedule" parameterType="omsRegulardeliveryschedule">
+		/* [oms.regular.update.delay.schedule][roy][2016. 10. 21.] */
+		UPDATE oms_regulardeliveryschedule
+		   SET upd_dt = TO_DATE(#{updDt},'YYYY-MM-DD HH24:MI:SS')
+		      ,upd_id = #{updId}
+		      <if test='increaseDay != null and increaseDay != ""'>
+		      ,regular_delivery_dt = regular_delivery_dt + #{increaseDay}
+		      </if>
+		 WHERE regular_delivery_id = #{regularDeliveryId} 
+		   AND delivery_product_no = #{deliveryProductNo}
+	      <if test='cancelAll == "Y"'>
+			   AND (delivery_schedule_state_cd = 'DELIVERY_SCHEDULE_STATE_CD.REQ'
+		    		OR delivery_schedule_state_cd = 'DELIVERY_SCHEDULE_STATE_CD.INFO')
+	      </if>
+	</update>
+</mapper>

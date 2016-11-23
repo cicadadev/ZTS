@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="oms.pgsettle">
+
+	<select id="getPgSettleList" parameterType="omsPgSettleSearch" resultType="omsPaymentsettle">
+	/* [oms.pgsettle.getPgSettleList][peter][2016. 10. 8.] */
+		<include refid="ccs.common.pagingPre" />
+			SELECT 
+				OPS.ORDER_ID
+				, CASE WHEN OPS.PAYMENT_METHOD_CD = 'PAYMENT_METHOD_CD.KAKAO'
+					   THEN '카카오페이'
+					   ELSE 'LG U+'
+				  END						AS PG_COMPANY
+				, OP.PG_APPROVAL_NO
+				, OP.PAYMENT_DT
+				, OO.ORDER_DT
+				, OPS.PG_SHOP_ID
+				, OPS.PAYMENT_METHOD_CD
+				, OP.PAYMENT_AMT			AS APPROVAL_AMT
+				, OPS.PAYMENT_AMT
+				, (OPS.PAYMENT_AMT - OPS.PAYMENT_FEE)		AS DEPOSIT_AMT
+				, OPS.SETTLE_DT
+				, (OPS.PAYMENT_AMT - OP.PAYMENT_AMT)		AS ERROR_AMT
+			FROM OMS_PAYMENTSETTLE OPS
+			INNER JOIN OMS_PAYMENT OP
+					ON OP.ORDER_ID = OPS.ORDER_ID
+				   AND OP.MAJOR_PAYMENT_YN = 'Y'
+				   AND OP.PAYMENT_TYPE_CD IN ('PAYMENT_TYPE_CD.PAYMENT', 'PAYMENT_TYPE_CD.ADDPAYMENT')
+				   AND OP.PAYMENT_STATE_CD = 'PAYMENT_STATE_CD.PAYMENT'
+				<if test="approvalNo != null and approvalNo != ''">
+				   AND OP.PG_APPROVAL_NO = #{approvalNo}
+				</if>
+				   AND OP.PAYMENT_METHOD_CD = OPS.PAYMENT_METHOD_CD
+				<if test="periodType == 'APPROVE'">
+				  	<if test="startDate != null and startDate != '' ">
+				  	  AND OP.PAYMENT_DT &gt;= TO_DATE(#{startDate}, 'YYYY-MM-DD HH24:MI:SS')
+				  	</if>
+				  	<if test="endDate != null and endDate != '' ">
+				  	  AND OP.PAYMENT_DT &lt;= TO_DATE(#{endDate}, 'YYYY-MM-DD HH24:MI:SS')
+				  	</if>
+				</if>
+			INNER JOIN OMS_ORDER OO
+					ON OO.ORDER_ID = OP.ORDER_ID
+				<if test="periodType == 'ORDER'">
+				  	<if test="startDate != null and startDate != '' ">
+				  	  AND OO.ORDER_DT &gt;= TO_DATE(#{startDate}, 'YYYY-MM-DD HH24:MI:SS')
+				  	</if>
+				  	<if test="endDate != null and endDate != '' ">
+				  	  AND OO.ORDER_DT &lt;= TO_DATE(#{endDate}, 'YYYY-MM-DD HH24:MI:SS')
+				  	</if>
+				</if>
+			WHERE 1 = 1
+			<if test="pgCompany eq 'Y'.toString()">
+			   AND OPS.PAYMENT_METHOD_CD IN ('PAYMENT_METHOD_CD.CARD', 'PAYMENT_METHOD_CD.VIRTUAL', 'PAYMENT_METHOD_CD.TRANSFER', 'PAYMENT_METHOD_CD.MOBILE')
+				<if test="paymentMethodCds != '' and paymentMethodCds != ''">
+			   	  AND OPS.PAYMENT_METHOD_CD IN (${paymentMethodCds})
+				</if>
+			</if>
+			<if test="pgCompany eq 'N'.toString()">
+			   AND OPS.PAYMENT_METHOD_CD = 'PAYMENT_METHOD_CD.KAKAO'
+			</if>
+			<if test="pgShopId != null and pgShopId != ''">
+			  AND OPS.PG_SHOP_ID = #{pgShopId}
+			</if>
+			<if test="orderId != null and orderId != ''">
+			  AND OPS.ORDER_ID = #{orderId}
+			</if>
+			<if test="periodType == 'DEPOSIT'">
+			  	<if test="startDate != null and startDate != '' ">
+			  	  AND OPS.SETTLE_DT &gt;= TO_DATE(#{startDate}, 'YYYY-MM-DD HH24:MI:SS')
+			  	</if>
+			  	<if test="endDate != null and endDate != '' ">
+			  	  AND OPS.SETTLE_DT &lt;= TO_DATE(#{endDate}, 'YYYY-MM-DD HH24:MI:SS')
+			  	</if>
+			</if>
+			<if test="errorYn eq 'Y'.toString()">
+			  AND (OPS.PAYMENT_AMT - OP.PAYMENT_AMT) = 0
+			</if>
+			<if test="errorYn eq 'N'.toString()">
+			  AND (OPS.PAYMENT_AMT - OP.PAYMENT_AMT) != 0
+			</if>
+			ORDER BY OPS.ORDER_ID
+		<include refid="ccs.common.pagingPost" />
+	</select>
+
+</mapper>

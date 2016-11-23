@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="oms.uploadexcel">
+
+	<select id="getSiteUploadconfInfo" parameterType="OmsUploadexcelSearch" resultType="omsUploadconf">
+	/*[oms.uploadexcel.getSiteUploadconfInfo][peter][2016. 9. 27]*/
+		SELECT 
+			ST.NAME			AS SITE_NAME
+			, UC.SITE_ID
+			, ST.SITE_TYPE_CD
+			, UC.TITLE_ROW
+			, UC.DATA_ROW
+			, UC.SITE_ORDER_ID
+			, UC.SALEPRODUCT_ID1
+			, UC.SALEPRODUCT_ID2
+			, UC.SALEPRODUCT_ID3
+			, UC.SALEPRODUCT_ID4
+			, UC.SALEPRODUCT_ID5
+			, UC.SALE_PRICE
+			, UC.ORDER_QTY
+			, UC.ZIP_CD
+			, UC.ADDRESS1
+			, UC.ADDRESS2
+			, UC.PHONE1
+			, UC.PHONE2
+			, UC.NAME
+			, UC.NOTE
+			, UC.CURRENCY_CD
+			, UC.CURRENCY_PRICE
+			, UC.LP_NO
+			, UC.LOCAL_DELIVERY
+		FROM OMS_UPLOADCONF UC
+		INNER JOIN CCS_SITE ST
+				ON ST.STORE_ID = UC.STORE_ID
+			   AND ST.SITE_ID = UC.SITE_ID
+			   AND ST.SITE_TYPE_CD IN ('SITE_TYPE_CD.OWN', 'SITE_TYPE_CD.DOMESTIC', 'SITE_TYPE_CD.CHINA')
+			   AND ST.USE_YN = 'Y'
+		WHERE UC.STORE_ID = #{storeId}
+		  AND UC.SITE_ID = #{siteId}
+	</select>
+
+	<select id="getSiteTypeCode" parameterType="String" resultType="String">
+	/* [oms.uploadexcel.getSiteTypeCode][peter][2016. 10. 13.] */
+		SELECT SITE_TYPE_CD
+		  FROM CCS_SITE
+		 WHERE SITE_ID = #{siteId}
+		   AND USE_YN = 'Y'
+	</select>
+
+	<select id="getOrderExistCount" parameterType="String" resultType="int">
+	/* [oms.uploadexcel.getOrderExistCount][peter][2016. 10. 6.] */
+		SELECT COUNT(ORDER_ID)
+		  FROM OMS_ORDER
+		 WHERE SITE_ORDER_ID = #{siteOrderId}
+	</select>
+
+	<select id="getSaleproductExistCount" parameterType="String" resultType="int">
+	/* [oms.uploadexcel.getSaleproductExistCount][peter][2016. 10. 13.] */
+		SELECT COUNT(*)
+		  FROM PMS_SALEPRODUCT
+		 WHERE SALEPRODUCT_ID = #{srchId}
+	</select>
+
+	<resultMap id="getProductDetail" autoMapping="true" type="gcp.pms.model.PmsProduct">
+		<id property="storeId" column="STORE_ID" />
+		<id property="productId" column="PRODUCT_ID" />
+		<result property="brandId" column="BRAND_ID" />
+		<result property="businessId" column="BUSINESS_ID" />
+		<result property="name" column="PRODUCT_NAME" />
+		<result property="erpProductId" column="ERP_PRODUCT_ID" />
+		<result property="categoryId" column="CATEGORY_ID" />
+<!-- 		<result property="brandId" column="BRAND_ID" />
+		<result property="brandName" column="BRAND_NAME" /> -->
+		<result property="productTypeCd" column="PRODUCT_TYPE_CD" />
+		<result property="saleStateCd" column="SALE_STATE_CD" />
+		<result property="exportErpProductId" column="EXPORT_ERP_PRODUCT_ID" />
+		<result property="maker" column="MAKER" />
+		<result property="unitQty" column="UNIT_QTY" />
+		<result property="taxTypeCd" column="TAX_TYPE_CD" />
+		<result property="optionYn" column="OPTION_YN" />
+		<result property="textOptionYn" column="TEXT_OPTION_YN" />
+		<result property="textOptionName" column="TEXT_OPTION_NAME" />
+		<result property="listPrice" column="LIST_PRICE" />
+		<result property="salePrice" column="SALE_PRICE" />
+		<result property="supplyPrice" column="SUPPLY_PRICE" />
+		<result property="commissionRate" column="COMMISSION_RATE" />
+		<result property="pointSaveRate" column="POINT_SAVE_RATE" />
+		<result property="deliveryFeeFreeYn" column="DELIVERY_FEE_FREE_YN" />
+		<result property="productNoticeTypeCd" column="PRODUCT_NOTICE_TYPE_CD" />
+		<result property="reserveYn" column="RESERVE_YN" />
+		<result property="fixedDeliveryYn" column="FIXED_DELIVERY_YN" />
+		<result property="wrapYn" column="WRAP_YN" />
+		<result property="wrapVolume" column="WRAP_VOLUME" />
+		<result property="overseasPurchaseYn" column="OVERSEAS_PURCHASE_YN" />
+		<result property="boxDeliveryYn" column="BOX_DELIVERY_YN" />
+		<result property="deliveryPolicyNo" column="DELIVERY_POLICY_NO" />
+		<association property="pmsBrand" javaType="gcp.pms.model.PmsBrand">
+			<id property="storeId" column="STORE_ID" />
+			<id property="brandId" column="BRAND_ID" />
+			<result property="name" column="BRAND_NAME" />
+		</association>
+		<association property="ccsBusiness" javaType="gcp.ccs.model.CcsBusiness">
+			<id property="storeId" column="STORE_ID" />
+			<id property="businessId" column="BUSINESS_ID" />
+			<result property="name" column="BUSINESS_NAME" />
+			<result property="saleTypeCd" column="SALE_TYPE_CD" />
+			<result property="purchaseYn" column="PURCHASE_YN" />
+		</association>
+		<association property="pmsSaleproduct" javaType="gcp.pms.model.PmsSaleproduct">
+			<id property="storeId" column="STORE_ID" />
+			<id property="productId" column="PRODUCT_ID" />
+			<id property="saleproductId" column="SALEPRODUCT_ID" />
+			<result property="erpSaleproductId" column="ERP_SALEPRODUCT_ID" />
+			<result property="name" column="SALEPRODUCT_NAME" />
+			<result property="realStockQty" column="REAL_STOCK_QTY" />
+			<result property="addSalePrice" column="ADD_SALE_PRICE" />
+			<result property="saleproductStateCd" column="SALEPRODUCT_STATE_CD" />
+		</association>
+	</resultMap>
+	<select id="getProductInfo" parameterType="pmsProductSearch" resultMap="getProductDetail">
+	/* [oms.uploadexcel.getProductInfo][peter][2016. 10. 6.] */
+		SELECT 
+			PP.PRODUCT_ID
+			, PP.NAME			AS PRODUCT_NAME
+			, PP.ERP_PRODUCT_ID
+			, PP.CATEGORY_ID
+			, PP.BRAND_ID
+			, (SELECT NAME FROM PMS_BRAND WHERE STORE_ID = PP.STORE_ID AND BRAND_ID = PP.BRAND_ID AND USE_YN = 'Y')		AS BRAND_NAME
+			, PP.BUSINESS_ID
+			, CB.NAME			AS BUSINESS_NAME
+			, CB.SALE_TYPE_CD
+			, CB.PURCHASE_YN
+			, PP.PRODUCT_TYPE_CD
+			, PP.SALE_STATE_CD
+			, PP.MAKER
+			, PP.UNIT_QTY
+			, PP.TAX_TYPE_CD
+			, PP.OPTION_YN
+			, PP.TEXT_OPTION_YN
+			, PP.LIST_PRICE
+			, PP.SALE_PRICE
+			, PP.SUPPLY_PRICE
+			, PP.COMMISSION_RATE
+			, PP.POINT_SAVE_RATE
+			, PP.DELIVERY_FEE_FREE_YN
+			, PP.PRODUCT_NOTICE_TYPE_CD
+			, PP.RESERVE_YN
+			, PP.FIXED_DELIVERY_YN
+			, PP.WRAP_YN
+			, PP.WRAP_VOLUME
+			, PP.OVERSEAS_PURCHASE_YN
+			, PP.BOX_DELIVERY_YN
+			, PP.DELIVERY_POLICY_NO
+			, PS.SALEPRODUCT_ID
+			, PS.ERP_SALEPRODUCT_ID
+			, PS.NAME			AS SALEPRODUCT_NAME
+			, PS.REAL_STOCK_QTY
+			, PS.ADD_SALE_PRICE
+			, PS.SALEPRODUCT_STATE_CD
+		FROM PMS_PRODUCT PP
+		INNER JOIN PMS_BRAND PB
+				ON PB.STORE_ID = PP.STORE_ID
+			   AND PB.BRAND_ID = PP.BRAND_ID
+		INNER JOIN CCS_BUSINESS CB
+				ON CB.STORE_ID = PP.STORE_ID
+			   AND CB.BUSINESS_ID = PP.BUSINESS_ID
+		INNER JOIN PMS_SALEPRODUCT PS
+				ON PS.STORE_ID = PP.STORE_ID
+			   AND PS.PRODUCT_ID = PP.PRODUCT_ID
+			   AND PS.SALEPRODUCT_ID = #{saleproductId}
+		WHERE PP.STORE_ID = #{storeId}
+		  AND PP.USE_YN = 'Y'
+	</select>
+
+	<select id="getSubProductList" parameterType="hashMap" resultType="pmsSetproduct">
+	/* [oms.uploadexcel.getSubProductList][peter][2016. 10. 6.] */
+		SELECT
+            PST.PRODUCT_ID
+            , PST.SUB_PRODUCT_ID
+            , PST.NAME
+            , PST.QTY
+            , PP.LIST_PRICE * PST.QTY	AS SUM_LIST_PRICE
+            , PP.SALE_PRICE
+            , PSL.SALEPRODUCT_ID
+            , PSL.NAME					AS SALEPRODUCT_NAME
+            , PSL.ADD_SALE_PRICE
+        FROM PMS_SETPRODUCT PST
+        INNER JOIN PMS_PRODUCT PP
+        		ON PP.STORE_ID = PST.STORE_ID
+        	   AND PP.PRODUCT_ID = PST.SUB_PRODUCT_ID
+        	   AND PP.USE_YN = 'Y'
+        INNER JOIN PMS_SALEPRODUCT PSL
+        		ON PSL.STORE_ID = PST.STORE_ID
+        	   AND PSL.PRODUCT_ID = PST.SUB_PRODUCT_ID
+        WHERE PST.STORE_ID = #{storeId}
+          AND PST.PRODUCT_ID = #{productId}
+	</select>
+
+	<update id="updateOrderAmtInOmsOrder" parameterType="hashMap">
+	/* [oms.uploadexcel.updateOrderAmtInOmsOrder][peter][2016. 10. 6.] */
+		UPDATE OMS_ORDER
+		   SET ORDER_AMT = #{orderAmt}
+		   	 , PAYMENT_AMT = #{orderAmt}
+		 WHERE ORDER_ID = #{orderId}
+	</update>
+
+	<update id="updatePaymentAmtInOmsPayment" parameterType="hashMap">
+	/* [oms.uploadexcel.updatePaymentAmtInOmsPayment][peter][2016. 10. 6.] */
+		UPDATE OMS_PAYMENT
+		   SET PAYMENT_AMT = #{orderAmt}
+		 WHERE ORDER_ID = #{orderId}
+	</update>
+
+	<select id="getOmsDeliveryExistCount" parameterType="hashMap" resultType="int">
+	/* [oms.uploadexcel.getOmsDeliveryExistCount][peter][2016. 10. 19.] */
+		SELECT
+			COUNT(*)
+          FROM OMS_DELIVERY
+         WHERE ORDER_ID = #{orderId}
+           AND DELIVERY_ADDRESS_NO = #{deliveryAddressNo} 
+           AND DELIVERY_POLICY_NO = #{deliveryPolicyNo}
+	</select>
+
+	<select id="getOmsDeliveryInfo" resultType="omsDelivery">
+	/* [oms.uploadexcel.getOmsDeliveryInfo][peter][2016. 10. 19.] */
+		SELECT
+			STORE_ID
+            , DELIVERY_POLICY_NO
+            , NAME
+            , DELIVERY_SERVICE_CD
+            , 0		AS DELIVERY_FEE
+            , 0		AS ORDER_DELIVERY_FEE
+            , 0		AS DELIVERY_COUPON_DC_AMT
+            , 0		AS APPLY_DELIVERY_FEE
+            , 'N'	AS WRAP_TOGETHER_YN
+            , 0		AS ORDER_WRAP_FEE
+            , 0		AS WRAP_COUPON_DC_AMT
+            , 0		AS APPLY_WRAP_FEE
+          FROM CCS_DELIVERYPOLICY
+         WHERE DELIVERY_POLICY_NO = #{deliveryPolicyNo}
+	</select>
+
+</mapper>

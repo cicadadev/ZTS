@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ccs.businessinquiry">
+	<resultMap type="ccsBusinessinquiry" id="getBusinessInquiryDetailResult" autoMapping="true">
+		<id property="storeId" 				column="STORE_ID" />
+		<id property="businessInquiryNo" 	column="BUSINESS_INQUIRY_ID" />
+		<id property="name" 				column="NAME" />
+		<id property="phone" 				column="PHONE" />
+		<id property="zipCd" 				column="ZIP_CD" />
+		<id property="address1" 			column="ADDRESS1" />
+		<id property="address2" 			column="ADDRESS2" />
+		<id property="homepageUrl" 			column="HOMEPAGE_URL" />
+		<id property="depName" 				column="DEP_NAME" />
+		<id property="managerName" 			column="MANAGER_NAME" />
+		<id property="managerPhone1" 		column="MANAGER_PHONE1" />
+		<id property="managerEmail" 		column="MANAGER_EMAIL" />
+		<id property="detail" 				column="DETAIL" />
+		<id property="img" 					column="IMG" />
+		<result property="mdInfo" 			column="MD_INFOS" />
+		<result property="categoryNames"	column="CATEGORY_NAMES" />
+	</resultMap>
+
+	<select id="getBusinessInquiryListInfo" resultMap="getBusinessInquiryDetailResult">
+		/* [ccs.business.getBusinessInquiryList][roy][2016. 8. 2.] */
+		<include refid="ccs.common.pagingPre" />
+		SELECT 	CBI.BUSINESS_INQUIRY_NO,
+				CBI.STORE_ID,
+				CBI.NAME,
+				CBI.PHONE,
+				CBI.ZIP_CD,
+				CBI.ADDRESS1,
+				CBI.ADDRESS2,
+				CBI.HOMEPAGE_URL,
+				CBI.DEP_NAME,
+				CBI.MANAGER_NAME,
+				CBI.MANAGER_PHONE1,
+				CBI.MANAGER_EMAIL,
+				CBI.DETAIL,
+				CBI.IMG,
+				CBI.INS_ID,
+				CBI.INS_DT,
+				CBI.UPD_ID,
+				CBI.UPD_DT,
+				REPLACE(WM_CONCAT (U.NAME || '(' || U.USER_ID || ')'), ',()', ' ') AS MD_INFOS,
+				WM_CONCAT (P.NAME) AS CATEGORY_NAMES,
+				( '('|| CBI.ZIP_CD  ||') '|| CBI.ADDRESS1 ||' '|| CBI.ADDRESS2) AS ADDRESS 
+			FROM CCS_BUSINESSINQUIRY CBI
+				LEFT OUTER JOIN CCS_BUSINESSINQUIRYCATEGORY C ON CBI.STORE_ID = C.STORE_ID AND CBI.BUSINESS_INQUIRY_NO = C.BUSINESS_INQUIRY_NO
+				LEFT OUTER JOIN PMS_CATEGORY P ON C.STORE_ID = C.STORE_ID AND P.CATEGORY_ID = C.CATEGORY_ID
+				LEFT OUTER JOIN CCS_USER U ON U.USER_ID = P.USER_ID
+			WHERE 1=1 
+			<if test="startDate != null and startDate != ''">
+				<if test="endDate != null and endDate != ''">
+					AND CBI.INS_DT BETWEEN TO_DATE (#{startDate},
+	                                                 'YYYY-MM-DD HH24:MI:SS')
+	                                    AND TO_DATE (#{endDate},
+	                                                 'YYYY-MM-DD HH24:MI:SS')	 
+				</if>
+			</if>
+			<if test="searchKeyword != null and searchKeyword != ''">
+				AND CBI.NAME LIKE '%'|| #{searchKeyword} ||'%'
+			</if>
+			<if test="mdName != null and mdName != ''">
+				AND CBI.BUSINESS_INQUIRY_NO IN (SELECT C2.BUSINESS_INQUIRY_NO
+												FROM CCS_BUSINESSINQUIRYCATEGORY C2
+													LEFT OUTER JOIN PMS_CATEGORY P2 ON C2.STORE_ID = C2.STORE_ID AND P2.CATEGORY_ID = C2.CATEGORY_ID
+													LEFT OUTER JOIN CCS_USER U2 ON U2.USER_ID = P2.USER_ID WHERE U2.NAME = #{mdName})
+			</if>
+			GROUP BY 	CBI.BUSINESS_INQUIRY_NO,
+						CBI.STORE_ID,
+						CBI.NAME,
+						CBI.PHONE,
+						CBI.ZIP_CD,
+						CBI.ADDRESS1,
+						CBI.ADDRESS2,
+						CBI.HOMEPAGE_URL,
+						CBI.DEP_NAME,
+						CBI.MANAGER_NAME,
+						CBI.MANAGER_PHONE1,
+						CBI.MANAGER_EMAIL,
+						CBI.DETAIL,
+						CBI.IMG,
+						CBI.INS_ID,
+						CBI.INS_DT,
+						CBI.UPD_ID,
+						CBI.UPD_DT
+		<include refid="ccs.common.pagingPost" />
+	</select>
+
+	<select id="getBusinessInquiryDetail" resultMap="getBusinessInquiryDetailResult">
+		/* [ccs.business.getBusinessInquiryDetail][roy][2016. 8. 2.] */
+		SELECT 	CBI.BUSINESS_INQUIRY_NO,
+				CBI.STORE_ID,
+				CBI.NAME,
+				CBI.PHONE,
+				CBI.ZIP_CD,
+				CBI.ADDRESS1,
+				CBI.ADDRESS2,
+				CBI.HOMEPAGE_URL,
+				CBI.DEP_NAME,
+				CBI.MANAGER_NAME,
+				CBI.MANAGER_PHONE1,
+				CBI.MANAGER_EMAIL,
+				CBI.DETAIL,
+				CBI.IMG,
+				CBI.INS_ID,
+				CBI.INS_DT,
+				CBI.UPD_ID,
+				CBI.UPD_DT,
+				REPLACE(WM_CONCAT (U.NAME || '(' || U.USER_ID || ')'), ',()', ' ') AS MD_INFOS,
+				WM_CONCAT (P.NAME) AS CATEGORY_NAMES
+			FROM CCS_BUSINESSINQUIRY CBI
+				LEFT OUTER JOIN CCS_BUSINESSINQUIRYCATEGORY C ON CBI.STORE_ID = C.STORE_ID AND CBI.BUSINESS_INQUIRY_NO = C.BUSINESS_INQUIRY_NO
+				LEFT OUTER JOIN PMS_CATEGORY P ON C.STORE_ID = C.STORE_ID AND P.CATEGORY_ID = C.CATEGORY_ID
+				LEFT OUTER JOIN CCS_USER U ON U.USER_ID = P.USER_ID
+			WHERE 	CBI.STORE_ID = #{storeId}
+					AND CBI.BUSINESS_INQUIRY_NO = #{businessInquiryNo}
+			GROUP BY 	CBI.BUSINESS_INQUIRY_NO,
+						CBI.STORE_ID,
+						CBI.NAME,
+						CBI.PHONE,
+						CBI.ZIP_CD,
+						CBI.ADDRESS1,
+						CBI.ADDRESS2,
+						CBI.HOMEPAGE_URL,
+						CBI.DEP_NAME,
+						CBI.MANAGER_NAME,
+						CBI.MANAGER_PHONE1,
+						CBI.MANAGER_EMAIL,
+						CBI.DETAIL,
+						CBI.IMG,
+						CBI.INS_ID,
+						CBI.INS_DT,
+						CBI.UPD_ID,
+						CBI.UPD_DT
+	</select>
+	
+	<select id="getBusinessInquiryNo" resultType="java.math.BigDecimal">
+		/* [ccs.businessinquiry.getBusinessInquiryNo][roy][2016. 9. 20.] */
+          	SELECT NVL (BUSINESS_INQUIRY_NO, 1) BUSINESS_INQUIRY_NO FROM (SELECT MAX (TO_NUMBER (BUSINESS_INQUIRY_NO)) BUSINESS_INQUIRY_NO
+         	 FROM CCS_BUSINESSINQUIRY WHERE STORE_ID = #{storeId}) DUAL
+	</select>
+</mapper>

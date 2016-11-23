@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ccs.role">
+
+	<select id="getRoleGroup" resultType="ccsRole">
+		/* [ccs.role.getRoleGroup][stella][2016. 6. 16.] */
+		SELECT
+			ROLE_ID
+			, NAME
+			, NOTE
+			, MAX(ROLE_ID) OVER() + 1		AS nextRoleId
+		 FROM
+		 	CCS_ROLE
+		WHERE
+			STORE_ID = #{storeId} 
+	 	ORDER BY cast(ROLE_ID as int) ASC
+	</select>
+	
+	<resultMap type="ccsMenu" id="accessibleMenuResult">
+		<id property="menuId" column="MENU_ID" />
+		<result property="originMenuId" column="ORIGIN_MENU_ID" />
+			
+	</resultMap>
+	<select id="getAccessibleMenuList" resultMap="accessibleMenuResult">
+		/* [ccs.role.getAccessibleMenuList][stella][2016. 6. 16.] */
+		<include refid="ccs.common.pagingPre" />
+			SELECT
+				#{roleId}	AS ROLE_ID
+				, MG.NAME || '>' || M.NAME		AS MENU_ID
+				, M.MENU_ID		AS ORIGIN_MENU_ID
+				, M.URL
+				, (CASE WHEN AM.ROLE_ID IS NULL THEN 'N' ELSE 'Y' END)		AS USE_YN
+			 FROM
+			 	CCS_MENU M
+			 	JOIN CCS_MENUGROUP MG
+			 		ON MG.MENU_GROUP_ID = M.MENU_GROUP_ID
+			 	LEFT OUTER JOIN CCS_ACCESSMENU AM
+			 		ON M.MENU_ID = AM.MENU_ID
+			 		AND AM.ROLE_ID = #{roleId}
+			 WHERE M.SYSTEM_TYPE_CD = 'SYSTEM_TYPE_CD.BO'
+			ORDER BY
+				MENU_ID
+				, ORIGIN_MENU_ID
+		<include refid="ccs.common.pagingPost" />	
+	</select>
+	
+	<resultMap type="ccsFunction" id="accessibleFuncResult">
+		<result property="url" column="URL" />		
+	</resultMap>
+	
+	<select id="getFunctionList" resultMap="accessibleFuncResult">
+		/* [ccs.role.getFunctionList][stella][2016. 7. 14.] */
+		<include refid="ccs.common.pagingPre" />
+		SELECT  CF.GROUP_NAME,
+				CF.NAME, 
+				CF.MENU_ID, 
+				CF.FUNCTION_ID, 
+				CF.SORT_NO, 
+  				(CASE WHEN (SELECT CAF.MENU_ID FROM CCS_ACCESSFUNCTION CAF WHERE CF.MENU_ID = CAF.MENU_ID AND ROLE_ID = #{roleId} AND CF.FUNCTION_ID = CAF.FUNCTION_ID) IS NULL THEN 'N' ELSE 'Y' END) AS USE_YN
+		FROM CCS_FUNCTION CF
+   		WHERE   CF.MENU_ID = #{menuId}
+		GROUP BY CF.GROUP_NAME, CF.MENU_ID, CF.FUNCTION_ID, CF.NAME, CF.SORT_NO
+		ORDER BY  CF.SORT_NO
+		<include refid="ccs.common.pagingPost" />
+	</select>
+	
+	<select id="checkAccessMenus" resultType="String">
+		/* [ccs.role.checkAccessMenus][stella][2016. 6. 21.] */
+		SELECT
+			MENU_ID
+		 FROM
+		 	CCS_ACCESSMENU
+		WHERE
+			ROLE_ID = #{roleId}
+	</select>
+	
+	<select id="checkAccessMenu" resultType="String">
+		/* [ccs.role.checkAccessMenu][roy][2016. 7. 14.] */
+		SELECT
+			MENU_ID
+		 FROM
+		 	CCS_ACCESSMENU
+		WHERE
+			ROLE_ID = #{roleId}
+			AND MENU_ID = #{menuId}
+	</select>
+	
+	<select id="checkAccessFunctions" resultType="String">
+		/* [ccs.role.checkAccessFunctions][stella][2016. 6. 21.] */
+		SELECT
+			FUNCTION_ID
+		 FROM
+		 	CCS_ACCESSFUNCTION
+		WHERE
+			ROLE_ID = #{roleId}
+			AND MENU_ID = #{menuId}
+			AND FUNCTION_ID = #{functionId}
+	</select>
+	
+	<select id="selectRoleCheck" resultType="int">
+		/* [ccs.role.selectRoleCheck][roy][2016. 7. 26.] */
+			SELECT COUNT (*)
+			FROM CCS_ACCESSMENU CA LEFT OUTER JOIN CCS_ACCESSFUNCTION CF 
+				ON CA.MENU_ID = CF.MENU_ID AND CA.ROLE_ID = CF.ROLE_ID
+			WHERE CA.ROLE_ID = #{roleId}
+	</select>
+	
+	<delete id="deleteAllFunctions">
+		/* [ccs.role.deleteAllFunctions][stella][2016. 6. 22.] */
+		DELETE 
+			FROM CCS_ACCESSFUNCTION
+		WHERE
+			ROLE_ID = #{roleId}
+	</delete>
+	
+	<delete id="deleteAllMenus">
+		/* [ccs.role.deleteAllFunctions][roy][2016. 7. 28.] */
+		DELETE 
+			FROM CCS_ACCESSMENU
+		WHERE
+			ROLE_ID = #{roleId}
+	</delete>
+	
+</mapper>

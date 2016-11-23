@@ -1,0 +1,597 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="oms.cart">
+
+	<select id="getCartCnt" resultType="omsCart">
+		/* [oms.cart.getCartCnt][dennis][2016. 7. 4.] */
+		SELECT 	NVL(SUM(DECODE(CART_TYPE_CD,'CART_TYPE_CD.GENERAL',CNT,0)),0) AS GENERAL_CNT,
+				NVL(SUM(DECODE(CART_TYPE_CD,'CART_TYPE_CD.PICKUP',CNT,0)),0) AS PICKUP_CNT,
+				NVL(SUM(DECODE(CART_TYPE_CD,'CART_TYPE_CD.REGULARDELIVERY',CNT,0)),0) AS REGULARDELIVERY_CNT,
+				NVL(SUM(CNT),0) AS TOTAL_CNT		
+		FROM (
+		
+		
+				SELECT	COUNT(DISTINCT A.CART_PRODUCT_NO) AS CNT,
+						A.CART_TYPE_CD
+				FROM (
+						SELECT  A.CART_PRODUCT_NO,
+								A.CART_TYPE_CD,
+								(CASE WHEN A.CART_TYPE_CD = 'CART_TYPE_CD.PICKUP'
+										THEN (CASE WHEN (A.OFFSHOP_REAL_STOCK_QTY &lt;= 0 OR A.OFFSHOP_STATE_CD != 'OFFSHOP_STATE_CD.RUN' OR A.OFFSHOP_PICKUP_YN != 'Y' OR A.PRODUCT_SALE_STATE_CD IN ('SALE_STATE_CD.MDSTOP','SALE_STATE_CD.END'))
+									  				THEN 'Y'						  				
+									  				ELSE 'N'
+									  				END)
+									    ELSE (CASE WHEN SUM(A.NON_SALE_CNT) OVER (PARTITION BY A.CART_PRODUCT_NO) &gt; 0 AND A.SALE_STATE_CD_1 = 'SALE_STATE_CD.SALE'
+												  THEN 'Y'
+												  WHEN A.SALE_STATE_CD_1 != 'SALE_STATE_CD.SALE'
+												  THEN 'Y'
+												  ELSE 'N'
+												  END)
+								END) AS EMPTY_FLAG						
+						FROM (
+							SELECT  C.CART_PRODUCT_NO,
+									C.CART_TYPE_CD,
+									(CASE WHEN PP.SALE_STATE_CD IN ('SALE_STATE_CD.SOLDOUT','SALE_STATE_CD.MDSTOP','SALE_STATE_CD.STOP')
+										 	THEN 'SALE_STATE_CD.SOLDOUT'											
+											WHEN C.CART_TYPE_CD = 'CART_TYPE_CD.REGULARDELIVERY' AND PP.REGULAR_DELIVERY_YN = 'N'
+											THEN 'SALE_STATE_CD.SOLDOUT'	 									
+										 	ELSE DECODE(PP.PRODUCT_TYPE_CD,'PRODUCT_TYPE_CD.GENERAL',
+													 	  (CASE WHEN PS.SALEPRODUCT_STATE_CD = 'SALEPRODUCT_STATE_CD.SALE' AND PS.REAL_STOCK_QTY &gt; 0
+													 			THEN PP.SALE_STATE_CD
+													 			ELSE 'SALE_STATE_CD.SOLDOUT'
+													 			END)
+													 , PP.SALE_STATE_CD
+													 )	  
+										 END) AS SALE_STATE_CD_1,							
+									(CASE 	WHEN C.CART_TYPE_CD = 'CART_TYPE_CD.PICKUP' AND PP.OFFSHOP_PICKUP_YN = 'N'
+											THEN 'SALE_STATE_CD.END'
+											ELSE PP.SALE_STATE_CD
+											END
+											) AS PRODUCT_SALE_STATE_CD,							
+			                        (CASE WHEN C.CART_PRODUCT_TYPE_CD ='CART_PRODUCT_TYPE_CD.SET'
+			                        	  	   AND (PSS.REAL_STOCK_QTY = 0 OR PSS.SALEPRODUCT_STATE_CD != 'SALEPRODUCT_STATE_CD.SALE')
+			                        	  THEN 1
+			                        	  ELSE 0
+			                        	  END
+									) AS NON_SALE_CNT,
+			                        
+			                        OS.OFFSHOP_STATE_CD,
+			                        OS.OFFSHOP_PICKUP_YN,
+			                        NVL(OT.REAL_STOCK_QTY,0) AS OFFSHOP_REAL_STOCK_QTY				
+							FROM OMS_CART C
+								 LEFT OUTER JOIN OMS_CART CU
+									ON C.STORE_ID = CU.STORE_ID
+									AND C.CART_PRODUCT_NO = CU.UPPER_CART_PRODUCT_NO 
+									AND CU.CART_PRODUCT_TYPE_CD = 'CART_PRODUCT_TYPE_CD.SUB'					 
+								 JOIN PMS_PRODUCT PP
+								 	ON C.PRODUCT_ID = PP.PRODUCT_ID
+								 	AND C.STORE_ID = PP.STORE_ID
+								 AND PP.SALE_STATE_CD IN ('SALE_STATE_CD.SALE',
+								 						  'SALE_STATE_CD.SOLDOUT',
+								 						  'SALE_STATE_CD.END',
+								 						  'SALE_STATE_CD.MDSTOP',
+								 						  'SALE_STATE_CD.STOP')
+								 JOIN PMS_SALEPRODUCT PS
+									ON C.PRODUCT_ID = PS.PRODUCT_ID
+									AND C.SALEPRODUCT_ID = PS.SALEPRODUCT_ID
+									AND C.STORE_ID = PS.STORE_ID	
+							     LEFT OUTER JOIN PMS_PRODUCT PPP
+								 	ON CU.PRODUCT_ID = PPP.PRODUCT_ID
+								 	AND CU.STORE_ID = PPP.STORE_ID
+								 AND PPP.SALE_STATE_CD IN ('SALE_STATE_CD.SALE',
+								 						  'SALE_STATE_CD.SOLDOUT',
+								 						  'SALE_STATE_CD.END',
+								 						  'SALE_STATE_CD.MDSTOP',
+								 						  'SALE_STATE_CD.STOP')			
+								 LEFT OUTER JOIN PMS_SALEPRODUCT PSS
+									ON CU.PRODUCT_ID = PSS.PRODUCT_ID
+									AND CU.SALEPRODUCT_ID = PSS.SALEPRODUCT_ID
+									AND CU.STORE_ID = PSS.STORE_ID
+								 LEFT OUTER JOIN CCS_OFFSHOP OS
+								 	ON C.OFFSHOP_ID = OS.OFFSHOP_ID
+								 	AND C.STORE_ID = OS.STORE_ID						 	
+								 LEFT OUTER JOIN PMS_OFFSHOPSTOCK OT
+								 	ON C.SALEPRODUCT_ID = OT.SALEPRODUCT_ID
+								 	AND C.OFFSHOP_ID = OT.OFFSHOP_ID
+								 	AND C.STORE_ID = OT.STORE_ID						 							 
+							WHERE C.CART_ID = #{cartId}						
+							AND C.CART_STATE_CD = 'CART_STATE_CD.REG'
+							AND C.CART_PRODUCT_TYPE_CD IN ('CART_PRODUCT_TYPE_CD.GENERAL','CART_PRODUCT_TYPE_CD.SET')
+							AND C.END_DT &gt;= SYSDATE					
+							<if test="channelId != null and channelId != ''">
+								<choose>
+									<when test="channelId == '-1'">
+										AND C.CHANNEL_ID IS NULL
+									</when>
+									<otherwise>
+										AND C.CHANNEL_ID = #{channelId}
+									</otherwise>
+								</choose>
+							</if>
+							) A	
+					) A				
+					WHERE A.EMPTY_FLAG = 'N'
+					GROUP BY A.CART_TYPE_CD		
+			) A	
+			
+<!-- 		SELECT -->
+<!-- 				NVL(SUM(DECODE(CART_TYPE_CD,'CART_TYPE_CD.GENERAL',CNT,0)),0) AS GENERAL_CNT, -->
+<!-- 				NVL(SUM(DECODE(CART_TYPE_CD,'CART_TYPE_CD.PICKUP',CNT,0)),0) AS PICKUP_CNT, -->
+<!-- 				NVL(SUM(DECODE(CART_TYPE_CD,'CART_TYPE_CD.REGULARDELIVERY',CNT,0)),0) AS REGULARDELIVERY_CNT, -->
+<!-- 				NVL(SUM(CNT),0) AS TOTAL_CNT -->
+<!-- 		FROM (		 -->
+<!-- 				SELECT COUNT(*) CNT, CART_TYPE_CD  -->
+<!-- 				FROM OMS_CART C -->
+<!-- 				JOIN PMS_PRODUCT PP -->
+<!-- 				 	ON C.PRODUCT_ID = PP.PRODUCT_ID -->
+<!-- 				 	AND C.STORE_ID = PP.STORE_ID -->
+<!-- 				 AND PP.SALE_STATE_CD IN ('SALE_STATE_CD.SALE', -->
+<!-- 				 						  'SALE_STATE_CD.SOLDOUT', -->
+<!-- 				 						  'SALE_STATE_CD.END', -->
+<!-- 				 						  'SALE_STATE_CD.MDSTOP', -->
+<!-- 				 						  'SALE_STATE_CD.STOP') -->
+<!-- 				 JOIN PMS_SALEPRODUCT PS -->
+<!-- 					ON C.PRODUCT_ID = PS.PRODUCT_ID -->
+<!-- 					AND C.SALEPRODUCT_ID = PS.SALEPRODUCT_ID -->
+<!-- 					AND C.STORE_ID = PS.STORE_ID	 -->
+<!-- 				WHERE C.CART_ID = #{cartId}		 -->
+<!-- 				AND C.STORE_ID = #{storeId}	 -->
+<!-- 				AND C.CART_STATE_CD = 'CART_STATE_CD.REG' -->
+<!-- 				AND C.CART_PRODUCT_TYPE_CD IN ('CART_PRODUCT_TYPE_CD.GENERAL','CART_PRODUCT_TYPE_CD.SET') -->
+<!-- 				AND C.END_DT &gt;= SYSDATE -->
+<!-- 				<if test="channelId != null and channelId != ''"> -->
+<!-- 					<choose> -->
+<!-- 						<when test="channelId == '-1'"> -->
+<!-- 							AND C.CHANNEL_ID IS NULL -->
+<!-- 						</when> -->
+<!-- 						<otherwise> -->
+<!-- 							AND C.CHANNEL_ID = #{channelId} -->
+<!-- 						</otherwise> -->
+<!-- 					</choose> -->
+<!-- 				</if> -->
+<!-- 				GROUP BY CART_TYPE_CD -->
+<!-- 			) -->
+	</select>
+	
+	<resultMap type="omsCart" id="getCartListResult" autoMapping="true">
+		<id column="STORE_ID" property="storeId"/>
+		<id column="CART_PRODUCT_NO" property="cartProductNo"/>
+		<result column="PRODUCT_ID" property="productId"/>
+		<result column="QTY" property="qty"/>
+		<result column="NEW_DELIVERY_POLICY_NO" property="deliveryPolicyNo"/>
+		<result column="OFFSHOP_ID" property="offshopId"/>
+		<result column="COMMISSION_RATE" property="commissionRate"/>
+		<result column="REAL_STOCK_QTY" property="realStockQty"/>
+		<association property="ccsOffshop" javaType="ccsOffshop" column="{storeId=STORE_ID,offshopId=OFFSHOP_ID}" select="ccs.offshop.getCcsOffshop"/>
+		<collection property="omsCarts" resultMap="getCartListResult1" ofType="omsCart"/>
+		<collection property="pmsSaleproducts" column="{storeId=STORE_ID,productId=PRODUCT_ID}" select="pms.product.getSaleproducts"/>		
+		<collection property="spsPresents" column="{productId = PRODUCT_ID,presentTypeCd=PRESENT_TYPE_CD,categoryId=CATEGORY_ID,brandId=BRAND_ID,dealId=DEAL_ID}" select="sps.present.getApplyPresentList"/>
+	</resultMap>
+	<resultMap type="omsCart" id="getCartListResult1">
+		<id column="STORE_ID" property="storeId"/>
+		<id column="SUB_CART_PRODUCT_NO" property="cartProductNo"/>
+		<result column="CART_ID" property="cartId"/>
+		<result column="OFFSHOP_ID" property="offshopId"/>
+		<result column="SUB_PRODUCT_ID" property="productId"/>
+		<result column="SUB_OPTION_YN" property="optionYn"/>
+		<result column="SUB_SALEPRODUCT_ID" property="saleproductId"/>
+		<result column="SUB_SALE_PRICE" property="salePrice"/>
+		<result column="SUB_ADD_SALE_PRICE" property="addSalePrice"/>
+		<result column="SUB_TOTAL_SALE_PRICE" property="totalSalePrice"/>
+		<result column="SUB_PRODUCT_NAME" property="productName"/>
+		<result column="SUB_BRAND_NAME" property="brandName"/>
+		<result column="SUB_SALEPRODUCT_NAME" property="saleproductName"/>
+		<result column="SUB_SET_QTY" property="setQty"/>
+		<collection property="pmsSaleproducts" column="{storeId=STORE_ID,productId=SUB_PRODUCT_ID}" select="pms.product.getSaleproducts"/>
+	</resultMap>	
+	<select id="getCartList" resultMap="getCartListResult" flushCache="true">
+		/* [oms.cart.getCartList][dennis][2016. 6. 29.] */
+		SELECT 	A.*,
+				PB.NAME AS BRAND_NAME,
+				SE.NAME AS SUB_PRODUCT_NAME,
+				PB2.NAME AS SUB_BRAND_NAME,
+				PS.NAME AS SUB_SALEPRODUCT_NAME,
+				DECODE(A.CART_TYPE_CD,'CART_TYPE_CD.GENERAL','PRESENT_TYPE_CD.PRODUCT','PRESENT_TYPE_CD.EMPTY') AS PRESENT_TYPE_CD,
+				SUM(A.DELIVERY_COUNT) OVER (PARTITION BY A.NEW_DELIVERY_POLICY_NO) AS CART_DELIVERY_CNT,
+				SUM(A.TOTAL_SALE_PRICE * A.QTY) OVER (PARTITION BY A.DELIVERY_POLICY_NO) AS POLICY_TOTAL_PRICE,
+				MAX(A.DELIVERY_FEE_FREE_YN) OVER (PARTITION BY A.DELIVERY_POLICY_NO) AS POLICY_DELIVERY_FEE_FREE_YN				
+		FROM (
+				SELECT
+						A.*,
+<!-- 						A.TOTAL_SALE_PRICE AS CART_TOTAL_SALE_PRICE, -->
+						(CASE WHEN A.CART_TYPE_CD = 'CART_TYPE_CD.PICKUP'
+								THEN (CASE WHEN (A.OFFSHOP_REAL_STOCK_QTY &lt;= 0 OR A.OFFSHOP_STATE_CD != 'OFFSHOP_STATE_CD.RUN' OR A.OFFSHOP_PICKUP_YN != 'Y' OR A.PRODUCT_SALE_STATE_CD IN ('SALE_STATE_CD.MDSTOP','SALE_STATE_CD.END'))
+							  				THEN -1							  				
+							  				ELSE A.DELIVERY_POLICY_NO
+							  				END)
+							    ELSE (CASE WHEN SUM(A.NON_SALE_CNT) OVER (PARTITION BY A.CART_PRODUCT_NO) &gt; 0 AND A.SALE_STATE_CD_1 = 'SALE_STATE_CD.SALE'
+										  THEN -1
+										  WHEN A.SALE_STATE_CD_1 != 'SALE_STATE_CD.SALE'
+										  THEN -1
+										  ELSE A.DELIVERY_POLICY_NO
+										  END)
+						END) AS NEW_DELIVERY_POLICY_NO,
+						(CASE WHEN A.CART_TYPE_CD = 'CART_TYPE_CD.PICKUP'
+							  THEN (CASE WHEN (A.OFFSHOP_REAL_STOCK_QTY &lt;= 0 OR A.OFFSHOP_STATE_CD != 'OFFSHOP_STATE_CD.RUN' OR A.OFFSHOP_PICKUP_YN != 'Y' OR A.PRODUCT_SALE_STATE_CD IN ('SALE_STATE_CD.MDSTOP','SALE_STATE_CD.END'))
+							  			 THEN 'SALE_STATE_CD.SOLDOUT'
+							  			 ELSE 'SALE_STATE_CD.SALE'
+							  			 END)
+							  ELSE (CASE WHEN SUM(A.NON_SALE_CNT) OVER (PARTITION BY A.CART_PRODUCT_NO) &gt; 0 AND A.SALE_STATE_CD_1 = 'SALE_STATE_CD.SALE'
+										  THEN 'SALE_STATE_CD.SOLDOUT'
+										  ELSE A.SALE_STATE_CD_1							  		
+										  END)
+						END) AS SALE_STATE_CD,
+						DECODE(A.CART_TYPE_CD,'CART_TYPE_CD.PICKUP',A.OFFSHOP_REAL_STOCK_QTY
+									 , A.GENERAL_REAL_STOCK_QTY
+						) AS MAX_STOCK_QTY
+				FROM (
+					SELECT  C.STORE_ID,
+							C.CART_PRODUCT_NO,
+							C.CART_ID,
+							C.CART_TYPE_CD,
+							C.SET_QTY,						
+							C.CART_PRODUCT_TYPE_CD,
+							C.CHANNEL_ID,
+							C.PRODUCT_ID,
+							C.SALEPRODUCT_ID,
+							C.DEAL_ID,
+							DECODE(C.CART_TYPE_CD,'CART_TYPE_CD.REGULARDELIVERY', C.REGULAR_DELIVERY_PRICE
+																			    , C.SALE_PRICE
+									) AS SALE_PRICE,
+							DECODE(C.CART_TYPE_CD,'CART_TYPE_CD.REGULARDELIVERY', 0
+																			    , C.ADD_SALE_PRICE
+									) AS ADD_SALE_PRICE,
+							DECODE(C.CART_TYPE_CD,'CART_TYPE_CD.PICKUP',ROUND((PP.SALE_PRICE + PS.ADD_SALE_PRICE) * (100 - NVL(PP.OFFSHOP_PICKUP_DC_RATE,0)) / 100)
+												 ,'CART_TYPE_CD.REGULARDELIVERY',PP.REGULAR_DELIVERY_PRICE
+																	   ,(PP.SALE_PRICE + PS.ADD_SALE_PRICE)
+									) AS ORG_TOTAL_SALE_PRICE,
+							DECODE(C.CART_TYPE_CD,'CART_TYPE_CD.PICKUP',ROUND((PP.SALE_PRICE + PS.ADD_SALE_PRICE) * (100 - NVL(PP.OFFSHOP_PICKUP_DC_RATE,0)) / 100)
+												 ,'CART_TYPE_CD.REGULARDELIVERY',PP.REGULAR_DELIVERY_PRICE
+												 ,C.TOTAL_SALE_PRICE
+									) AS TOTAL_SALE_PRICE,
+							C.TOTAL_SALE_PRICE AS CART_TOTAL_SALE_PRICE, 							
+							C.REGULAR_DELIVERY_PRICE AS REGULAR_DELIVERY_PRICE,
+							C.QTY,
+							C.CART_STATE_CD,
+							C.END_DT,
+							C.OFFSHOP_ID,
+							C.STYLE_NO,
+							C.KEEP_YN,
+							C.COUPON_ID,
+							C.DELIVERY_CNT,
+							C.DELIVERY_PERIOD_VALUE,
+							C.DELIVERY_PERIOD_CD,
+							CU.CART_PRODUCT_NO AS SUB_CART_PRODUCT_NO,
+							CU.PRODUCT_ID SUB_PRODUCT_ID,
+							CU.SALEPRODUCT_ID AS SUB_SALEPRODUCT_ID,
+							CU.SALE_PRICE AS SUB_SALE_PRICE,
+							CU.ADD_SALE_PRICE AS SUB_ADD_SALE_PRICE,
+							CU.TOTAL_SALE_PRICE AS  SUB_TOTAL_SALE_PRICE,
+							CU.SET_QTY AS SUB_SET_QTY,
+							PP.NAME AS PRODUCT_NAME,
+							PP.DELIVERY_POLICY_NO,
+							DECODE(C.CART_TYPE_CD,'CART_TYPE_CD.REGULARDELIVERY',PP.REGULAR_DELIVERY_FEE_FREE_YN,PP.DELIVERY_FEE_FREE_YN) AS DELIVERY_FEE_FREE_YN,
+							PP.REGULAR_DELIVERY_FEE_FREE_YN,
+							PS.NAME AS SALEPRODUCT_NAME,
+							PP.BRAND_ID,
+							PP.CATEGORY_ID,
+							(CASE 	WHEN PP.SALE_STATE_CD IN ('SALE_STATE_CD.SOLDOUT','SALE_STATE_CD.MDSTOP','SALE_STATE_CD.STOP')
+								 	THEN 'SALE_STATE_CD.SOLDOUT'								 	
+									WHEN C.CART_TYPE_CD = 'CART_TYPE_CD.REGULARDELIVERY' AND PP.REGULAR_DELIVERY_YN = 'N'
+									THEN 'SALE_STATE_CD.SOLDOUT'
+								 	ELSE DECODE(PP.PRODUCT_TYPE_CD,'PRODUCT_TYPE_CD.GENERAL',
+											 	  (CASE WHEN PS.SALEPRODUCT_STATE_CD = 'SALEPRODUCT_STATE_CD.SALE' AND PS.REAL_STOCK_QTY &gt; 0
+											 			THEN PP.SALE_STATE_CD
+											 			ELSE 'SALE_STATE_CD.SOLDOUT'
+											 			END)
+											 , PP.SALE_STATE_CD
+											 )	  
+								 END) AS SALE_STATE_CD_1,							
+							DECODE(C.CART_TYPE_CD,'CART_TYPE_CD.PICKUP',0,NVL(CD.DELIVERY_FEE,0)) AS DELIVERY_FEE,
+							CD.MIN_DELIVERY_FREE_AMT,
+							(CASE WHEN C.CART_PRODUCT_TYPE_CD IN ('CART_PRODUCT_TYPE_CD.GENERAL','CART_PRODUCT_TYPE_CD.SET')
+								 THEN 1
+								 ELSE 0
+								 END) DELIVERY_COUNT,
+							(CASE 	WHEN C.CART_TYPE_CD = 'CART_TYPE_CD.PICKUP' AND PP.OFFSHOP_PICKUP_YN = 'N'
+									THEN 'SALE_STATE_CD.END'
+									ELSE PP.SALE_STATE_CD
+									END
+									) AS PRODUCT_SALE_STATE_CD,							
+	                        DECODE(C.CART_TYPE_CD,'CART_TYPE_CD.GENERAL',PP.WRAP_YN,'N') AS WRAP_YN,
+	                        PP.REGULAR_DELIVERY_MIN_CNT,
+	                        PP.REGULAR_DELIVERY_MAX_CNT,	                        
+	                        PP.MIN_QTY,
+	                        PP.OPTION_YN,
+	                        PP.BUSINESS_ID,
+	                        PP.COMMISSION_RATE,
+	                        
+	                        PPP.OPTION_YN AS SUB_OPTION_YN,
+	                        
+	                        DECODE(C.CART_PRODUCT_TYPE_CD,'CART_PRODUCT_TYPE_CD.SET',PSS.SALEPRODUCT_STATE_CD,PS.SALEPRODUCT_STATE_CD) AS SALEPRODUCT_STATE_CD,
+	                        DECODE(C.CART_PRODUCT_TYPE_CD,'CART_PRODUCT_TYPE_CD.SET',PSS.REAL_STOCK_QTY,PS.REAL_STOCK_QTY) AS REAL_STOCK_QTY,
+	                        DECODE(C.CART_PRODUCT_TYPE_CD,'CART_PRODUCT_TYPE_CD.SET', MIN(CEIL(PSS.REAL_STOCK_QTY / CU.SET_QTY)) OVER (PARTITION BY C.CART_PRODUCT_NO)
+	                        							 , PS.REAL_STOCK_QTY
+	                        ) AS GENERAL_REAL_STOCK_QTY,
+	                        
+	                        (CASE WHEN C.CART_PRODUCT_TYPE_CD ='CART_PRODUCT_TYPE_CD.SET'
+	                        	  	   AND (PSS.REAL_STOCK_QTY = 0 OR PSS.SALEPRODUCT_STATE_CD != 'SALEPRODUCT_STATE_CD.SALE')
+	                        	  THEN 1
+	                        	  ELSE 0
+	                        	  END
+							) AS NON_SALE_CNT,
+	                        
+	                        OS.OFFSHOP_STATE_CD,
+	                        OS.OFFSHOP_PICKUP_YN,
+	                        NVL(OT.REAL_STOCK_QTY,0) AS OFFSHOP_REAL_STOCK_QTY				
+					FROM OMS_CART C
+						 LEFT OUTER JOIN OMS_CART CU
+							ON C.STORE_ID = CU.STORE_ID
+							AND C.CART_PRODUCT_NO = CU.UPPER_CART_PRODUCT_NO 
+							AND CU.CART_PRODUCT_TYPE_CD = 'CART_PRODUCT_TYPE_CD.SUB'					 
+						 JOIN PMS_PRODUCT PP
+						 	ON C.PRODUCT_ID = PP.PRODUCT_ID
+						 	AND C.STORE_ID = PP.STORE_ID
+						 AND PP.SALE_STATE_CD IN ('SALE_STATE_CD.SALE',
+						 						  'SALE_STATE_CD.SOLDOUT',
+						 						  'SALE_STATE_CD.END',
+						 						  'SALE_STATE_CD.MDSTOP',
+						 						  'SALE_STATE_CD.STOP')
+						 JOIN PMS_SALEPRODUCT PS
+							ON C.PRODUCT_ID = PS.PRODUCT_ID
+							AND C.SALEPRODUCT_ID = PS.SALEPRODUCT_ID
+							AND C.STORE_ID = PS.STORE_ID	
+					     LEFT OUTER JOIN PMS_PRODUCT PPP
+						 	ON CU.PRODUCT_ID = PPP.PRODUCT_ID
+						 	AND CU.STORE_ID = PPP.STORE_ID
+						 AND PPP.SALE_STATE_CD IN ('SALE_STATE_CD.SALE',
+						 						  'SALE_STATE_CD.SOLDOUT',
+						 						  'SALE_STATE_CD.END',
+						 						  'SALE_STATE_CD.MDSTOP',
+						 						  'SALE_STATE_CD.STOP')			
+						 LEFT OUTER JOIN PMS_SALEPRODUCT PSS
+							ON CU.PRODUCT_ID = PSS.PRODUCT_ID
+							AND CU.SALEPRODUCT_ID = PSS.SALEPRODUCT_ID
+							AND CU.STORE_ID = PSS.STORE_ID
+						 LEFT OUTER JOIN CCS_DELIVERYPOLICY CD
+						 	ON PP.DELIVERY_POLICY_NO = CD.DELIVERY_POLICY_NO
+						 	AND PP.STORE_ID = CD.STORE_ID
+						 LEFT OUTER JOIN CCS_OFFSHOP OS
+						 	ON C.OFFSHOP_ID = OS.OFFSHOP_ID
+						 	AND C.STORE_ID = OS.STORE_ID						 	
+						 LEFT OUTER JOIN PMS_OFFSHOPSTOCK OT
+						 	ON C.SALEPRODUCT_ID = OT.SALEPRODUCT_ID
+						 	AND C.OFFSHOP_ID = OT.OFFSHOP_ID
+						 	AND C.STORE_ID = OT.STORE_ID						 							 
+					WHERE C.CART_ID = #{cartId}
+					AND C.CART_TYPE_CD = #{cartTypeCd}		
+					AND C.CART_STATE_CD = 'CART_STATE_CD.REG'
+					AND C.CART_PRODUCT_TYPE_CD IN ('CART_PRODUCT_TYPE_CD.GENERAL','CART_PRODUCT_TYPE_CD.SET')
+					AND C.END_DT &gt;= SYSDATE					
+					<if test="productId != null and productId != ''">
+						AND C.PRODUCT_ID = #{productId}
+					</if>					
+					<if test="channelId != null and channelId != ''">
+						<choose>
+							<when test="channelId == '-1'">
+								AND C.CHANNEL_ID IS NULL
+							</when>
+							<otherwise>
+								AND C.CHANNEL_ID = #{channelId}
+							</otherwise>
+						</choose>
+					</if>
+					<if test="orgOffshopId != null and orgOffshopId != ''">
+						AND (
+								(#{cartTypeCd} = 'CART_TYPE_CD.PICKUP' AND C.OFFSHOP_ID = #{orgOffshopId})
+								OR #{cartTypeCd} != 'CART_TYPE_CD.PICKUP'
+							)
+					</if>				
+					) A					
+					
+			) A
+			 LEFT OUTER JOIN PMS_BRAND PB
+	            ON A.BRAND_ID = PB.BRAND_ID
+	            AND A.STORE_ID = PB.STORE_ID
+	         LEFT OUTER JOIN PMS_SETPRODUCT SE
+	         	ON A.PRODUCT_ID = SE.PRODUCT_ID
+	         	AND A.STORE_ID = SE.STORE_ID
+	         	AND A.SUB_PRODUCT_ID = SE.SUB_PRODUCT_ID
+	         LEFT OUTER JOIN PMS_PRODUCT PP
+	            ON A.SUB_PRODUCT_ID = PP.PRODUCT_ID
+	            AND A.STORE_ID = PP.STORE_ID
+	         LEFT OUTER JOIN PMS_BRAND PB2
+	            ON PP.BRAND_ID = PB2.BRAND_ID
+	            AND PP.STORE_ID = PB2.STORE_ID
+	         LEFT OUTER JOIN PMS_SALEPRODUCT PS
+	            ON A.SUB_PRODUCT_ID = PS.PRODUCT_ID
+	           AND A.SUB_SALEPRODUCT_ID = PS.SALEPRODUCT_ID
+	           AND A.STORE_ID = PS.STORE_ID 
+		ORDER BY A.NEW_DELIVERY_POLICY_NO DESC,A.PRODUCT_ID, A.SALEPRODUCT_ID, A.SUB_PRODUCT_ID, A.SUB_SALEPRODUCT_ID		
+	</select>		
+	
+	<resultMap type="pmsProduct" id="getCartProductInfoResult" autoMapping="true">
+		<id column="STORE_ID" property="storeId"/>
+		<id column="PRODUCT_ID" property="productId"/>
+		<collection property="pmsSetproducts" ofType="pmsSetproduct">
+			<result column="SUB_PRODUCT_ID" property="subProductId"/>
+			<result column="QTY" property="qty"/>
+			<association property="pmsProduct" javaType="pmsProduct">				
+				<result column="SUB_SALE_PRICE" property="salePrice"/>
+				<result column="SUB_REGULAR_DELIVERY_PRICE" property="regularDeliveryPrice"/>
+			</association>
+		</collection>
+	</resultMap>
+	<select id="getCartProductInfo" resultMap="getCartProductInfoResult">
+		/* [oms.cart.getCartProductInfo][dennis][2016. 6. 29.] */
+		SELECT  PP.STORE_ID,
+				PP.PRODUCT_ID,
+				PP.PRODUCT_TYPE_CD,
+				PP.SALE_PRICE,
+				PP.REGULAR_DELIVERY_PRICE,
+				PS.SUB_PRODUCT_ID,
+				PP.SALE_PRICE * (PS.LIST_PRICE / PS.SUM_PRICE) AS SUB_SALE_PRICE,
+				PP.REGULAR_DELIVERY_PRICE * (PS.LIST_PRICE / PS.SUM_PRICE) AS SUB_REGULAR_DELIVERY_PRICE,
+				PS.QTY,
+				PP.REGULAR_DELIVERY_YN,
+				PP.OFFSHOP_PICKUP_YN,
+				PP.COMMISSION_RATE,
+				PP.NAME							
+		FROM PMS_PRODUCT PP
+			LEFT OUTER JOIN (SELECT PS.PRODUCT_ID,
+									PS.QTY,
+									PS.SUB_PRODUCT_ID,
+									PS2.LIST_PRICE,
+									PS2.SALE_PRICE,
+									SUM(PS2.LIST_PRICE) OVER (PARTITION BY PS.PRODUCT_ID) AS SUM_PRICE,
+									PS2.SUPPLY_PRICE									
+							   FROM PMS_SETPRODUCT PS,
+							   		PMS_PRODUCT PS2
+							  WHERE PS.SUB_PRODUCT_ID = PS2.PRODUCT_ID
+							  AND PS.PRODUCT_ID = #{productId}
+							 ) PS  
+			ON PP.PRODUCT_ID = PS.PRODUCT_ID								
+		WHERE PP.PRODUCT_ID = #{productId} 
+		<!-- 유효상품 조건 추가 -->
+	</select>
+	
+	<select id="getCartSaleproductInfo" resultType="pmsSaleproduct">
+		/* [oms.cart.getCartSaleproductInfo][dennis][2016. 6. 29.] */
+		SELECT  PP.STORE_ID,
+				PP.PRODUCT_ID,
+				PS.SALEPRODUCT_ID,
+				PS.SALEPRODUCT_STATE_CD,
+				PS.REAL_STOCK_QTY,						
+				PS.ADD_SALE_PRICE,
+				PS.NAME		
+		  FROM PMS_PRODUCT PP,
+		  	   PMS_SALEPRODUCT PS		  	   		  	  
+		 WHERE PP.PRODUCT_ID = PS.PRODUCT_ID		 
+		 AND PP.PRODUCT_ID = #{productId}
+		 AND PS.SALEPRODUCT_ID = #{saleproductId}		 
+	</select>
+	
+	<insert id="insertOmsCart">
+		/* [oms.cart.insertOmsCart][dennis][2016. 6. 29.] */
+		<selectKey keyProperty="cartProductNo" resultType="java.math.BigDecimal" order="BEFORE">	 	
+			SELECT NVL((SELECT MAX(CART_PRODUCT_NO) FROM OMS_CART WHERE CART_ID = #{cartId}),0) + 1 FROM DUAL				
+		</selectKey>
+		INSERT INTO OMS_CART (STORE_ID,
+		                      CART_PRODUCT_NO,
+		                      UPPER_CART_PRODUCT_NO,
+		                      SET_QTY,
+		                      CART_TYPE_CD,
+		                      CART_PRODUCT_TYPE_CD,
+		                      CART_ID,
+		                      CHANNEL_ID,
+		                      PRODUCT_ID,
+		                      SALEPRODUCT_ID,
+		                      DEAL_ID,
+		                      SALE_PRICE,
+		                      ADD_SALE_PRICE,
+		                      TOTAL_SALE_PRICE,
+		                      REGULAR_DELIVERY_PRICE,
+		                      QTY,
+		                      CART_STATE_CD,
+		                      KEEP_YN,
+		                      OFFSHOP_ID, 
+		                      END_DT,
+		                      INS_DT,
+		                      INS_ID,
+		                      UPD_DT,
+		                      UPD_ID)
+		     VALUES (#{storeId},
+		             #{cartProductNo},
+		             #{upperCartProductNo},
+		             #{setQty}              ,
+		             #{cartTypeCd},
+		             #{cartProductTypeCd}              ,
+		             #{cartId},
+		             #{channelId}              ,
+		             #{productId},
+		             #{saleproductId}              ,
+		             #{dealId},
+		             #{salePrice}              ,
+		             #{addSalePrice},
+		             #{totalSalePrice}              ,
+		             #{regularDeliveryPrice},
+		             #{qty}              ,
+		             #{cartStateCd},
+		             'N',
+		             #{offshopId},
+		             #{endDt}              ,
+		             SYSDATE,
+		             #{insId}              ,
+		             SYSDATE,
+		             #{updId} 
+		              )		 		
+	</insert>
+	
+	<update id="updateOmsCart">
+		/* [oms.cart.updateOmsCart][dennis][2016. 6. 29.] */
+		UPDATE OMS_CART
+		SET UPD_DT = SYSDATE,
+			UPD_ID = #{updId}			
+			<if test="cartStateCd != null and cartStateCd != ''">
+			, CART_STATE_CD = #{cartStateCd}
+			</if>
+			<if test="qty != null and qty != ''">
+			, QTY = #{qty}
+			</if>
+			<if test="newSaleproductId != null and newSaleproductId != ''">
+			, SALEPRODUCT_ID = #{newSaleproductId}
+			</if>
+			<if test="deliveryCnt != null and deliveryCnt != ''">
+			, DELIVERY_CNT = #{deliveryCnt}
+			</if>
+			<if test="deliveryPeriodCd != null and deliveryPeriodCd != ''">
+			, DELIVERY_PERIOD_CD = #{deliveryPeriodCd}
+			</if>
+			<if test="deliveryPeriodValue != null and deliveryPeriodValue != ''">
+			, DELIVERY_PERIOD_VALUE = #{deliveryPeriodValue}
+			</if>
+			<if test="offshopId != null and offshopId != ''">
+			, OFFSHOP_ID = #{offshopId}
+			</if>
+		WHERE STORE_ID = #{storeId}
+		AND CART_PRODUCT_NO = #{cartProductNo}
+		AND CART_ID = #{cartId}			
+	</update>	
+	
+	<update id="updateOmsCartBySalepriceChange">
+		UPDATE OMS_CART
+			SET UPD_DT = SYSDATE,
+				UPD_ID = #{updId}
+				, DEAL_ID = #{dealId}
+				, COUPON_ID = #{couponId}
+				, SALE_PRICE = #{salePrice}
+				, ADD_SALE_PRICE = #{addSalePrice}
+				, TOTAL_SALE_PRICE = #{totalSalePrice}				
+			WHERE STORE_ID = #{storeId}
+			AND CART_PRODUCT_NO = #{cartProductNo}
+			AND CART_ID = #{cartId}	
+									
+	</update>
+	
+	<update id="updateUpperCart">
+		/* [oms.cart.updateUpperCart][dennis][2016. 6. 29.] */
+		UPDATE OMS_CART
+		SET UPD_DT = SYSDATE,
+			UPD_ID = #{updId},
+			CART_STATE_CD = #{cartStateCd}			
+		WHERE STORE_ID = #{storeId}
+		AND CART_ID = #{cartId}	
+		AND UPPER_CART_PRODUCT_NO = #{cartProductNo}
+	</update>	
+	
+	<update id="updateCartDel">
+		/* [oms.cart.updateCartDel][dennis][2016. 9. 29.] */
+		UPDATE OMS_CART
+		SET UPD_DT = SYSDATE,
+			UPD_ID = #{updId},
+			CART_STATE_CD = 'CART_STATE_CD.DEL'
+		WHERE KEEP_YN != 'Y' 
+		AND STORE_ID = #{storeId}
+		AND CART_PRODUCT_NO = #{cartProductNo}
+	</update>
+</mapper>

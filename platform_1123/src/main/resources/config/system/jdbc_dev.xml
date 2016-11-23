@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd" >
+<properties>
+
+	<comment>jdbc setting</comment>
+	<!-- 1. own database(oracle) -->	
+<!-- 	<entry key="jdbc.driverClass">oracle.jdbc.OracleDriver</entry>	 
+	<entry key="jdbc.url">jdbc:oracle:thin:@192.2.72.104:1521:ORCL</entry>
+	<entry key="jdbc.username">ZEROTO7</entry>
+	<entry key="jdbc.password">ZEROTO7PW</entry> -->
+
+	<!-- idc dev -->
+	<entry key="jdbc.driverClass">oracle.jdbc.OracleDriver</entry>
+	<entry key="jdbc.url">jdbc:oracle:thin:@172.16.10.166:1521:SHOPDEV</entry>
+	<entry key="jdbc.username">ZTSSHOP</entry>
+	<entry key="jdbc.password">zts#dev</entry>
+	
+	<entry key="jdbc.maxIdle">10</entry>
+	<entry key="jdbc.maxActive">10</entry>
+	<entry key="jdbc.poolPreparedStatements">true</entry>
+	
+	<!-- 2. erp database(mssql) -->	
+	<entry key="jdbc.driverClass.erp">net.sourceforge.jtds.jdbc.Driver</entry>	 
+	<entry key="jdbc.url.erp">jdbc:jtds:sqlserver://172.16.10.97:1433/ZTS_ERP</entry>
+	<entry key="jdbc.username.erp">sa</entry>
+	<entry key="jdbc.password.erp">Passw0rd</entry>
+	
+	<!-- 3. hanjin database(oracle) -->	
+	<entry key="jdbc.driverClass.hanjin">oracle.jdbc.OracleDriver</entry>	 
+	<entry key="jdbc.url.hanjin">jdbc:oracle:thin:@211.210.94.2:1531:HDDWEB</entry>
+	<entry key="jdbc.username.hanjin">ZERO</entry>
+	<entry key="jdbc.password.hanjin">zero123</entry>
+	
+	<!-- 4. tms database(mysql) -->	
+	<entry key="jdbc.driverClass.tms">com.mysql.jdbc.Driver</entry>
+	<entry key="jdbc.url.tms">jdbc:mysql://172.16.10.48:3306/tms30</entry>
+<!-- 	<entry key="jdbc.driverClass.tms">org.mariadb.jdbc.Driver</entry> -->
+<!-- 	<entry key="jdbc.url.tms">jdbc:mariadb://172.16.10.48:3306/tms30</entry> -->
+	<entry key="jdbc.username.tms">tms</entry>
+	<entry key="jdbc.password.tms">tms123!@</entry>
+	
+	<!-- 5. pos database(mssql) -->
+	<entry key="jdbc.url.pos">jdbc:jtds:sqlserver://172.16.10.97:1433/ZTS_WEB</entry>
+</properties>

@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="pms.attribute">
+	
+	<select id="getAttributeList" parameterType="pmsAttributeSearch" resultType="pmsAttribute">
+		/* [pms.attribute.getAttributeList][peter][2016. 5. 30.] */
+		<include refid="ccs.common.pagingPre" />
+			SELECT 
+				STORE_ID
+				, ATTRIBUTE_ID
+				, NAME
+				, ATTRIBUTE_TYPE_CD
+				, INS_ID
+				, INS_DT
+				, UPD_ID
+				, UPD_DT
+				, USE_YN
+				,(SELECT US.NAME FROM CCS_USER US WHERE PMS_ATTRIBUTE.INS_ID = US.USER_ID AND ROWNUM=1) AS INS_NAME
+			  	,(SELECT US.NAME FROM CCS_USER US WHERE PMS_ATTRIBUTE.UPD_ID = US.USER_ID AND ROWNUM=1) AS UPD_NAME
+			FROM PMS_ATTRIBUTE
+			<trim prefix="WHERE" prefixOverrides="AND | OR">
+				STORE_ID = #{storeId}
+				<if test="name != null and name != '' ">
+					AND NAME LIKE '%' || #{name} || '%'
+				</if>
+				<if test="attributeTypeCds != null and attributeTypeCds != '' ">
+					AND ATTRIBUTE_TYPE_CD IN ( ${attributeTypeCds} )
+				</if>
+			</trim>
+			ORDER BY TO_NUMBER(ATTRIBUTE_ID)
+		<include refid="ccs.common.pagingPost" />
+	</select>
+
+	<resultMap id="pmsAttributeData" autoMapping="true" type="gcp.pms.model.PmsAttribute">
+		<id property="storeId" column="STORE_ID"/>
+		<id property="attributeId" column="ATTRIBUTE_ID"/>
+	    <result property="name" column="NAME" />
+	    <result property="attributeTypeCd" column="ATTRIBUTE_TYPE_CD" />
+	    <result property="useYn" column="USE_YN" />
+	 	<collection property="pmsAttributevalues" ofType="gcp.pms.model.PmsAttributevalue" >
+	 		<id property="storeId" column="STORE_ID"/>
+			<id property="attributeId" column="ATTRIBUTE_ID"/>
+	    	<id property="attributeValue" column="ATTRIBUTE_VALUE" />
+	    	<result property="sortNo" column="SORT_NO" />
+		</collection>
+	</resultMap>
+	<select id="getAttributeDetail" parameterType="pmsAttributeSearch" resultMap="pmsAttributeData">
+		/* [pms.attribute.getAttributeDetail][peter][2016. 5. 30.] */
+			SELECT 
+				ATT.STORE_ID
+				, ATT.ATTRIBUTE_ID
+				, ATT.NAME
+				, ATT.ATTRIBUTE_TYPE_CD
+				, ATT.USE_YN
+				, VAL.ATTRIBUTE_VALUE
+				, VAL.SORT_NO
+			FROM PMS_ATTRIBUTE ATT, PMS_ATTRIBUTEVALUE VAL
+			WHERE ATT.STORE_ID = #{storeId}
+			  AND ATT.STORE_ID = VAL.STORE_ID(+)
+			  AND ATT.ATTRIBUTE_ID = #{attributeId}
+			  AND ATT.ATTRIBUTE_ID = VAL.ATTRIBUTE_ID(+)
+	</select>
+
+	<update id="updateAttributevalue" parameterType="pmsAttributevalue">
+		/* [pms.attribute.updateAttribute][peter][2016. 6. 1.] */
+			UPDATE PMS_ATTRIBUTEVALUE
+			   SET USE_YN = #{useYn, jdbcType=VARCHAR}
+			   , UPD_DT = SYSDATE
+			   , UPD_ID = #{updId, jdbcType=VARCHAR}
+			 WHERE STORE_ID = #{storeId, jdbcType=VARCHAR}
+			 AND ATTRIBUTE_ID = #{attributeId, jdbcType=VARCHAR}
+	</update>
+
+	<insert id="insertAttribute">
+		<selectKey keyProperty="attributeId" resultType="String" order="BEFORE">
+		/* [pms.attribute.getAttributeId][peter][2016.05.30] */
+		SELECT NVL(ATTRIBUTE_ID, '1')	AS ATTRIBUTE_ID
+		  FROM (SELECT MAX(TO_NUMBER(ATTRIBUTE_ID)) + 1 ATTRIBUTE_ID FROM PMS_ATTRIBUTE WHERE STORE_ID = #{storeId}) DUAL
+		</selectKey>	
+		INSERT INTO PMS_ATTRIBUTE
+								(STORE_ID,
+		                         ATTRIBUTE_ID,
+		                         ATTRIBUTE_TYPE_CD,
+		                         NAME,
+		                         SORT_NO,
+		                         USE_YN,
+		                         INS_DT,
+		                         INS_ID,
+		                         UPD_DT,
+		                         UPD_ID)
+		     VALUES (#{storeId, jdbcType=VARCHAR},
+		             #{attributeId, jdbcType=VARCHAR},
+		             #{attributeTypeCd, jdbcType=VARCHAR},
+		             #{name, jdbcType=VARCHAR},
+		             #{sortNo, jdbcType=NUMERIC},
+		             #{useYn, jdbcType=VARCHAR},
+		             SYSDATE,
+		             #{insId, jdbcType=VARCHAR},
+		             SYSDATE,
+		             #{updId, jdbcType=VARCHAR}
+		             )		             	
+	</insert>
+	
+	<select id="getAttributeValues" resultType="basePmsAttributevalue">
+		/* [pms.attribute.getAttributeValues][stella][2016.05.09] */
+		<include refid="ccs.common.pagingPre" />
+		    SELECT
+		    	ATTRIBUTE_ID
+		    	, ATTRIBUTE_VALUE
+		    	, ADD_VALUE
+		    	, USE_YN
+		    	, INS_DT
+		    	, INS_ID
+		    	, UPD_DT
+		    	, UPD_ID
+		     FROM
+		     	PMS_ATTRIBUTEVALUE
+		    WHERE
+		    	STORE_ID = #{storeId}
+		    	AND ATTRIBUTE_ID = #{attributeId}
+	    <include refid="ccs.common.pagingPost" />	
+	</select>	
+
+	<resultMap id="selectAttributeListByCategoryIdResult" autoMapping="true" type="pmsAttribute">
+		<id property="attributeId" column="ATTRIBUTE_ID"/>
+	    <result property="name" column="NAME" />
+	 	<collection property="pmsAttributevalues" ofType="pmsAttributevalue" >
+	    	<result property="attributeValue" column="ATTRIBUTE_VALUE" />
+		</collection>
+	</resultMap>	
+	<select id="selectAttributeListByCategoryId" resultMap="selectAttributeListByCategoryIdResult">
+		/* [pms.attribute.selectAttributeListByCategoryId][eddie][2016.06.14] */
+			SELECT ATT.*, ATTV.ATTRIBUTE_VALUE
+			  FROM PMS_CATEGORYATTRIBUTE CATT
+			       INNER JOIN PMS_ATTRIBUTE ATT
+			          ON     CATT.ATTRIBUTE_ID = ATT.ATTRIBUTE_ID
+			             AND CATT.STORE_ID = ATT.STORE_ID
+			       LEFT OUTER JOIN PMS_ATTRIBUTEVALUE ATTV
+			          ON ATTV.ATTRIBUTE_ID = ATT.ATTRIBUTE_ID
+			 WHERE     CATT.CATEGORY_ID = #{categoryId}
+			       AND CATT.STORE_ID = #{storeId}
+	 		   <if test="attributeTypeCd=='SALEPRODUCT'">
+			       AND ATT.ATTRIBUTE_TYPE_CD = 'ATTRIBUTE_TYPE_CD.SALEPRODUCT'
+			   </if>    	
+			   <if test="attributeTypeCd=='ATTR'">
+			       AND ATT.ATTRIBUTE_TYPE_CD &lt;&gt; 'ATTRIBUTE_TYPE_CD.SALEPRODUCT'
+			   </if>
+	</select>
+	
+</mapper>

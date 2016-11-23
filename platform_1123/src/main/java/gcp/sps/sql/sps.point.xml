@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="sps.point">
+	
+	<select id="getPointList" resultType="spsPointsave">
+		/* [sps.point.getPointList][dennis][2016. 6. 14.] */
+		<include refid="ccs.common.pagingPre" />
+			SELECT T1.STORE_ID,
+			       T1.POINT_SAVE_ID,
+			       T1.NAME,
+			       T1.POINT_SAVE_STATE_CD,
+			       T1.START_DT,
+			       T1.END_DT,
+			       T1.POINT_SAVE_TYPE_CD,
+			       T1.POINT_VALUE,
+			       T1.APPLY_NO,
+			       T1.CONTROL_NO,
+			       T1.INS_DT,
+			       T1.INS_ID,
+			       T1.UPD_DT,
+			       T1.UPD_ID,
+			       (SELECT US.NAME FROM CCS_USER US WHERE T1.INS_ID = US.USER_ID AND ROWNUM=1) AS INS_NAME,
+			  	   (SELECT US.NAME FROM CCS_USER US WHERE T1.UPD_ID = US.USER_ID AND ROWNUM=1) AS UPD_NAME
+			  FROM SPS_POINTSAVE T1
+			  WHERE T1.STORE_ID = #{storeId}
+			  	<if test="startDate != null and startDate != ''" >
+					<if test="endDate != null and endDate != ''" >
+						AND ( T1.START_DT <![CDATA[<=]]> TO_DATE (#{endDate}, 'YYYY-MM-DD HH24:MI:SS')
+							AND T1.END_DT <![CDATA[>=]]> TO_DATE (#{startDate}, 'YYYY-MM-DD HH24:MI:SS') )	
+					</if>
+				</if>
+				<if test="pointSaveStateCds != null and pointSaveStateCds != ''" >
+					AND T1.POINT_SAVE_STATE_CD IN ( ${pointSaveStateCds} )
+				</if>
+	            <if test="searchKeyword != null and searchKeyword !=''">
+	                <if test=" 'NAME'.equals(infoType)">
+	            	AND T1.NAME LIKE '%' || #{searchKeyword} || '%'
+	                </if>
+	                <if test=" 'ID'.equals(infoType)">
+	            	AND T1.POINT_SAVE_ID = #{searchKeyword}
+	                </if>
+	            </if>
+<!-- 				<if test="pointSaveIds != null and pointSaveIds != ''" > -->
+<!-- 					AND T1.POINT_SAVE_ID IN ( ${pointSaveIds} ) -->
+<!-- 				</if> -->
+<!-- 				<if test="name != null and name != ''"> -->
+<!-- 					AND T1.NAME LIKE '%' || #{name} || '%' -->
+<!-- 				</if> -->
+				<if test="productId != null and productId != '' ">
+			        <include refid="ccs.common.existsCheckApplytarget" />
+				</if>
+			ORDER BY T1.INS_DT DESC
+		<include refid="ccs.common.pagingPost" />
+	</select>
+	
+	<resultMap type="spsPointsave" id="getPointDetailResult" autoMapping="true">
+		<id column="POINT_SAVE_ID" property="pointSaveId"/>
+		<association property="ccsApply" javaType="ccsApply">
+			<id column="APPLY_NO" property="applyNo"/>
+			<result column="TARGET_TYPE_CD" property="targetTypeCd"/>
+		</association>					
+	</resultMap>
+	<select id="getPointDetail" resultMap="getPointDetailResult">
+		SELECT  SP.POINT_SAVE_ID,
+				SP.NAME,
+				SP.POINT_SAVE_TYPE_CD,
+				SP.POINT_VALUE,
+				SP.APPLY_NO,
+				SP.CONTROL_NO,
+				SP.START_DT,
+				SP.END_DT,
+				SP.POINT_SAVE_STATE_CD,
+				CA.TARGET_TYPE_CD,
+				DECODE(SP.CONTROL_NO,NULL,'ALL','USER') AS CONTROL_TYPE				
+		FROM SPS_POINTSAVE SP,
+			 CCS_APPLY CA			 
+		WHERE SP.APPLY_NO = CA.APPLY_NO 
+		AND SP.POINT_SAVE_ID = #{pointSaveId}
+	</select>		
+	
+	<resultMap type="spsPointsave" id="getApplyPointListResult" autoMapping="true">
+		<id column="POINTSAVE_ID" property="pointsaveId"/>
+		<association property="ccsApply" javaType="ccsApply">
+			<result column="TARGET_TYPE_CD" property="targetTypeCd"/>
+		</association>		
+	</resultMap>
+	<select id="getApplyPointList" resultMap="getApplyPointListResult" flushCache="true">
+		SELECT SP.*,
+		       AP.TARGET_TYPE_CD		       
+		FROM SPS_POINTSAVE SP,		     
+		     (
+		        SELECT MAX(AP.TYPE_SEQ) OVER (PARTITION BY SP.POINT_SAVE_ID) AS MAX_TYPE_SEQ,
+		        	   AP.TYPE_SEQ,
+		        	   AP.TARGET_TYPE_CD,
+		               SP.POINT_SAVE_ID                            
+		          FROM SPS_POINTSAVE SP,       
+		               (SELECT APPLY_NO,TYPE_SEQ,TARGET_TYPE_CD
+		                FROM (
+		                    SELECT CT.APPLY_NO,
+		                           1 AS TYPE_SEQ,
+		                           CT.TARGET_ID,
+		                           CA.TARGET_TYPE_CD 
+		                    FROM CCS_APPLYTARGET CT,
+		                         CCS_APPLY CA 
+		                    WHERE CT.APPLY_NO = CA.APPLY_NO 
+		                    AND CT.STORE_ID = CA.STORE_ID
+		                    AND CA.TARGET_TYPE_CD = 'TARGET_TYPE_CD.PRODUCT' 
+		                    AND CT.TARGET_ID = #{productId}
+		                    AND CT.STORE_ID = #{storeId}
+		                    UNION ALL
+		                    SELECT CT.APPLY_NO,
+		                           2 AS TYPE_SEQ,
+		                           CT.TARGET_ID,
+		                           CA.TARGET_TYPE_CD 
+		                    FROM CCS_APPLYTARGET CT,
+		                         CCS_APPLY CA 
+		                    WHERE CT.APPLY_NO = CA.APPLY_NO
+		                    AND CT.STORE_ID = CA.STORE_ID 
+		                    AND CA.TARGET_TYPE_CD = 'TARGET_TYPE_CD.BRAND' 
+		                    AND CT.TARGET_ID = (SELECT PP.BRAND_ID 
+		                    					  FROM PMS_PRODUCT PP 
+		                    					 WHERE PP.PRODUCT_ID = #{productId}
+		                    					 AND PP.STORE_ID = #{storeId})
+		                    UNION ALL
+		                    SELECT CT.APPLY_NO,
+		                           3 AS TYPE_SEQ,
+		                           CT.TARGET_ID,
+		                           CA.TARGET_TYPE_CD 
+		                    FROM CCS_APPLYTARGET CT,
+		                         CCS_APPLY CA 
+		                    WHERE CT.APPLY_NO = CA.APPLY_NO 
+		                    AND CT.STORE_ID = CA.STORE_ID
+		                    AND CT.STORE_ID = #{storeId}
+		                    AND CA.TARGET_TYPE_CD = 'TARGET_TYPE_CD.CATEGORY' 
+		                    AND CT.TARGET_ID IN (SELECT DISTINCT(DD.DISPLAY_CATEGORY_ID) 
+		                    					   FROM DMS_DISPLAYCATEGORY DD,
+		                    					   		DMS_DISPLAYCATEGORYPRODUCT DP
+		                    					  WHERE DD.DISPLAY_CATEGORY_ID = DP.DISPLAY_CATEGORY_ID
+		                    					  AND DD.STORE_ID = DP.STORE_ID
+		                    					  AND DD.STORE_ID =#{storeId}
+		                    					  AND DD.LEAF_YN = 'Y'
+		                    					  AND DD.DISPLAY_YN = 'Y'
+		                    					  AND DP.DISPLAY_YN = 'Y'
+		                    					  AND DP.PRODUCT_ID = #{productId})
+		                    UNION ALL
+		                    SELECT CE.APPLY_NO,
+		                           99 AS TYPE_SEQ,
+		                           CE.PRODUCT_ID,
+		                           CA.TARGET_TYPE_CD
+		                    FROM CCS_EXCPRODUCT CE,
+		                         CCS_APPLY CA
+		                    WHERE CE.APPLY_NO = CA.APPLY_NO
+		                    AND CE.STORE_ID = CA.STORE_ID
+		                    AND CA.TARGET_TYPE_CD != 'TARGET_TYPE_CD.PRODUCT'
+		                    AND CE.PRODUCT_ID = #{productId}
+		                    AND CE.STORE_ID = #{storeId}
+		                    UNION ALL
+		                    SELECT CA.APPLY_NO,
+		                           98 AS TYPE_SEQ,
+		                           #{productId} AS PRODUCT_ID,
+		                           CA.TARGET_TYPE_CD
+		                    FROM CCS_APPLY CA
+		                    WHERE CA.TARGET_TYPE_CD = 'TARGET_TYPE_CD.ALL'
+		                    AND CA.STORE_ID = #{storeId}		                    
+		                )) AP
+		         WHERE SP.APPLY_NO = AP.APPLY_NO
+		         AND SP.POINT_SAVE_STATE_CD = 'POINT_SAVE_STATE_CD.RUN'
+		         AND SP.START_DT &lt;= SYSDATE
+		         AND SP.END_DT &gt;= SYSDATE		         
+		      ) AP
+		WHERE SP.POINT_SAVE_ID = AP.POINT_SAVE_ID 
+		AND AP.MAX_TYPE_SEQ &lt; 99	 
+		ORDER BY SP.POINT_SAVE_TYPE_CD DESC
+	</select>
+	
+	<update id="updatePointState">
+		/* [sps.point.updatePointState][ian][2016. 8. 22.] */
+		UPDATE SPS_POINTSAVE
+		   SET POINT_SAVE_STATE_CD = #{pointSaveStateCd}, UPD_ID = #{updId}, UPD_DT = SYSDATE
+		 WHERE STORE_ID = #{storeId} AND POINT_SAVE_ID = #{pointSaveId}
+	</update>
+	
+</mapper>

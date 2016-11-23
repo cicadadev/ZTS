@@ -1,0 +1,335 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="external.erp">
+	
+	<select id="selectItemList" resultType="gcp.external.model.ErpItem">
+	/* [external.erp.selectItemList][eddie][2016. 6. 11.] */
+		WITH ITEMLIST
+		     AS (
+				SELECT ROW_NUMBER () OVER (ORDER BY IVT.ITEMID) AS ROWNUMS,
+				       IVT.TKR_LIKELYSALES,
+				       IVT.TKR_TAGPRICE,
+				       IVT.ITEMNAME,
+				       IVT.TKR_ORIGIN,
+				       IVT.ITEMID,
+				       IVT.TKR_BRAND,
+				       BND.BRANDNAME,
+				       IVT.TKR_ESTIMATECOST,
+				       IVT.ZTS_STDCATEGORY,
+				       IVT.UNITVOLUME,
+				       IVT.APX_MANUFACTURE,
+				       IVT.APX_TAX,
+				       IVT.APX_GOODTYPE
+				  FROM INVENTTABLE IVT
+				       JOIN TKR_BRANDTABLE BND
+				          ON IVT.TKR_BRAND = BND.BRAND AND IVT.DATAAREAID = BND.DATAAREAID
+				 WHERE     IVT.DATAAREAID = 'zts'
+				       AND NOT EXISTS
+				              (SELECT 1
+				                 FROM APX_ITEMMAPPING M
+				                WHERE M.ITEMID = IVT.ITEMID AND M.ITEMSOURCEID = 3)
+				   	<if test="itemid!=null and itemid!=''">
+				         AND IVT.ITEMID = #{itemid}
+					</if>		        
+				   	<if test="itemname!=null and itemname!=''">
+				         AND IVT.ITEMNAME  LIKE '%'+#{itemname}+'%'
+					</if>	   	
+					)
+				SELECT *,
+				  (
+				       SELECT COUNT (*) FROM ITEMLIST
+				  ) TOTAL_COUNT
+				  FROM ITEMLIST
+				 WHERE ROWNUMS BETWEEN #{firstRow} AND #{lastRow}                 
+	</select>	
+	<select id="selectItem" resultType="gcp.external.model.ErpItem">
+	/* [external.erp.selectItem][eddie][2016. 6. 11.] */
+		  SELECT IVT.TKR_LIKELYSALES,
+		         IVT.TKR_TAGPRICE,
+		         IVT.ITEMNAME,
+		         IVT.TKR_ORIGIN,
+		         IVT.ITEMID,
+		         'size' OPTION1_NAME,
+		         IVS.INVENTSIZEID,
+		         'color' OPTION2_NAME,
+		         IVC.INVENTCOLORID,
+		         IVT.TKR_BRAND,
+		         BND.BRANDNAME,
+		         IVT.TKR_ESTIMATECOST,
+		         IVT.ZTS_STDCATEGORY,
+		         MAP.EX_ITEMID,
+		         IVT.UNITVOLUME,
+		         BARCODE.ITEMBARCODE,
+		         IVT.APX_MANUFACTURE,
+		         IVT.APX_TAX,
+		         IVT.APX_GOODTYPE
+		    FROM INVENTTABLE IVT
+		         LEFT OUTER JOIN TKR_BRANDTABLE BND
+		            ON IVT.TKR_BRAND = BND.BRAND AND IVT.DATAAREAID = BND.DATAAREAID
+		         LEFT OUTER JOIN INVENTCOLOR IVC
+		            ON IVT.ITEMID = IVC.ITEMID AND IVT.DATAAREAID = IVC.DATAAREAID
+		         LEFT OUTER JOIN INVENTSIZE IVS
+		            ON IVT.ITEMID = IVS.ITEMID AND IVT.DATAAREAID = IVS.DATAAREAID
+		         LEFT OUTER JOIN (SELECT A.ITEMID,
+		                                 B.INVENTCOLORID,
+		                                 B.INVENTSIZEID,
+		                                 A.ITEMBARCODE,
+		                                 A.DATAAREAID
+		                            FROM    INVENTITEMBARCODE A
+		                                 INNER JOIN
+		                                    INVENTDIM B
+		                                 ON     A.INVENTDIMID = B.INVENTDIMID
+		                                    AND A.DATAAREAID = B.DATAAREAID
+		                           WHERE A.DATAAREAID = 'zts') BARCODE
+		            ON     IVT.ITEMID = BARCODE.ITEMID
+		               AND IVT.DATAAREAID = BARCODE.DATAAREAID
+		               AND BARCODE.INVENTCOLORID = IVC.INVENTCOLORID
+		               AND BARCODE.INVENTSIZEID = IVS.INVENTSIZEID
+		         LEFT OUTER JOIN APX_ITEMMAPPING MAP
+		            ON     IVT.ITEMID = MAP.ITEMID
+		               AND IVT.DATAAREAID = MAP.DATAAREAID
+		               AND MAP.INVENTCOLORID = IVC.INVENTCOLORID
+		               AND MAP.INVENTSIZEID = IVS.INVENTSIZEID
+		               AND MAP.ITEMSOURCEID = 4
+		   WHERE     IVT.DATAAREAID = 'zts'
+		         AND IVT.ITEMID = #{itemid}
+		         AND NOT EXISTS
+		                (SELECT 1
+		                   FROM APX_ITEMMAPPING M
+		                  WHERE M.ITEMID = IVT.ITEMID AND M.ITEMSOURCEID = 3)
+		ORDER BY IVC.INVENTCOLORID, IVS.INVENTSIZEID
+	</select>
+	<insert id="insertApxItemmappingtemp">
+	/* [external.erp.insertApxItemmappingtemp][eddie][2016. 6. 11.] */
+		INSERT INTO APX_ITEMMAPPINGTEMP (ITEMID,
+		                                 EX_OPTIONID,
+		                                 EX_ITEMID,
+		                                 UNITID,
+		                                 INVENTSIZEID,
+		                                 INVENTCOLORID,
+		                                 EX_UNITID,
+		                                 EX_ITEMNAME,
+		                                 REGISTYN,
+		                                 MODIFIEDDATETIME,
+		                                 MODIFIEDBY,
+		                                 CREATEDDATETIME,
+		                                 CREATEDBY,
+		                                 DATAAREAID,
+		                                <!--  RECVERSION, -->
+		                                 RECID
+		                                 )
+		     VALUES (#{itemId, 				jdbcType=VARCHAR},
+		             #{exOptionid, 			jdbcType=VARCHAR},
+		             #{exItemid, 			jdbcType=VARCHAR},
+		             '',
+		             #{inventsizeid, 		jdbcType=VARCHAR},
+		             #{inventcolorid, 		jdbcType=VARCHAR},
+		             '',
+		             #{exItemname, 			jdbcType=VARCHAR},
+		             0,
+		             getdate(),
+		             '',
+		             getdate(),
+		             '',
+		             'ZTS',
+ 		             <!-- #{recversion}, -->
+		             (SELECT MAX(RECID)+1 FROM APX_ITEMMAPPINGTEMP)
+		             )
+	</insert>
+	
+	<select id="getItemSaleProductList" resultType="gcp.external.model.ErpItem">
+		SELECT 
+				* 
+		  FROM (
+				SELECT 
+				          ROW_NUMBER () OVER (ORDER BY A.ITEMID) AS ROWNUMS
+				        , COUNT(*) OVER () AS TOTAL_COUNT
+				        , A.TKR_LIKELYSALES
+				        , A.TKR_TAGPRICE
+				        , A.ITEMNAME
+				        , A.TKR_ORIGIN
+				        , A.ITEMID
+				        , B.INVENTSIZEID       
+				        , B.INVENTCOLORID	   
+				        , A.TKR_BRAND
+				        , BND.BRANDNAME
+				        , A.TKR_ESTIMATECOST
+				        , A.ZTS_STDCATEGORY
+				        , A.UNITVOLUME
+				        , A.APX_MANUFACTURE
+				        , A.APX_TAX
+				        , A.APX_GOODTYPE
+				        , BARCODE.ITEMBARCODE
+				  FROM INVENTTABLE A
+				  JOIN TKR_BRANDTABLE BND
+				    ON A.TKR_BRAND = BND.BRAND
+				  LEFT OUTER JOIN
+				          (SELECT 
+		                            IVT.TKR_LIKELYSALES
+		                          , IVT.TKR_TAGPRICE
+		                          , IVT.ITEMNAME
+		                          , IVT.TKR_ORIGIN
+		                          , IVT.ITEMID
+		                          , IVS.INVENTSIZEID
+		                          , IVC.INVENTCOLORID
+		                          , IVT.TKR_BRAND
+		                          , IVT.TKR_ESTIMATECOST
+		                          , IVT.ZTS_STDCATEGORY
+		                          , IVT.UNITVOLUME
+		                          , IVT.APX_MANUFACTURE
+		                          , IVT.APX_TAX
+		                          , IVT.APX_GOODTYPE
+				             FROM INVENTTABLE IVT, INVENTCOLOR IVC, INVENTSIZE IVS
+				             WHERE IVT.ITEMID = IVC.ITEMID
+				               AND IVT.ITEMID = IVS.ITEMID
+				               AND IVT.DATAAREAID = 'zts'
+				               AND IVC.DATAAREAID = 'zts'
+				               AND IVS.DATAAREAID = 'zts'
+				              <if test="itemid!=null and itemid!=''">
+				         	   AND IVT.ITEMID = #{itemid}
+					  		  </if>		        
+				   	  		  <if test="itemname!=null and itemname!=''">
+				         	   AND IVT.ITEMNAME  LIKE '%'+#{itemname}+'%'
+					  		  </if>  
+				           ) AS B
+				     ON A.ITEMID = B.ITEMID
+				     LEFT OUTER JOIN (SELECT A.ITEMID,
+		                                  B.INVENTCOLORID,
+		                                  B.INVENTSIZEID,
+		                                  A.ITEMBARCODE,
+		                                  A.DATAAREAID
+		                            FROM INVENTITEMBARCODE A
+		                            JOIN INVENTDIM B
+		                              ON A.INVENTDIMID = B.INVENTDIMID
+		                             AND A.DATAAREAID = B.DATAAREAID
+		                            WHERE A.DATAAREAID = 'zts'
+		                              AND B.DATAAREAID = 'zts') BARCODE
+		           		ON A.ITEMID = BARCODE.ITEMID
+		            	AND BARCODE.INVENTCOLORID = B.INVENTCOLORID
+		           		AND BARCODE.INVENTSIZEID = B.INVENTSIZEID
+			         	WHERE A.DATAAREAID = 'zts'
+			           	  AND BND.DATAAREAID = 'zts'
+		                  AND NOT EXISTS
+           				              (SELECT 1
+           				                 FROM APX_ITEMMAPPING M
+           				                WHERE M.ITEMID = A.ITEMID AND M.ITEMSOURCEID = 3)
+                      <if test="itemid!=null and itemid!=''">
+				         AND A.ITEMID LIKE #{itemid}+'%'
+					  </if>		        
+				   	  <if test="itemname!=null and itemname!=''">
+				         AND A.ITEMNAME  LIKE '%'+#{itemname}+'%'
+					  </if>
+				    ) result
+				WHERE result.ROWNUMS BETWEEN #{firstRow} AND #{lastRow}
+	</select>
+	
+
+	<resultMap id="erpOffshopInfo" autoMapping="true" type="gcp.external.model.ErpCustTable">
+		<id property="accountNum" column="ACCOUNTNUM" />
+		<id property="dataareaId" column="DATAAREAID" />
+		<result property="tkrShopType" column="TKR_SHOPTYPE" />
+		<result property="name" column="NAME" />
+		<result property="zipCode" column="ZIPCODE" />
+		<result property="esgKrKraddress" column="ESG_KR_KRADDRESS" />
+		<result property="phone" column="PHONE" />
+		<result property="tkrManagerPhone" column="TKR_MANAGERPHONE" />
+		<result property="ztsLatitude" column="ZTS_LATITUDE" />
+		<result property="ztsLongitude" column="ZTS_LONGITUDE" />
+		<result property="openTime" column="OPENTIME" />
+		<result property="closedTime" column="CLOSEDTIME" />
+		<result property="pickup" column="PICKUP" />
+		<result property="modifiedDateTime" column="CT_MODIFIEDDATETIME" />
+		<result property="tkrSeriesName" column="TKR_SERIESNAME" />
+		<result property="tkrRegion" column="TKR_REGION" />
+		<result property="state" column="STATE" />
+		<result property="county" column="COUNTY" />
+		<result property="holidayInfo" column="HOLIDAYINFO" />
+		<collection property="erpApxCustHolidays" ofType="gcp.external.model.ErpApxCustHoliday">
+			<id property="accountNum" column="ACCOUNTNUM" />
+			<id property="dataareaId" column="DATAAREAID" />
+			<id property="holiday" column="HOLIDAY" />
+		</collection>
+		<collection property="erpApxSellingBrands" ofType="gcp.external.model.ErpApxSellingBrand">
+			<id property="accountNum" column="ACCOUNTNUM" />
+			<id property="dataareaId" column="DATAAREAID" />
+			<id property="brand" column="BRAND" />
+		</collection>
+	</resultMap>
+	<select id="getErpOffshopList" parameterType="hashMap" resultMap="erpOffshopInfo">
+	/* [external.erp.getErpOffshopList][peter][2016. 7. 21.] */
+		SELECT
+			CT.ACCOUNTNUM
+			, CT.TKR_SHOPTYPE
+			, CT.ZTS_CUSTNAME
+			, CT.ZIPCODE
+			, CT.ESG_KR_KRADDRESS
+			, CT.PHONE
+			, CT.TKR_MANAGERPHONE
+			, CT.ZTS_LATITUDE
+			, CT.ZTS_LONGITUDE
+			, RIGHT('00'+CONVERT(VARCHAR,CT.OPENTIME/3600),2) + RIGHT('00'+CONVERT(VARCHAR,CT.OPENTIME%60),2)		AS OPENTIME
+			, RIGHT('00'+CONVERT(VARCHAR,CT.CLOSEDTIME/3600),2) + RIGHT('00'+CONVERT(VARCHAR,CT.CLOSEDTIME%60),2)	AS CLOSEDTIME
+			, CT.PICKUP
+			, CONVERT(VARCHAR(10), CT.MODIFIEDDATETIME, 120)	AS CT_MODIFIEDDATETIME
+			, CT.TKR_REGION
+			, CT.STATE
+			, CT.COUNTY
+			, CT.HOLIDAYINFO
+			, (SELECT SERIESNAME FROM TKR_SERIESTABLE WHERE SERIES = CT.TKR_SERIES AND DATAAREAID = 'zts')			AS TKR_SERIESNAME
+			, CONVERT(VARCHAR(8), CH.HOLIDAY, 112)				AS HOLIDAY
+			, SB.BRAND
+		  FROM CUSTTABLE CT
+		  INNER JOIN APX_SELLINGBRAND SB
+				  ON SB.ACCOUNTNUM = CT.ACCOUNTNUM
+				 AND SB.DATAAREAID = 'zts'
+		  LEFT OUTER JOIN APX_CUSTHOLIDAY CH
+				  ON CH.ACCOUNTNUM = CT.ACCOUNTNUM
+				 AND CH.DATAAREAID = 'zts'
+		 WHERE CT.REALSHOP = 1
+		   AND CT.DATAAREAID = 'zts'
+		ORDER BY CT.ACCOUNTNUM
+	</select>
+
+	<select id="getErpShopInfoOfManager" parameterType="String" resultType="String">
+	/* [external.erp.getErpShopInfoOfManager][peter][2016. 11. 7.] */
+		SELECT 
+			ESG_KR_KRADDRESS
+		FROM CUSTTABLE
+		WHERE ACCOUNTNUM IN (SELECT MANAGERCODE FROM TKR_MANAGERTABLE
+							 WHERE DATAAREAID = 'zts'
+							   AND CUSTACCOUNT = #{accountNum}
+							   AND CONVERT(VARCHAR(8),TODATE,112) = '19000101')
+		  AND DATAAREAID = 'zts'
+	</select>
+
+	<select id="getErpBarcodeList" parameterType="hashMap" resultType="gcp.external.model.ErpItem">
+	/* [external.erp.getErpBarcodeList][peter][2016. 9. 20.] */
+		SELECT 
+			ITEM.ITEMBARCODE
+			, ITEM.ITEMID
+			, DIM.INVENTSIZEID
+			, DIM.INVENTCOLORID
+		FROM INVENTITEMBARCODE ITEM
+		INNER JOIN INVENTDIM DIM
+				ON DIM.INVENTDIMID = ITEM.INVENTDIMID
+			   AND DIM.DATAAREAID = ITEM.DATAAREAID
+		WHERE ITEM.DATAAREAID = 'zts'
+		<if test="modifyDate != null and modifyDate != ''">
+		  AND CONVERT(VARCHAR(8),ITEM.MODIFIEDDATETIME,112) = #{modifyDate}
+		</if>	
+	</select>
+
+	<select id="getErpTmallPresentInfo" parameterType="hashMap" resultType="gcp.external.model.ErpPresent">
+	/* [external.erp.getErpTmallPresentInfo][peter][2016. 11. 10.] */
+		SELECT 
+			GIFTBOCODE
+			, CAST(GIFTQTY AS INT)	AS GIFTQTY
+		FROM APX_GIFTSETUP
+		WHERE MALLCODE = 'TMALL'
+		  AND DATAAREAID = 'zts'
+		  AND BOITEMCODE = #{productId}
+		  AND CONVERT(VARCHAR(8),STARTPERIOD,112) &gt;= #{orderDate}
+		  AND CONVERT(VARCHAR(8),ENDPERIOD,112) &lt;= #{orderDate}
+	</select>
+
+</mapper>

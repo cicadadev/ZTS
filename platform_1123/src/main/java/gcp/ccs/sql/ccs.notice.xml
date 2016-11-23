@@ -1,0 +1,296 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ccs.notice">
+	<!-- notice 그리드 데이터 조회 -->
+	<select id="list" resultType="ccsNotice" parameterType="ccsNoticeSearch">
+		/* [ccs.notice.list][roy][2016. 7. 25.] */
+		<include refid="ccs.common.pagingPre"/>
+		SELECT RE.*
+		FROM (SELECT 
+			   t.*
+			  ,(SELECT US.NAME FROM CCS_USER US WHERE t.INS_ID = US.USER_ID AND ROWNUM=1) AS INS_NAME
+			  ,(SELECT US.NAME FROM CCS_USER US WHERE t.UPD_ID = US.USER_ID AND ROWNUM=1) AS UPD_NAME
+		  FROM ccs_notice t) RE
+		 WHERE RE.store_id = #{storeId}
+		 		AND RE.NOTICE_TYPE_CD != 'NOTICE_TYPE_CD.PRODUCT'
+		<if test='startDate != null and startDate != ""' >
+			<if test='endDate != null and endDate != ""'>
+				AND RE.ins_dt BETWEEN TO_DATE (#{startDate},
+                                           'YYYY-MM-DD HH24:MI:SS')
+                              AND TO_DATE (#{endDate},
+                                           'YYYY-MM-DD HH24:MI:SS')	   
+			</if>
+		</if>
+		<if test="noticeTypeCd != null and noticeTypeCd !=''">
+			 AND RE.notice_type_cd  = #{noticeTypeCd}
+		</if>
+		<if test="noticeTypeCds != null and noticeTypeCds !=''">
+			 AND RE.notice_type_cd IN (${noticeTypeCds})
+		</if>
+		<if test='title != null and title != ""'>
+			AND (RE.title like '%' || #{title} || '%' OR RE.detail like '%' || #{title} || '%')
+		</if>
+		<if test="insInfoId != null and insInfoId !=''">
+			AND RE.INS_ID = #{insInfoId}
+		</if>
+		<if test="type != null and type !=''">
+			<if test="type=='TITLE'">
+				AND RE.title like '%' || #{info} || '%'
+			</if>
+			<if test="type=='DETAIL'">
+				AND RE.detail like '%' || #{info} || '%'
+		  	</if>
+		</if>
+		
+		<if test="insInfoName != null and insInfoName !=''">
+			AND RE.INS_NAME = #{insInfoName}
+		</if>
+		<if test="displayYnCds != null and displayYnCds != ''">           
+			AND RE.DISPLAY_YN IN (${displayYnCds})
+		</if>
+		<if test="topNoticeYnCds != null and topNoticeYnCds != ''">           
+			AND RE.TOP_NOTICE_YN IN (${topNoticeYnCds})
+		</if>
+		ORDER BY RE.notice_no DESC
+		<include refid="ccs.common.pagingPost"/>
+	</select>
+	
+	<resultMap type="CcsNotice" id="noticeDetailMap" autoMapping="true">	
+		<collection property="ccsNoticeBrands" ofType="gcp.ccs.model.CcsNoticeBrand" >
+	    	<result property="brandId" column="BRAND_ID"/>
+	    </collection>
+	</resultMap>
+	<select id="getNoticeDetail" parameterType="ccsNotice" resultMap="noticeDetailMap">
+		/* [ccs.notice.getNoticeDetail][roy][2016. 7. 25.] */
+		SELECT C.*, CB.BRAND_ID,
+				(SELECT E.NAME FROM SPS_EVENT E WHERE C.EVENT_ID = E.EVENT_ID AND ROWNUM=1) AS EVENT_NAME
+			FROM ccs_notice C LEFT OUTER JOIN CCS_NOTICE_BRAND CB ON C.STORE_ID = CB.STORE_ID AND C.NOTICE_NO = CB.NOTICE_NO 
+			WHERE C.STORE_ID = #{storeId}
+			AND C.notice_no = #{noticeNo}
+	</select>
+	
+	<delete id="deleteNoticeBrand" parameterType="ccsNotice">
+	/* [ccs.notice.deleteNoticeBrand][roy][2016. 8. 17.] */
+		DELETE FROM CCS_NOTICE_BRAND
+		WHERE STORE_ID = #{storeId}
+			AND NOTICE_NO = #{noticeNo}
+	</delete>
+	
+	<!-- FO 고객센터 공지사항 조회 -->
+	<select id="noticelist" resultType="ccsNotice" parameterType="ccsNoticeSearch">
+		/* [ccs.notice.noticelist][roy][2016. 8. 24.] */
+		SELECT *
+  		FROM (SELECT t.NOTICE_NO, t.TITLE, t.READ_CNT, t.TOP_NOTICE_YN 
+     	 			, TO_CHAR (t.INS_DT, 'YYYY/MM/DD') as INS_DT
+     	 			, CASE
+			          WHEN t.INS_DT &gt; TO_DATE (#{newDt}, 'YYYY-MM-DD HH24:MI:SS')
+			          THEN 'Y'
+			        ELSE 'N' END NEW_YN
+			        , ROWNUM rnum
+        	 FROM (  
+        	 		SELECT *
+                    FROM CCS_NOTICE
+                    WHERE NOTICE_TYPE_CD = 'NOTICE_TYPE_CD.FRONT'
+                    	AND DISPLAY_YN = 'Y'
+                    	AND SYSDATE BETWEEN START_DT AND END_DT
+                	ORDER BY TOP_NOTICE_YN DESC,  NOTICE_NO DESC) t
+             )
+ 		WHERE rnum BETWEEN 0 and 5
+	</select>
+	
+	<!-- FO 고객센터 이벤트 조회 -->
+	<select id="eventlist" resultType="ccsNotice" parameterType="ccsNoticeSearch">
+		/* [ccs.notice.eventlist][roy][2016. 9. 05.] */
+		SELECT *
+  		FROM (SELECT t.NOTICE_NO, t.TITLE, t.READ_CNT, t.TOP_NOTICE_YN 
+     	 			, TO_CHAR (t.INS_DT, 'YYYY/MM/DD') as INS_DT
+     	 			, CASE
+			          WHEN t.INS_DT &gt; TO_DATE (#{newDt}, 'YYYY-MM-DD HH24:MI:SS')
+			          THEN 'Y'
+			        ELSE 'N' END NEW_YN
+			        , ROWNUM rnum
+        	 FROM (  
+        	 		SELECT *
+                    FROM CCS_NOTICE
+                    WHERE NOTICE_TYPE_CD = 'NOTICE_TYPE_CD.EVENT'
+                    		AND DISPLAY_YN = 'Y'
+                    		AND SYSDATE BETWEEN START_DT AND END_DT
+                	ORDER BY TOP_NOTICE_YN DESC,  INS_DT DESC) t
+             )
+ 		WHERE rnum BETWEEN 0 and 5
+	</select>
+	<select id="getProductMdNotice" resultType="ccsNotice">
+	/* [ccs.notice.getProductMdNoticeList][eddie][2016. 8. 24.] */
+		SELECT *
+		  FROM (SELECT NOTICE.*,
+		               ROW_NUMBER () OVER (PARTITION BY NPRD.PRODUCT_ID ORDER BY NOTICE.INS_DT DESC)
+		                  AS ROWCNT
+		          FROM    CCS_NOTICEPRODUCT NPRD
+		               INNER JOIN
+		                  CCS_NOTICE NOTICE
+		               ON     NPRD.NOTICE_NO = NOTICE.NOTICE_NO
+		                  AND NOTICE.DISPLAY_YN = 'Y'
+		                  AND NOTICE.NOTICE_TYPE_CD = 'NOTICE_TYPE_CD.PRODUCT'
+		                  AND SYSDATE BETWEEN NOTICE.START_DT AND NOTICE.END_DT
+		                  AND NOTICE.STORE_ID = NPRD.STORE_ID
+		         WHERE NPRD.PRODUCT_ID = #{productId} AND NPRD.STORE_ID = #{storeId})
+		 WHERE ROWCNT = 1
+	</select>
+	
+	<select id="getNoticeNo" parameterType="ccsNotice" resultType="java.math.BigDecimal">
+		/* [ccs.notice.getNoticeNo][roy][2016. 8. 31.] */
+		SELECT NVL (NOTICE_NO, 1) NOTICE_NO
+		  FROM (SELECT MAX (TO_NUMBER (NOTICE_NO)) NOTICE_NO FROM CCS_NOTICE WHERE STORE_ID= #{storeId}) DUAL
+	</select>
+	
+	<select id="getNoticeListSearch" resultType="ccsNotice">
+	/* [ccs.notice.getNoticeListSearch][roy][2016. 8. 29.] */
+		<include refid="ccs.common.pagingPre" />
+		  SELECT CN.NOTICE_NO, CN.TITLE, CN.READ_CNT, CN.TOP_NOTICE_YN 
+        	 	, TO_CHAR (CN.INS_DT, 'YYYY/MM/DD') as INS_DT
+        	 	, CASE 
+       			  WHEN (SELECT COUNT(*) FROM CCS_NOTICE_BRAND CB  WHERE CB.NOTICE_NO = CN.NOTICE_NO AND CB.STORE_ID = '1001') = 1
+             	  THEN (SELECT PB.NAME FROM PMS_BRAND PB 
+             	  				WHERE ROWNUM = 1 AND PB.BRAND_ID = (SELECT CB.BRAND_ID FROM CCS_NOTICE_BRAND CB 
+             	  														WHERE CB.NOTICE_NO = CN.NOTICE_NO AND CB.STORE_ID = '1001'))
+             	  ELSE '' END BRAND_NAME
+        	 	, CASE
+		          WHEN CN.INS_DT &gt; TO_DATE (#{newDt}, 'YYYY-MM-DD HH24:MI:SS')
+		          THEN 'Y'
+		        ELSE 'N' END NEW_YN
+		    FROM CCS_NOTICE CN
+		   WHERE CN.STORE_ID = #{storeId}
+		   		AND CN.NOTICE_TYPE_CD = 'NOTICE_TYPE_CD.FRONT'
+		   		AND CN.DISPLAY_YN = 'Y'
+		   		AND SYSDATE BETWEEN CN.START_DT AND CN.END_DT
+		   	<if test="type != null and type !=''">
+				<if test="type=='TITLE' and  (info != null and info != '')">
+					AND CN.title like '%' || #{info} || '%'
+				</if>
+				<if test="type=='DETAIL' and  (info != null and info != '')">
+					AND CN.detail like '%' || #{info} || '%'
+			  	</if>
+			</if>
+			<if test='type == "" and  (info != null and info !="")'>
+				AND (CN.title like '%' || #{info} || '%' OR CN.detail like '%' || #{info} || '%')
+			</if>
+		ORDER BY CN.TOP_NOTICE_YN DESC, CN.INS_DT DESC
+		<include refid="ccs.common.pagingPost"/>
+	</select>
+	
+	<select id="getEventNoticeListSearch" resultType="ccsNotice">
+	/* [ccs.notice.getEventNoticeListSearch][roy][2016. 8. 30.] */
+		<include refid="ccs.common.pagingPre" />
+		  SELECT CN.NOTICE_NO, CN.TITLE, CN.READ_CNT, CN.TOP_NOTICE_YN 
+        	 	, TO_CHAR (CN.INS_DT, 'YYYY/MM/DD') as INS_DT
+		  		, (SELECT E.NAME FROM SPS_EVENT E WHERE CN.EVENT_ID = E.EVENT_ID AND ROWNUM=1) AS EVENT_NAME
+		  		, CASE
+		          WHEN CN.INS_DT &gt; TO_DATE (#{newDt}, 'YYYY-MM-DD HH24:MI:SS')
+		          THEN 'Y'
+		        ELSE 'N' END NEW_YN
+		    FROM CCS_NOTICE CN
+		   WHERE CN.STORE_ID = #{storeId}
+		   		AND CN.NOTICE_TYPE_CD = 'NOTICE_TYPE_CD.EVENT'
+		   		AND CN.DISPLAY_YN = 'Y'
+		   		AND SYSDATE BETWEEN CN.START_DT AND CN.END_DT
+		   	<if test="type != null and type !=''">
+				AND CN.EVENT_TARGET_DIV_CD = #{type}
+			</if>
+			<if test='info != null and info !=""'>
+				AND (CN.title like '%' || #{info} || '%' OR CN.detail like '%' || #{info} || '%')
+			</if>
+		ORDER BY CN.TOP_NOTICE_YN DESC, CN.INS_DT DESC	
+		<include refid="ccs.common.pagingPost"/>
+	</select>
+	
+	<!-- FO 브랜드관 템플릿 메인 최근 공지사항 -->
+	<select id="getBrandNotice" resultType="ccsNotice">
+		/* [ccs.notice.getBrandNotice][stella][2016. 10. 5.] */
+		<include refid="ccs.common.pagingPre"/>
+		SELECT
+			N.NOTICE_NO
+			, N.NOTICE_TYPE_CD
+			, N.TITLE
+			, N.READ_CNT
+		  FROM
+		  	CCS_NOTICE N
+		  	JOIN CCS_NOTICE_BRAND NB
+		  		ON N.STORE_ID = NB.STORE_ID
+		  		AND N.NOTICE_NO = NB.NOTICE_NO
+		  		AND NB.BRAND_ID = #{brandId}
+		 WHERE
+			N.STORE_ID = #{storeId}
+			AND (START_DT <![CDATA[<=]]> SYSDATE AND END_DT <![CDATA[>=]]> SYSDATE)
+			AND N.DISPLAY_YN = 'Y'
+		ORDER BY
+			N.TOP_NOTICE_YN DESC, N.INS_DT DESC
+		<include refid="ccs.common.pagingPost"/>
+	</select>
+	
+	<!-- FO 브랜드관 템플릿 메인 브랜드별 공지사항 리스트 -->
+	<select id="getBrandNoticeList" resultType="ccsNotice">
+		/* [ccs.notice.getBrandNoticeList][stella][2016. 10. 5.] */
+		<include refid="ccs.common.pagingPre" />
+			SELECT
+				BN.*
+			  FROM
+			  	(SELECT
+				  	N.NOTICE_NO
+				  	, N.TITLE
+				  	, N.READ_CNT
+				  	, N.TOP_NOTICE_YN 
+		        	, TO_CHAR (N.INS_DT, 'YYYY/MM/DD') as INS_DT
+				  	, (SELECT E.NAME FROM SPS_EVENT E WHERE N.EVENT_ID = E.EVENT_ID AND ROWNUM = 1) AS EVENT_NAME
+				  	, (CASE WHEN N.INS_DT &gt; TO_DATE (#{newDt}, 'YYYY-MM-DD HH24:MI:SS')
+				          	THEN 'Y' ELSE 'N' END)	AS NEW_YN
+				    , (SELECT PB.NAME FROM PMS_BRAND PB WHERE PB.BRAND_ID = #{brandId} AND PB.STORE_ID = N.STORE_ID) AS BRAND_NAME
+				   FROM
+				   	  CCS_NOTICE N
+				   	  JOIN CCS_NOTICE_BRAND NB
+				   	  	ON N.STORE_ID = NB.STORE_ID
+				  		AND N.NOTICE_NO = NB.NOTICE_NO
+				  		AND NB.BRAND_ID = #{brandId}
+				   WHERE
+				   	  N.STORE_ID = #{storeId}
+				   	  AND N.DISPLAY_YN = 'Y'
+				   	  AND SYSDATE BETWEEN N.START_DT AND N.END_DT
+				UNION
+				  SELECT
+				  	N.NOTICE_NO
+				  	, N.TITLE
+				  	, N.READ_CNT
+				  	, N.TOP_NOTICE_YN 
+		        	, TO_CHAR (N.INS_DT, 'YYYY/MM/DD') as INS_DT
+				  	, (SELECT E.NAME FROM SPS_EVENT E WHERE N.EVENT_ID = E.EVENT_ID AND ROWNUM = 1) AS EVENT_NAME
+				  	, (CASE WHEN N.INS_DT &gt; TO_DATE (#{newDt}, 'YYYY-MM-DD HH24:MI:SS')
+				          	THEN 'Y' ELSE 'N' END)	AS NEW_YN
+				    , (SELECT PB.NAME FROM PMS_BRAND PB WHERE PB.BRAND_ID = #{brandId} AND PB.STORE_ID = N.STORE_ID) AS BRAND_NAME
+				   FROM
+				   	  CCS_NOTICE N
+				   WHERE
+				   	  N.STORE_ID = #{storeId}
+				   	  AND N.DISPLAY_YN = 'Y'
+				   	  AND SYSDATE BETWEEN N.START_DT AND N.END_DT
+				   	  AND (N.TITLE LIKE '%' || (SELECT NAME FROM PMS_BRAND WHERE STORE_ID = N.STORE_ID AND BRAND_ID = #{brandId}) || '%')
+				) BN
+		   ORDER BY 
+			BN.TOP_NOTICE_YN DESC, BN.INS_DT DESC		   	          			  	  
+		<include refid="ccs.common.pagingPost"/>
+	</select>
+	
+	<!-- ponotice 리스트 조회 -->
+	<select id="polist" resultType="ccsNotice" parameterType="ccsNoticeSearch">
+		/* [ccs.notice.list][roy][2016. 7. 25.] */
+		
+		SELECT T2.*
+		  FROM (SELECT ROWNUM AS RNUM, COUNT (*) OVER () AS TOTAL_COUNT, T1.*
+		          FROM (  SELECT *
+		                    FROM CCS_NOTICE
+		                   WHERE     STORE_ID = '1001'
+		                         AND DISPLAY_YN = 'Y'
+		                         AND SYSDATE BETWEEN START_DT AND END_DT
+		                         AND NOTICE_TYPE_CD = 'NOTICE_TYPE_CD.PARTNER'
+		                ORDER BY INS_DT DESC) T1) T2
+		 WHERE T2.RNUM BETWEEN #{firstRow} AND #{lastRow}
+	</select>	
+</mapper>

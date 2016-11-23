@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ccs.popupnotice">
+	<!-- notice 그리드 데이터 조회 -->
+	<select id="list" resultType="ccsPopup" parameterType="ccsPopupNoticeSearch">
+	/* [ccs.popupnotice.ccsPopupNoticeSearch][roy][2016. 7. 29.] */
+		<include refid="ccs.common.pagingPre"/>
+		SELECT RE.*
+		FROM (
+				SELECT  t.*,
+					(SELECT US.NAME FROM CCS_USER US WHERE t.INS_ID = US.USER_ID AND ROWNUM=1) AS INS_NAME
+					,(SELECT US.NAME FROM CCS_USER US WHERE t.UPD_ID = US.USER_ID AND ROWNUM=1) AS UPD_NAME
+		  		FROM ccs_popup t) RE
+		WHERE RE.store_id = #{storeId}
+		<if test='startDate != null and startDate != ""' >
+			<if test='endDate != null and endDate != ""'>
+				AND RE.ins_dt BETWEEN TO_DATE (#{startDate},
+                                        'YYYY-MM-DD HH24:MI:SS')
+                           AND TO_DATE (#{endDate},
+                                        'YYYY-MM-DD HH24:MI:SS')	   
+			</if>
+		</if>
+		<if test="popupTypeCds != null and popupTypeCds !=''">
+		 	AND RE.popup_type_cd IN (${popupTypeCds})
+		</if>
+		<if test="displayYnCds != null and displayYnCds !=''">
+		 	AND RE.DISPLAY_YN IN (${displayYnCds})
+		</if>
+		<choose>
+			<when test="pcChannelY != null and pcChannelY !=''">
+				<choose>
+					<when test="mobileChannelY != null and mobileChannelY !=''">
+						AND (RE.PC_DISPLAY_YN = 'Y'	OR RE.MOBILE_DISPLAY_YN = 'Y')
+					</when>
+					<otherwise>
+						AND RE.PC_DISPLAY_YN = 'Y'
+					</otherwise>
+				</choose>
+			</when>
+			<otherwise>
+				<if test="mobileChannelY != null and mobileChannelY !=''">
+					AND RE.MOBILE_DISPLAY_YN = 'Y'
+				</if>
+			</otherwise>
+		</choose>
+		<if test='title != null and title != ""'>
+			 AND (RE.title like '%' || #{title} || '%' OR RE.detail1 like '%' || #{title} || '%' OR RE.detail2 like '%' || #{title} || '%')
+		</if>
+		<if test='insInfoId != null and insInfoId != ""'>
+		 	AND RE.ins_id = #{insInfoId}
+		</if>
+		<if test='insInfoName != null and insInfoName != ""'>
+		 	AND RE.INS_NAME = #{insInfoName}
+		</if>
+		ORDER BY RE.popup_no DESC
+		<include refid="ccs.common.pagingPost"/>
+	</select>
+	
+	<resultMap type="DmsExhibitproduct" id="exhibitProductMap" autoMapping="true">
+		<id property="storeId" column="STORE_ID" />
+		<id property="exhibitId" column="EXHIBIT_ID" />
+		<id property="groupNo" column="GROUP_NO" />
+		<id property="productId" column="PRODUCT_ID" />
+		<result property="displayYn" column="DISPLAY_YN" />
+		<result property="sortNo" column="SORT_NO" />
+		   	<association property="pmsProduct" column="PRODUCT_ID" javaType="pmsProduct">
+		   		<id property="productId" column="PRODUCT_ID" />
+		   		<result property="name" column="NAME" />
+		   		<result property="productTypeCd" column="PRODUCT_TYPE_CD" />
+		   		<result property="saleStateCd" column="SALE_STATE_CD" />
+		   		<result property="salePrice" column="SALE_PRICE" />
+		   		<result property="brandName" column="BRAND_NAME" />
+		   	</association>
+	   </resultMap>
+	   
+	<resultMap type="CcsPopup" id="popupDetailMap" autoMapping="true">
+		<id property="storeId" 			column="STORE_ID" />
+		<id property="popupNo" 			column="POPUP_NO" />
+		<id property="startDt" 			column="START_DT" />
+		<id property="endDt" 			column="END_DT" />
+		<id property="title" 			column="TITLE" />
+		<id property="detail1" 			column="DETAIL1" />
+		<id property="detail2" 			column="DETAIL2" />
+		<id property="displayYn" 		column="DISPLAY_YN" />
+		<id property="pcDisplayYn" 		column="PC_DISPLAY_YN" />
+		<id property="mobileDisplayYn" 	column="MOBILE_DISPLAY_YN" />
+		<id property="position" 		column="POSITION" />
+		<id property="popupTypeCd" 		column="POPUP_TYPE_CD" />		
+		<collection property="ccsPopupurls" ofType="gcp.ccs.model.CcsPopupurl" >
+	    	<result property="popupUrl" column="POPUP_URL"/>
+	    	<result property="deviceChannelTypeCd" column="DEVICE_CHANNEL_TYPE_CD"/>
+	    </collection>
+	</resultMap>
+	
+	<select id="getPopupDetail" parameterType="ccsPopup" resultMap="popupDetailMap">
+		/* [ccs.popupnotice.getPopupDetail][roy][2016. 7. 29.] */
+		SELECT CP.*, CPU.POPUP_URL, CPU.DEVICE_CHANNEL_TYPE_CD
+			FROM ccs_popup CP LEFT JOIN CCS_POPUPURL CPU
+				ON CP.STORE_ID = CPU.STORE_ID AND CP.POPUP_NO = CPU.POPUP_NO 
+			WHERE CP.STORE_ID = #{storeId}
+			AND CP.POPUP_NO = #{popupNo}
+	</select>
+	
+	<delete id="deletePopupUrl" parameterType="ccsPopup">
+	/* [ccs.popupnotice.deletePopupUrl][roy][2016. 7. 29.] */
+		DELETE FROM CCS_POPUPURL
+		WHERE STORE_ID = #{storeId}
+			AND POPUP_NO = #{popupNo}
+	</delete>
+	
+	<select id="getPopupFoList" resultType="ccsPopup" parameterType="ccsPopup">
+		/* [ccs.popupnotice.getPopupFoList][roy][2016. 9. 10.] */
+		SELECT CP.POPUP_NO, CP.POSITION, CP.TITLE
+			  FROM    ccs_popup CP
+			       LEFT JOIN CCS_POPUPURL CPU ON CP.STORE_ID = CPU.STORE_ID AND CP.POPUP_NO = CPU.POPUP_NO
+			 WHERE CP.STORE_ID = #{storeId} 
+				 AND CP.DISPLAY_YN = 'Y' 
+				 AND #{url} LIKE '%' || CPU.POPUP_URL || '%'
+				 AND CPU.POPUP_URL IS NOT NULL
+				 AND SYSDATE BETWEEN CP.START_DT
+                                           AND CP.END_DT
+			 <if test='popupTypeCd != null and popupTypeCd != ""'>
+		 		AND CP.POPUP_TYPE_CD = #{popupTypeCd}
+			</if>
+			<if test='pcDisplayYn != null and pcDisplayYn != ""'>
+			 	AND CP.PC_DISPLAY_YN = #{pcDisplayYn}
+			 	AND CPU.DEVICE_CHANNEL_TYPE_CD = 'DEVICE_CHANNEL_TYPE_CD.PC'
+			</if>
+			<if test='mobileDisplayYn != null and mobileDisplayYn != ""'>
+			 	AND CP.MOBILE_DISPLAY_YN = #{mobileDisplayYn}
+			 	AND CPU.DEVICE_CHANNEL_TYPE_CD = 'DEVICE_CHANNEL_TYPE_CD.MW'
+			</if>
+			GROUP BY CP.POPUP_NO, CP.POSITION, CP.TITLE
+	</select>
+</mapper>
