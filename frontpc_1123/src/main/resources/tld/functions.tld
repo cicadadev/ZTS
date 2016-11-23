@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- <!DOCTYPE taglib
+PUBLIC "-//Sun Microsystems, Inc.//DTD JSP Tag Library 1.1//EN"
+"web-jsptaglib_1_1.dtd"> -->
+<taglib xmlns="http://java.sun.com/xml/ns/javaee"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-jsptaglibrary_2_1.xsd"
+    version="2.1">
+	<tlib-version>2.1</tlib-version>
+	<short-name>func</short-name>
+	<uri>kr.co.intune.commerce.common.functions</uri>
+	
+	<function>
+	    <name>getCodeList</name>
+	    <function-class>gcp.common.functions.CommonFunctions</function-class>
+	    <function-signature>
+	        java.util.list getCodeList(java.lang.String) <!-- 그룹코드 --> 	
+	    </function-signature>
+	</function>
+	
+	<function>
+	    <name>getCodePartList</name>
+	    <function-class>gcp.common.functions.CommonFunctions</function-class>
+	    <function-signature>
+	        java.util.list getCodeList(java.lang.String, java.util.List)	<!-- 그룹코드, 제외할 코드순번 -->
+	    </function-signature>
+	</function>
+	
+	<function>
+	    <name>getCodeName</name>
+	    <function-class>gcp.common.functions.CommonFunctions</function-class>
+	    <function-signature>
+	        java.lang.String getCodeName(java.lang.String)	<!-- 상세코드 -->
+	    </function-signature>
+	</function>
+	
+	<function>
+	    <name>price</name>
+	    <function-class>gcp.common.functions.CommonFunctions</function-class>
+	    <function-signature>
+	        java.lang.String getPrice(java.lang.String, java.lang.String)
+	    </function-signature>
+	</function>
+	
+</taglib>

@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd" >
+<properties>
+	<comment>production front setting</comment>
+	<entry key="system.type">FO</entry>	
+	
+	<!-- 통합 멤버십 로그인 url -->
+	<entry key="membership.login.url">http://www.maeildo.com/co/li/coli01t1.do</entry>
+	<entry key="membership.join.url">http://www.maeildo.com/co/pi/copi01t1.do</entry>
+	<entry key="membership.modify.url">http://www.maeildo.com/co/mp/comp01t2.do</entry>
+	<entry key="membership.disagree.url">http://www.maeildo.com/co/mp/comp01r7.do</entry>
+  	<entry key="membership.pwchange.url">http://www.maeildo.com/co/mp/comp01t4.do</entry>
+  	<entry key="membership.mktagree.url">http://www.maeildo.com/co/mp/comp01t9.do</entry>
+  	<entry key="membership.logout.url">http://www.maeildo.com/auth/ssoLogout.do</entry>
+  		  	
+	<!-- facebook : 미사용 -->
+	<entry key="facebook.app.id">1763733237229832</entry>
+	<entry key="facebook.app.secret">9eaf0d4b02f7e4377b0b72604c016784</entry>
+	<!-- kakao : 미사용 -->
+	<entry key="kako.rest.key">ea2e3052f9b50b5e330373ab1327fd5d</entry>
+	<entry key="kako.script.key">21a0c8a9ac1cf3d700ba80a460cbe280</entry>
+	<!-- naver : 미사용 -->
+	<entry key="naver.client.id">fDF2s4d51J3cU5QlvgzI</entry>
+	<entry key="naver.client.secret">hGpqcaQ2ld</entry>
+	
+	<!-- 검색엔진 API -->
+	<entry key="search.api.url">http://49.50.33.225:7800/manager/WNRun.do</entry>
+	<entry key="search.api.server.type">opr</entry>
+	
+	<!-- 레코벨 개인화 -->
+	<entry key="recobell.url">http://rb-rec-api-apne1.recobell.io/rec/</entry>
+	<entry key="recobell.cuid">8e4a3136-8321-4edd-9048-131a7dc77c4a</entry>
+	
+	<!-- 전시 코너 번호  개발서버-->
+	<entry key="corner.common.banner.img.1">34</entry>		<!-- 공통 > 공통 배너 > 스카이배너 - PC --> 
+	<entry key="corner.common.banner.img.2">35</entry>		<!-- 공통 > 공통 배너 > 좌측 위배너 - PC --> 
+	<entry key="corner.common.banner.img.3">36</entry>		<!-- 공통 > 공통 배너 > 우측 윙배너 - PC --> 
+	<entry key="corner.common.ctg.img.1">37</entry>			<!-- 공통 > 전체 카테고리 > 전체카테고리배너 식품/분유 - PC --> 
+	<entry key="corner.common.ctg.img.2">38</entry>			<!-- 공통 > 전체 카테고리 > 전체카테고리배너 물티슈/기저귀 - PC --> 
+	<entry key="corner.common.ctg.img.3">39</entry>			<!-- 공통 > 전체 카테고리 > 전체카테고리배너 의류/잡화 - PC --> 
+	<entry key="corner.common.ctg.img.4">40</entry>			<!-- 공통 > 전체 카테고리 > 전체카테고리배너 유아용품 - PC --> 
+	<entry key="corner.common.ctg.img.5">41</entry>			<!-- 공통 > 전체 카테고리 > 전체카테고리배너 월령별 - PC --> 
+	<entry key="corner.main.banner.img.1">42</entry>		<!-- 메인 > 빅배너 > 빅배너 식품/분유 - PC --> 
+	<entry key="corner.main.banner.img.2">43</entry>		<!-- 메인 > 빅배너 > 빅배너 기저귀/물티슈 - PC --> 
+	<entry key="corner.main.banner.img.3">44</entry>		<!-- 메인 > 빅배너 > 빅배너 의류/잡화 - PC --> 
+	<entry key="corner.main.banner.img.4">45</entry>		<!-- 메인 > 빅배너 > 빅배너 유아용품 - PC --> 
+	<entry key="corner.main.banner.img.5">46</entry>		<!-- 메인 > 빅배너 > 빅배너 핫이슈 - PC --> 
+	<entry key="corner.main.banner.img.6">47</entry>		<!-- 메인 > 빅배너 > 빅배너 - Mobile --> 
+	<entry key="corner.main.ctg.img.1">48</entry>			<!-- 메인 > 아이템별 카테고리 > 식품/분유 배너 - PC --> 
+	<entry key="corner.main.ctg.img.2">49</entry>			<!-- 메인 > 아이템별 카테고리 > 물티슈/기저귀 배너 - PC --> 
+	<entry key="corner.main.ctg.img.3">50</entry>			<!-- 메인 > 아이템별 카테고리 > 의류/잡화 배너 - PC --> 
+	<entry key="corner.main.ctg.img.4">51</entry>			<!-- 메인 > 아이템별 카테고리 > 용품/완구/화장품 배너 - PC --> 
+	<entry key="corner.main.md.product.1">52</entry>		<!-- 메인 > MD 특가 > MD 특가 상품 --> 
+	<entry key="corner.main.season">13</entry>				<!-- 메인 > 시즌추천		 --> 
+	<entry key="corner.main.season.img.1">55</entry>		<!-- 메인 > 시즌추천 > 시즌추천 배너 1 --> 
+	<entry key="corner.main.season.product.1">56</entry>	<!-- 메인 > 시즌추천 > 시즌추천 상품배너  --> 
+	<entry key="corner.main.brand.text.1">60</entry>		<!-- 메인 > 추천브랜드 > 추천브랜드 --> 
+	<entry key="corner.main.event.img.1">61</entry>			<!-- 메인 > 추천이벤트 > 이벤트 배너 --> 
+	<entry key="corner.main.event.img.2">62</entry>			<!-- 메인 > 추천이벤트 > 제휴이벤트 배너 - PC --> 
+	<entry key="corner.ctg.2depth.img.1">129</entry>		<!-- 카테고리&상품 > 중카 메인 > 빅배너(PC) --> 
+	<entry key="corner.ctg.2depth.exhibit.1">63</entry>		<!-- 카테고리&상품 > 중카 메인 > 빅배너(Mobile) --> 
+	<entry key="corner.ctg.2depth.text.1">64</entry>		<!-- 카테고리&상품 > 중카 메인 > 추천브랜드 --> 
+	<entry key="corner.ctg.2depth.product.1">65</entry>		<!-- 카테고리&상품 > 중카 메인 > MD 추천 --> 
+	<entry key="corner.product.detail.img.1">66</entry>		<!-- 카테고리&상품 > 상품상세 > 이벤트 배너 --> 
+	<entry key="corner.exhibit.exhibit.exhibit.1">67</entry><!-- 기획전&이벤트 > 기획전 > 기획전 빅배너 --> 
+	<entry key="corner.event.event.img.1">68</entry>		<!-- 기획전&이벤트 > 이벤트 > 상단 키비주얼 배너 --> 
+	<entry key="corner.special.shock.img.1">69</entry>		<!-- 전문관 > 쇼킹제로 > 상단 키비주얼 배너 - Mobile --> 
+	<entry key="corner.special.shock.product.1">70</entry>	<!-- 전문관 > 쇼킹제로 > 상단 상품 추천 - PC --> 
+	<entry key="corner.special.mem.img.1">71</entry>		<!-- 전문관 > 멤버십관 > 진입전 행사배너 --> 
+	<entry key="corner.special.gift.html.1">72</entry>		<!-- 전문관 > 기프트샵 상단 > 상단 키비주얼 배너 --> 
+	<entry key="corner.special.gift">23</entry>				<!-- 전문관 > 기프트샵 시즌상품		 --> 
+	<entry key="corner.special.gift.product.1">73</entry>	<!-- 전문관 > 기프트샵 시즌상품 > 시즌 상품 분류 1 --> 
+	<entry key="corner.special.gift.product.2">74</entry>	<!-- 전문관 > 기프트샵 시즌상품 > 시즌 상품 분류 2 --> 
+	<entry key="corner.special.gift.product.3">75</entry>	<!-- 전문관 > 기프트샵 시즌상품 > 시즌 상품 분류 3 --> 
+	<entry key="corner.special.gift.product.4">76</entry>	<!-- 전문관 > 기프트샵 시즌상품 > 시즌 상품 분류 4 --> 
+	<entry key="corner.special.gift.product.5">77</entry>	<!-- 전문관 > 기프트샵 시즌상품 > 시즌 상품 분류 5 --> 
+	<entry key="corner.special.pickup.html.1">78</entry>	<!-- 전문관 > 매장픽업관 > 상단 키비주얼 배너 - PC --> 
+	<entry key="corner.special.regul.html.1">79</entry>		<!-- 전문관 > 정기배송관 상단 > 상단 키비주얼 배너 --> 
+	<entry key="corner.special.regul">26</entry>			<!-- 전문관 > 정기배송관 패키지 상품		 --> 
+	<entry key="corner.special.regul.product.1">80</entry>	<!-- 전문관 > 정기배송관 패키지 상품 > 패키지 상품 분류 1 --> 
+	<entry key="corner.special.regul.product.2">81</entry>	<!-- 전문관 > 정기배송관 패키지 상품 > 패키지 상품 분류 2 --> 
+	<entry key="corner.special.regul.product.3">82</entry>	<!-- 전문관 > 정기배송관 패키지 상품 > 패키지 상품 분류 3 --> 
+	<entry key="corner.special.regul.product.4">83</entry>	<!-- 전문관 > 정기배송관 패키지 상품 > 패키지 상품 분류 4 --> 
+	<entry key="corner.special.regul.product.5">84</entry>	<!-- 전문관 > 정기배송관 패키지 상품 > 패키지 상품 분류 5 --> 
+	<entry key="corner.special.ready.img.1">85</entry>		<!-- 전문관 > 출산준비관 > 상단 키비주얼 배너 --> 
+	<entry key="corner.special.milk1.img.1">86</entry>		<!-- 전문관 > 분유관 상단 > 상단 키비주얼 배너 --> 
+	<entry key="corner.special.milk1.img.2">87</entry>		<!-- 전문관 > 분유관 상단 > 카테고리 소개 배너 --> 
+	<entry key="corner.special.milk2">29</entry>			<!-- 전문관 > 분유관 상품분류		 --> 
+	<entry key="corner.special.milk2.product.1">88</entry>	<!-- 전문관 > 분유관 상품분류 > 상품 분류 1 --> 
+	<entry key="corner.special.milk2.product.2">89</entry>	<!-- 전문관 > 분유관 상품분류 > 상품 분류 2 --> 
+	<entry key="corner.special.milk2.product.3">90</entry>	<!-- 전문관 > 분유관 상품분류 > 상품 분류 3 --> 
+	<entry key="corner.special.milk2.product.4">91</entry>	<!-- 전문관 > 분유관 상품분류 > 상품 분류 4 --> 
+	<entry key="corner.special.milk2.product.5">92</entry>	<!-- 전문관 > 분유관 상품분류 > 상품 분류 5 --> 
+	<entry key="corner.special.emp.img.1">93</entry>		<!-- 전문관 > 임직원관 > 상단 키비주얼 배너 --> 
+	<entry key="corner.brand.templA.main">137</entry>		<!-- 브랜드관 > 템플릿A > 빅배너 --> 
+	<entry key="corner.brand.templA.lookbook">95</entry>	<!-- 브랜드관 > 템플릿A > LOOKBOOK 배너 --> 
+	<entry key="corner.brand.templA.video">96</entry>		<!-- 브랜드관 > 템플릿A > 동영상 --> 
+	<entry key="corner.brand.templA.story">98</entry>		<!-- 브랜드관 > 템플릿A > 브랜드 스토리 --> 
+	<entry key="corner.brand.templA.style">99</entry>		<!-- 브랜드관 > 템플릿A > 스타일 상단 키비주얼 배너 --> 
+	<entry key="corner.brand.templB.main">138</entry>		<!-- 브랜드관 > 템플릿B > 빅배너 --> 
+	<entry key="corner.brand.templB.video">102</entry>		<!-- 브랜드관 > 템플릿B > 동영상 --> 
+	<entry key="corner.brand.templB.story">103</entry>		<!-- 브랜드관 > 템플릿B > 브랜드 스토리 --> 
+	<entry key="corner.brand.templB.product">104</entry>	<!-- 브랜드관 > 템플릿B > 제품 라인/ 아이템별 소개 --> 
+	<entry key="corner.brand.templC.intro">105</entry>		<!-- 브랜드관 > 템플릿C > 브랜드 소개 이미지 배너 -->
+	<entry key="corner.main.evnet.key.mb">108</entry>		<!-- 공통> 메인> 모바일> key이벤트 배너 이미지-->
+	<entry key="corner.brand.templA.event">109</entry>		<!-- 브랜드관 > 템플릿A > 이벤트배너_공통 --> 
+	<entry key="corner.brand.templB.event">110</entry>		<!-- 브랜드관 > 템플릿B > 이벤트배너_공통 -->
+	<entry key="corner.brand.templB.storyB">111</entry>		<!-- 브랜드관 > 템플릿B > 브랜드 스토리 배너 --> 
+	<entry key="corner.brand.templA.coordi">133</entry>		<!-- 브랜드관 > 템플릿A > 코디 배너 -->
+	<entry key="corner.brand.templA.coordi.product">134</entry>		<!-- 브랜드관 > 템플릿A > 코디 상품 --> 	
+	<entry key="corner.brand.templB.recommend">135</entry>			<!-- 브랜드관 > 템플릿B > 추천 배너 -->
+	<entry key="corner.brand.templB.rec.product">136</entry>		<!-- 브랜드관 > 템플릿B > 추천 상품 --> 	
+	<entry key="corner.common.banner.img">7</entry>			<!-- 공통 > 공통 배너  PC --> 
+	<entry key="corner.common.ctg.img">8</entry>			<!-- 공통 > 전체 카테고리  PC --> 
+	<entry key="corner.main.banner">2</entry>
+	<entry key="corner.main.md.img.1">120</entry>			<!--  메인 > MD 특가 > MD 특가 이미지배너 -->
+	<entry key="corner.main.md.product.2">121</entry>		<!--  메인 > MD 특가 > MD 특가 상품 PC-->  
+	<entry key="corner.special.primem.img.1">123</entry>	<!-- 브랜드관 > 프리미엄멤버십관 > 행사배너_공통--> 
+	<entry key="corner.style.banner.img.1">125</entry>		<!-- 스타일 > 이미지배너--> 
+	<entry key="corner.etc.search">132</entry>				<!-- 기타 > 검색어광고관리--> 
+	
+	<!-- 지도 clientId -->
+	<entry key="map.clientId">nBMZRIdqjQ4oQvX64j2g</entry>
+	
+	<!-- 카테고리 : 루트카테고리-->
+	<entry key="root.display.category.id">00001</entry>
+	<entry key="root.birthready.category.id">00002</entry>
+	<entry key="root.milkpowder.category.id">00003</entry>
+	
+	<!-- 카테고리 : 브랜드 카테고리(common.css 브랜드관 className 기반)-->
+	<entry key="brand1.root.category.id">100089</entry>		<!-- 알로앤루 루트 카테고리 -->
+	<entry key="brand2.root.category.id">100217</entry>		<!-- 궁중비책 루트 카테고리 -->
+	<entry key="brand3.root.category.id">100262</entry>		<!-- 토미티피 루트 카테고리 -->
+	<entry key="brand4.root.category.id">100279</entry>		<!-- 와이볼루션 루트 카테고리 -->
+	<entry key="brand5.root.category.id">100189</entry>		<!-- 섀르반 루트 카테고리 -->
+	<entry key="brand6.root.category.id">100125</entry>		<!-- 알퐁소 루트 카테고리 -->
+	<entry key="brand7.root.category.id">100289</entry>		<!-- 츄즈 루트 카테고리 -->
+	<entry key="brand8.root.category.id">100161</entry>		<!-- 포래즈 루트 카테고리 -->
+	
+	<!-- 기타 브랜드관 템플릿 -->
+	<entry key="corner.brand.templC">4</entry>
+	
+	<!-- 자사브랜드코드 -->
+	<entry key="brand.allo.code">500359</entry><!-- 알로앤루 -->
+	<entry key="brand.alfonso.code">500362</entry><!-- 알퐁소 -->
+	<entry key="brand.fourlads.code">500360</entry><!-- 포래츠 -->
+	<entry key="brand.skarbarn.code">500361</entry><!-- 새르반 -->
+	<entry key="brand.royal.code">500131</entry><!-- 궁중비책 -->
+	<entry key="brand.tommeetippe.code">500226</entry> <!-- 브랜드 : 토미티피 -->
+	<entry key="brand.chooze.code">500363</entry><!-- 츄즈 -->
+	<entry key="brand.yvol.code">4102706</entry><!-- 와이볼루션 -->
+	
+	<!-- 와이볼루션 표준카테고리 -->
+	<entry key="brand.yvol.pms.category.id">0028</entry>
+	
+	<!-- 멤버십 혜택 쿠폰 -->
+	<entry key="member.benefit.couponIds.vip">13668851|13668850|13668852</entry><!-- vip -->
+	<entry key="member.benefit.couponIds.gold">13668851|13668850|13668852</entry><!-- gold -->
+	<entry key="member.benefit.couponIds.silver">13668851</entry><!-- silver -->
+	<entry key="member.benefit.couponIds.family">13668851|13668852</entry><!-- family -->
+	<entry key="member.benefit.couponIds.welcome">13668851</entry><!-- welcome -->
+	
+	<!-- 쿠폰 상시 혜택 -->
+	<entry key="coupon.benefit.first.buy.id">13668828</entry><!-- TODO 임시 생성한 첫구매감사 쿠폰 -->
+	<entry key="coupon.benefit.app.install.id">13668836</entry><!-- TODO 임시 생성한 앱설치유도 쿠폰 -->
+	
+	<!-- 기프트샵 선물 포장비 쿠폰 -->
+	<entry key="giftshop.coupon.id">13751446</entry><!-- 기프트샵 선물 포장비 쿠폰 -->
+	
+	<!-- 다자녀 DEAL ID -->
+	<entry key="children.deal.id.CHILDRENCARD_TYPE_CD.GYEONGGI">11</entry><!-- 다자녀-경기 -->
+	<entry key="children.deal.id.CHILDRENCARD_TYPE_CD.GANGWON">12</entry><!-- 다자녀-강원 -->
+	<entry key="children.deal.id.CHILDRENCARD_TYPE_CD.GYEONGNAM">13</entry><!-- 다자녀-경남 -->
+	<entry key="children.deal.id.CHILDRENCARD_TYPE_CD.CHUNGNAM">14</entry><!-- 다자녀-충남 -->
+	<entry key="children.deal.id.CHILDRENCARD_TYPE_CD.CHUNGBUK">15</entry><!-- 다자녀-충북 -->
+	<entry key="children.deal.id.CHILDRENCARD_TYPE_CD.BUSAN">16</entry><!-- 다자녀-부산 -->
+	<entry key="children.deal.id.CHILDRENCARD_TYPE_CD.DAEJEON">17</entry><!-- 다자녀-대전 -->
+	<entry key="children.deal.id.CHILDRENCARD_TYPE_CD.GWANGJU">18</entry><!-- 다자녀-광주 -->
+	<entry key="children.deal.id.CHILDRENCARD_TYPE_CD.INCHEON">19</entry><!-- 다자녀-인천 -->
+	
+	<!-- 다자녀 card 매핑 -->
+	<entry key="card.type.bc">31</entry>
+	<entry key="card.type.hana">32</entry>
+	<entry key="card.type.gwangju">46</entry>
+	<entry key="card.type.shinhan">41</entry>
+	
+	<entry key="card.type.children.11">${card.type.bc}</entry><!-- 다자녀-경기 (비씨)-->
+	<entry key="card.type.children.12">${card.type.bc}</entry><!-- 다자녀-강원 (비씨)-->
+	<entry key="card.type.children.13">${card.type.bc}</entry><!-- 다자녀-경남 (비씨)-->
+	<entry key="card.type.children.14">${card.type.bc}</entry><!-- 다자녀-충남 (비씨)-->
+	<entry key="card.type.children.15">${card.type.bc}</entry><!-- 다자녀-충북 (비씨)-->
+	<entry key="card.type.children.16">${card.type.shinhan}</entry><!-- 다자녀-부산 (신한)-->
+	<entry key="card.type.children.17">${card.type.hana}</entry><!-- 다자녀-대전 (하나)-->
+	<entry key="card.type.children.18">${card.type.gwangju}</entry><!-- 다자녀-광주 (광주)-->
+	<entry key="card.type.children.19">${card.type.bc}</entry><!-- 다자녀-인천 (비씨)-->
+	
+	<!-- 로그인 필수 URL -->
+	<entry key="login.mandatory.url">/ccs/cs/qna/insert,/mms/mypage,/dms/special/employee</entry><!-- 로그인 체크 url패턴 -->
+	<entry key="login.mandatory.url.except">/shoppingAlarm/count,/gift,/ccs/guest</entry><!-- 로그인 체크 패턴의 예외 url패턴 -->	
+	
+	<!-- 모바일 앱 URL -->
+	<entry key="mobile.app.url">http://bit.ly/2bTwiH1</entry>
+	
+	<!-- SSL 필수 url -->
+	<entry key="ssl.mandatory.url">/oms,/mms/mypage,/dms/special/employee,/ccs/cs/qna/insert,/ccs/guest,/ccs/common/interestInfo/layer</entry><!-- SSL 체크 url패턴 -->
+	<entry key="ssl.mandatory.url.except">/resources,/api,/ajax,/gift,/oms/order/login/return,/inner/presentList,/shoppingAlarm/count,/common/searchAddress/layer,/common/memberAddress/layer,/ccs/common/reviewLayer,/ccs/common/searchOrderProduct/layer,/ccs/offshop/layer,/ccs/common/deliveryAddress/layer,/ccs/common/layer/optionChangeLayer,/ccs/common/layer/styleDetailLayer,/ccs/common/offlineOrder/layer,/ccs/common/interest/category</entry><!-- SSL 체크 패턴의 예외 url패턴 -->
+</properties>

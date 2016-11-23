@@ -1,0 +1,235 @@
+<!DOCTYPE tiles-definitions PUBLIC "-//Apache Software Foundation//DTD Tiles Configuration 3.0//EN" "http://tiles.apache.org/dtds/tiles-config_3_0.dtd">
+
+<tiles-definitions>
+	<!-- 1. base -->
+	<!-- 	: header-->
+	<!-- 	: navigation-->
+	<!-- 	: left -->
+	<!-- 	: body -->
+	<!-- 	: sky scraper -->
+	<!-- 	: footer -->
+	<!-- 2. no left -->
+	<!-- 	: header-->
+	<!-- 	: navigation-->
+	<!-- 	: body -->
+	<!-- 	: sky scraper -->
+	<!-- 	: footer -->
+	<!-- 3. base mobile -->
+	<!-- 	: header-->
+	<!-- 	: left-->
+	<!-- 	: sky scraper -->
+	<!-- 	: navigation-->
+	<!-- 	: body -->
+	<!-- 	: footer -->
+	
+	<definition name="/oms/pg/*" template="/WEB-INF/views/oms/pg/{1}.jsp" />
+	<!-- 카드사제휴-->	
+	<definition name="/ccs/common/commonAffiliate" template="/WEB-INF/views/ccs/common/commonAffiliate.jsp" />
+			
+	<!-- ==================================================================================== -->
+	<!-- layout_salesAssist.jsp =================================================================== -->
+	<!-- ==================================================================================== -->
+	<definition name="layoutSales" template="/WEB-INF/views/gsf/layout/layout_salesAssist.jsp">
+		<put-attribute name="body" value="" />
+	</definition>
+	
+	<!-- extends  -->	
+	<definition name="/dms/template/salesAssist" extends="layoutSales">
+		<put-attribute name="body" expression="/WEB-INF/views/dms/template/salesAssist.jsp" />
+	</definition>
+	
+	<!-- ==================================================================================== -->
+	<!-- layout_empty.jsp =================================================================== -->
+	<!-- ==================================================================================== -->
+	<definition name="layoutEmpty" template="/WEB-INF/views/gsf/layout/layout_empty.jsp">
+		<put-attribute name="body" value="" />
+	</definition>
+	
+	<!-- extends  -->
+	<definition name="/*/*/inner/*" extends="layoutEmpty">
+		<put-attribute name="body" expression="/WEB-INF/views/{1}/{2}/inner/{3}.jsp" />
+	</definition>
+	<definition name="/*/*/inner/*/*" extends="layoutEmpty">
+		<put-attribute name="body" expression="/WEB-INF/views/{1}/{2}/inner/{3}/{4}.jsp" />
+	</definition>		
+	<definition name="/*/*/*/inner/*" extends="layoutEmpty">
+		<put-attribute name="body" expression="/WEB-INF/views/{1}/{2}/{3}/inner/{4}.jsp" />
+	</definition>
+	<definition name="/*/*/layer/*" extends="layoutEmpty">
+		<put-attribute name="body" expression="/WEB-INF/views/{1}/{2}/layer/{3}.jsp" />
+	</definition>
+	<definition name="/*/include/*" extends="layoutEmpty">
+		<put-attribute name="body" expression="/WEB-INF/views/{1}/include/{2}.jsp" />
+	</definition>	
+<!-- 	<definition name="/navi/*" extends="layoutEmpty">
+		<put-attribute name="body" expression="/WEB-INF/views/gsf/layout/page/{1}/navi_{1}.jsp" />
+	</definition>	 -->
+	<definition name="/mms/sso/sso" extends="layoutEmpty">
+		<put-attribute name="body" expression="/WEB-INF/views/mms/sso/sso.jsp" />
+	</definition>
+
+
+	
+		
+	<!-- ==================================================================================== -->
+	<!-- layout_popup.jsp 팝업 레이아웃 ===================================================== -->
+	<!-- ==================================================================================== -->
+	<!-- 팝업 레이아웃 -->
+	<definition name="basePopup" template="/WEB-INF/views/gsf/layout/layout_popup.jsp">
+		<put-attribute name="body" value="" />
+	</definition>
+	
+	<!-- extends  -->
+	<definition name="/*/popup/*" extends="basePopup">
+		<put-attribute name="body" expression="/WEB-INF/views/{1}/popup/{2}.jsp" />
+	</definition>
+	<definition name="/*/*/popup/*" extends="basePopup">
+		<put-attribute name="body" expression="/WEB-INF/views/{1}/{2}/popup/{3}.jsp" />
+	</definition>
+
+
+	<!-- ==================================================================================== -->
+	<!-- layout_mypage.jsp 마이페이지 레이아웃 ============================================== -->
+	<!-- ==================================================================================== -->
+	<definition name="mypageCommon" template="/WEB-INF/views/gsf/layout/layout_mypage.jsp" preparer="gcp.frontpc.common.tiles.TilesPreparer">
+	   	<put-attribute name="header_mo" value="/WEB-INF/views/gsf/layout/page/mo/header_mo.jsp" />
+	   	<put-attribute name="header_pc" value="/WEB-INF/views/gsf/layout/page/pc/header_pc.jsp" />
+		<put-attribute name="bottom_mo" value="/WEB-INF/views/gsf/layout/page/mo/bottom_mo.jsp" /><!-- 모바일용 -->
+		<put-attribute name="footer_mo" value="/WEB-INF/views/gsf/layout/page/mo/footer_mo.jsp" />
+		<put-attribute name="footer_pc" value="/WEB-INF/views/gsf/layout/page/pc/footer_pc.jsp" />			
+	</definition>
+	<!-- extends  -->
+	<definition name="/mms/mypage/*/layer/*" template="/WEB-INF/views/gsf/layout/layout_empty.jsp">
+		<put-attribute name="body" expression="/WEB-INF/views/mms/mypage/{1}/layer/{2}.jsp" />
+	</definition>
+	<definition name="/mms/mypage/*/*/*" extends="mypageCommon">
+		<put-attribute name="body" expression="/WEB-INF/views/mms/mypage/{1}/{2}/{3}.jsp" />
+	</definition>
+	<definition name="/mms/mypage/*/*" extends="mypageCommon">
+		<put-attribute name="body" expression="/WEB-INF/views/mms/mypage/{1}/{2}.jsp" />
+	</definition>
+	<definition name="/mms/mypage/*" extends="mypageCommon">
+		<put-attribute name="body" expression="/WEB-INF/views/mms/mypage/{1}.jsp" />
+	</definition>		
+		
+	<!-- ==================================================================================== -->
+	<!-- layout_cs.jsp 고객센터 레이아웃===================================================== -->
+	<!-- ==================================================================================== -->		
+	<definition name="csCommon" template="/WEB-INF/views/gsf/layout/layout_cs.jsp" preparer="gcp.frontpc.common.tiles.TilesPreparer">
+	   	<put-attribute name="header_mo" value="/WEB-INF/views/gsf/layout/page/mo/header_mo.jsp" />
+	   	<put-attribute name="header_pc" value="/WEB-INF/views/gsf/layout/page/pc/header_pc.jsp" />
+		<put-attribute name="navi_mo" value="/WEB-INF/views/gsf/layout/page/mo/navi_mo.jsp" /><!-- 모바일용 -->
+		<put-attribute name="bottom_mo" value="/WEB-INF/views/gsf/layout/page/mo/bottom_mo.jsp" /><!-- 모바일용 -->
+		<put-attribute name="footer_mo" value="/WEB-INF/views/gsf/layout/page/mo/footer_mo.jsp" />
+		<put-attribute name="footer_pc" value="/WEB-INF/views/gsf/layout/page/pc/footer_pc.jsp" />		
+	</definition>
+	<definition name="/ccs/cs/*" extends="csCommon">
+		<put-attribute name="body" expression="/WEB-INF/views/ccs/cs/{1}.jsp" />
+	</definition>
+	<definition name="/ccs/cs/*/*" extends="csCommon">
+		<put-attribute name="body" expression="/WEB-INF/views/ccs/cs/{1}/{2}.jsp" />
+	</definition>
+	
+	<definition name="/ccs/guest/*/layer/*" template="/WEB-INF/views/gsf/layout/layout_empty.jsp">
+		<put-attribute name="body" expression="/WEB-INF/views/ccs/guest/{1}/layer/{2}.jsp" />
+	</definition>	
+	<definition name="/ccs/guest/*" extends="csCommon">
+		<put-attribute name="body" expression="/WEB-INF/views/ccs/guest/{1}.jsp" />
+	</definition>
+	<definition name="/ccs/guest/*/*" extends="csCommon">
+		<put-attribute name="body" expression="/WEB-INF/views/ccs/guest/{1}/{2}.jsp" />
+	</definition>
+	<definition name="/ccs/guest/*/*/*" extends="csCommon">
+		<put-attribute name="body" expression="/WEB-INF/views/ccs/guest/{1}/{2}/{3}.jsp" />
+	</definition>
+				
+					
+	<!-- ==================================================================================== -->
+	<!-- layout_default.jsp 기본 레이아웃 =========================================================== -->
+	<!-- ==================================================================================== -->
+	
+	
+	<!-- Mo 리스트용(푸터없음) 레이아웃-->
+<!--  	<definition name="layoutMoList" template="/WEB-INF/views/gsf/layout/layout_default.jsp" preparer="gcp.frontpc.common.tiles.TilesPreparer">
+		<put-attribute name="title" value="제로투세븐닷컴" />
+	</definition>
+	
+	extends 
+ 	<definition name="/*/*/*_list" extends="layoutMoList">
+		<put-attribute name="body" expression="/WEB-INF/views/{1}/{2}/{3}_list.jsp" />
+		<put-attribute name="footer_mo" value="" />
+	</definition>
+ 	<definition name="/*/*/*_list_mo" extends="layoutMoList">
+		<put-attribute name="body" expression="/WEB-INF/views/{1}/{2}/{3}_list_mo.jsp" />
+		<put-attribute name="footer_mo" value="" />
+	</definition>	 -->
+		
+		
+	<!-- 기본 레이아웃 -->
+   	<definition name="layoutDefault" template="/WEB-INF/views/gsf/layout/layout_default.jsp" preparer="gcp.frontpc.common.tiles.TilesPreparer">
+	   	<put-attribute name="header_mo" value="/WEB-INF/views/gsf/layout/page/mo/header_mo.jsp" />
+	   	<put-attribute name="header_pc" value="/WEB-INF/views/gsf/layout/page/pc/header_pc.jsp" />
+		<put-attribute name="bottom_mo" value="/WEB-INF/views/gsf/layout/page/mo/bottom_mo.jsp" />
+		<put-attribute name="footer_mo" value="/WEB-INF/views/gsf/layout/page/mo/footer_mo.jsp" />
+		<put-attribute name="footer_pc" value="/WEB-INF/views/gsf/layout/page/pc/footer_pc.jsp" />
+	</definition>
+	
+	<!-- Brand Layout A,B -->		
+	<definition name="layoutDefaultB" template="/WEB-INF/views/gsf/layout/layout_default.jsp" preparer="gcp.frontpc.common.tiles.TilesPreparer">
+		<put-attribute name="header_mo" value="/WEB-INF/views/gsf/layout/page/mo/brand_header_mo.jsp" />
+		<put-attribute name="bottom_mo" value="/WEB-INF/views/gsf/layout/page/mo/bottom_mo.jsp" /><!-- 모바일용 -->
+		<put-attribute name="footer_mo" value="/WEB-INF/views/gsf/layout/page/mo/footer_mo.jsp" />
+	</definition>
+	
+  	<definition name="/dms/template/brandTemplateC_mo" extends="layoutDefault">
+		<put-attribute name="body" expression="/WEB-INF/views/dms/template/brandTemplateC.jsp" />
+	</definition>		
+	 <definition name="/dms/template/brandTemplate*_mo" extends="layoutDefaultB">
+		<put-attribute name="body" expression="/WEB-INF/views/dms/template/brandTemplate{1}.jsp" />
+	</definition>
+	
+	<definition name="/dms/search/brandSearchMain" extends="layoutDefaultB">
+		<put-attribute name="body" expression="/WEB-INF/views/dms/search/brandSearchMain.jsp" />
+	</definition>
+ 	<definition name="/pms/brand/brandProductB_mo" extends="layoutDefaultB">
+		<put-attribute name="body" expression="/WEB-INF/views/pms/brand/brandProductB.jsp" />
+	</definition>		
+
+  	<definition name="/ccs/common/commonMain.mobile" extends="layoutDefault">
+		<put-attribute name="body" expression="/WEB-INF/views/ccs/common/commonMain.mobile.jsp" />
+	</definition>
+		
+  	<definition name="/pms/product/productDetail_mo" extends="layoutDefault">
+		<put-attribute name="body" expression="/WEB-INF/views/pms/product/productDetail_mo.jsp" />
+		<put-attribute name="bottom_mo" value="" />
+	</definition>		
+ 	<definition name="/*/*/*_list" extends="layoutDefault">
+		<put-attribute name="body" expression="/WEB-INF/views/{1}/{2}/{3}_list.jsp" />
+		<put-attribute name="footer_mo" value="" />
+	</definition>
+ 	<definition name="/*/*/*/*_list" extends="layoutDefault">
+		<put-attribute name="body" expression="/WEB-INF/views/{1}/{2}/{3}/{4}_list.jsp" />
+		<put-attribute name="footer_mo" value="" />
+	</definition>	
+ 	<definition name="/*/*/*_list_mo" extends="layoutDefault">
+		<put-attribute name="body" expression="/WEB-INF/views/{1}/{2}/{3}_list_mo.jsp" />
+		<put-attribute name="footer_mo" value="" />
+	</definition>
+	<definition name="/*/*" extends="layoutDefault">
+		<put-attribute name="body" expression="/WEB-INF/views/{1}/{2}.jsp" />
+	</definition>
+ 	<definition name="/*/*/*" extends="layoutDefault">
+		<put-attribute name="body" expression="/WEB-INF/views/{1}/{2}/{3}.jsp" />
+	</definition>	
+	<definition name="/*/*/*/*" extends="layoutDefault">
+		<put-attribute name="body" expression="/WEB-INF/views/{1}/{2}/{3}/{4}.jsp" />
+	</definition>
+		
+	<!-- ==================================================================================== -->
+	<!-- Extends 영역======================================================================== -->
+	<!-- ==================================================================================== -->	
+
+
+
+	
+</tiles-definitions>

@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ehcache xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="http://ehcache.org/ehcache.xsd" updateCheck="false">   
+    
+    <defaultCache 
+    	eternal="false" 
+    	maxElementsInMemory="1000"
+        overflowToDisk="false" 
+        diskPersistent="false" 
+        timeToIdleSeconds="0"
+        timeToLiveSeconds="600" 
+        memoryStoreEvictionPolicy="LRU"/>
+        
+	<!-- 메인화면 코너정보 cornerService.getMainCornerMap : 10분-->
+    <cache 
+    	name="getMainCornerMap-cache" 
+    	eternal="false"
+        maxElementsInMemory="100" 
+        overflowToDisk="false" 
+        diskPersistent="false"
+        timeToIdleSeconds="0" 
+        timeToLiveSeconds="600"
+        memoryStoreEvictionPolicy="LRU" />
+        
+    <!-- 전체카테고리 목록 categoryService.getAllCategoryList : 1시간-->
+    <cache 
+    	name="getAllCategoryList-cache" 
+    	eternal="false"
+        maxElementsInMemory="100" 
+        overflowToDisk="false" 
+        diskPersistent="false"
+        timeToIdleSeconds="0" 
+        timeToLiveSeconds="3600"
+        memoryStoreEvictionPolicy="LRU" />   
+             
+     <!-- 2뎁스카테고리 목록 categoryService.getDepth2CategoryList : 1시간-->    
+    <cache 
+    	name="getDepth2CategoryList-cache" 
+    	eternal="false"
+        maxElementsInMemory="100" 
+        overflowToDisk="false" 
+        diskPersistent="false"
+        timeToIdleSeconds="0" 
+        timeToLiveSeconds="3600"
+        memoryStoreEvictionPolicy="LRU" />   
+                     
+     <!-- 레코벨 호출 recobelRecommendationService.getRecommendationList : 30분-->    
+    <cache 
+    	name="getRecommendationList-cache" 
+    	eternal="false"
+        maxElementsInMemory="100" 
+        overflowToDisk="false" 
+        diskPersistent="false"
+        timeToIdleSeconds="0" 
+        timeToLiveSeconds="1800"
+        memoryStoreEvictionPolicy="LRU" />   
+               
+     <!-- GNB영역 displayCommonService.getGnbInfo : 1시간-->    
+    <cache 
+    	name="getGnbInfo-cache" 
+    	eternal="false"
+        maxElementsInMemory="100" 
+        overflowToDisk="false" 
+        diskPersistent="false"
+        timeToIdleSeconds="0" 
+        timeToLiveSeconds="3600"
+        memoryStoreEvictionPolicy="LRU" />      
+    
+    <!-- GNB영역 displayCommonService.getGnbCorner : 1시간-->     
+    <cache 
+    	name="getGnbCorner-cache" 
+    	eternal="false"
+        maxElementsInMemory="100" 
+        overflowToDisk="false" 
+        diskPersistent="false"
+        timeToIdleSeconds="0" 
+        timeToLiveSeconds="3600"
+        memoryStoreEvictionPolicy="LRU" /> 
+        
+    <!-- 메인 이벤트 영역 eventService.getRunAllEventList : 1시간-->      
+    <cache 
+    	name="getRunAllEventList-cache" 
+    	eternal="false"
+        maxElementsInMemory="100" 
+        overflowToDisk="false" 
+        diskPersistent="false"
+        timeToIdleSeconds="0" 
+        timeToLiveSeconds="3600"
+        memoryStoreEvictionPolicy="LRU" />  
+     
+     <!-- 메인 스타일 영역 코너 조회 cornerService.getCommonCornerList : 1시간-->         
+     <cache 
+    	name="getCommonCornerList-cache" 
+    	eternal="false"
+        maxElementsInMemory="100" 
+        overflowToDisk="false" 
+        diskPersistent="false"
+        timeToIdleSeconds="0" 
+        timeToLiveSeconds="3600"
+        memoryStoreEvictionPolicy="LRU" />    
+     
+     <!-- 메인 영역 월령코드 조회 codeService.getFrontCodeList : 1시간--> 
+     <cache 
+    	name="getFrontCodeList-cache" 
+    	eternal="false"
+        maxElementsInMemory="100" 
+        overflowToDisk="false" 
+        diskPersistent="false"
+        timeToIdleSeconds="0" 
+        timeToLiveSeconds="3600"
+        memoryStoreEvictionPolicy="LRU" />   
+          
+     
+      <!-- 메인 영역  브랜드 목록  조회 brandService.getBrandCodeList : 1시간--> 
+     <cache 
+    	name="getBrandCodeList-cache" 
+    	eternal="false"
+        maxElementsInMemory="100" 
+        overflowToDisk="false" 
+        diskPersistent="false"
+        timeToIdleSeconds="0" 
+        timeToLiveSeconds="3600"
+        memoryStoreEvictionPolicy="LRU" />    
+        
+</ehcache>
