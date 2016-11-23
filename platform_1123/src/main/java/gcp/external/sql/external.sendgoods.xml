@@ -1,0 +1,447 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="external.sendgoods">
+
+	<select id="getSendgoodsList" parameterType="pmsSendgoodsSearch" resultType="pmsProduct">
+		/* [external.sendgoods.getSendgoodsList][peter][2016. 6. 20.] */
+		<include refid="ccs.common.pagingPre"/>
+			SELECT 
+				PP.STORE_ID
+				, PP.PRODUCT_ID
+				, PP.ERP_PRODUCT_ID
+				, PP.NAME
+				, CB.BUSINESS_ID || '(' || CB.NAME || ')'	AS BUSINESS_INFO
+				, PP.SALE_STATE_CD
+				, PP.PRODUCT_TYPE_CD
+				, PP.OUT_SEND_YN
+				, TO_CHAR(PP.OUT_SEND_DT, 'yyyy/MM/dd')		AS OUT_SEND_DT
+				, PP.MAKER
+				, PP.TAX_TYPE_CD
+				, PP.LIST_PRICE
+				, PP.SALE_PRICE
+				, PP.SUPPLY_PRICE
+				, PP.INS_ID
+				, TO_CHAR(PP.INS_DT, 'yyyy/MM/dd')		AS INS_DT
+				, PP.UPD_ID
+				, TO_CHAR(PP.UPD_DT, 'yyyy/MM/dd')		AS UPD_DT
+				,(SELECT US.NAME FROM CCS_USER US WHERE PP.INS_ID = US.USER_ID AND ROWNUM=1) AS INS_NAME
+			  	,(SELECT US.NAME FROM CCS_USER US WHERE PP.UPD_ID = US.USER_ID AND ROWNUM=1) AS UPD_NAME
+			  	, DECODE(SG.SEND_GOODS_CD_RT, 'Y', '성공', '')		AS SAVE_TYPE
+			FROM PMS_PRODUCT PP
+			INNER JOIN CCS_BUSINESS CB
+					ON CB.STORE_ID = PP.STORE_ID
+				   AND CB.BUSINESS_ID = PP.BUSINESS_ID
+				   AND CB.SALE_TYPE_CD = 'SALE_TYPE_CD.PURCHASE'
+				   AND CB.PURCHASE_YN = 'N'
+				   AND CB.BUSINESS_STATE_CD IN ('BUSINESS_STATE_CD.APPROVAL', 'BUSINESS_STATE_CD.RUN')
+			LEFT OUTER JOIN ZTS_TERM.SEND_GOODS SG
+						 ON SG.COMPAYNY_GOODS_CD = PP.PRODUCT_ID
+			WHERE PP.STORE_ID = #{storeId}
+			  AND PP.RESERVE_YN = 'N'
+			  AND PP.USE_YN = 'Y'
+			  AND PP.CONTROL_NO IS NULL
+			<if test="erpProductIds == null or erpProductIds == ''">
+	            <if test="startDate != null and startDate != '' ">
+	                <if test="dateType eq 'REG'.toString()">
+						AND PP.INS_DT &gt;= TO_DATE(#{startDate}, 'YYYY-MM-DD HH24:MI:SS')
+	                </if>
+	                <if test="dateType eq 'SEND'.toString()">
+						AND PP.OUT_SEND_DT &gt;= TO_DATE(#{startDate}, 'YYYY-MM-DD HH24:MI:SS')
+	                </if>
+	            </if>
+				<if test="endDate != null and endDate != '' ">
+					<if test="dateType eq 'REG'.toString()">
+						AND PP.INS_DT &lt;= TO_DATE(#{endDate}, 'YYYY-MM-DD HH24:MI:SS')
+					</if>
+					<if test="dateType eq 'SEND'.toString()">
+						AND PP.OUT_SEND_DT &lt;= TO_DATE(#{endDate}, 'YYYY-MM-DD HH24:MI:SS')
+					</if>
+				</if>
+				<if test="outSendYn != null and outSendYn != '' ">
+					AND PP.OUT_SEND_YN = #{outSendYn}
+				</if>
+				<if test="mdId != null and mdId != '' ">
+					AND PP.CATEGORY_ID IN (SELECT CATEGORY_ID FROM PMS_CATEGORY WHERE STORE_ID = #{storeId} AND USER_ID = #{mdId} AND LEAF_YN = 'Y' AND USE_YN = 'Y')
+				</if>
+				<if test="saleStateCds == null or saleStateCds == '' ">
+					AND PP.SALE_STATE_CD IN ('SALE_STATE_CD.SALE', 'SALE_STATE_CD.SOLDOUT', 'SALE_STATE_CD.STOP', 'SALE_STATE_CD.MDSTOP', 'SALE_STATE_CD.END')
+				</if>
+				<if test="saleStateCds != null and saleStateCds != '' ">
+					AND PP.SALE_STATE_CD IN ( ${saleStateCds} )
+				</if>
+				<if test="businessId != null and businessId != '' ">
+					AND PP.BUSINESS_ID = #{businessId}
+				</if>
+				<if test="productTypeCds == null or productTypeCds == '' ">
+					AND PP.PRODUCT_TYPE_CD IN ('PRODUCT_TYPE_CD.GENERAL', 'PRODUCT_TYPE_CD.SET')
+				</if>
+				<if test="productTypeCds != null and productTypeCds != '' ">
+					AND PP.PRODUCT_TYPE_CD IN ( ${productTypeCds} )
+				</if>
+				<if test="brandId != null and brandId != '' ">
+					AND PP.BRAND_ID = #{brandId}
+				</if>
+				<if test="makerName != null and makerName != '' ">
+					AND PP.MAKER LIKE '%' || #{makerName} || '%'
+				</if>
+	            <if test="searchKeyword != null and searchKeyword !=''">
+	                <if test="infoType eq 'NAME'.toString()">
+	            		AND PP.NAME LIKE '%' || #{searchKeyword} || '%'
+	                </if>
+	                <if test="infoType eq 'ID'.toString()">
+	            		AND PP.PRODUCT_ID = #{searchKeyword}
+	                </if>
+	            </if>
+            </if>
+            <if test="erpProductIds != null and erpProductIds != ''">
+				AND PP.ERP_PRODUCT_ID IN ( ${erpProductIds} )
+				AND PP.PRODUCT_TYPE_CD IN ('PRODUCT_TYPE_CD.GENERAL', 'PRODUCT_TYPE_CD.SET')
+				AND PP.SALE_STATE_CD IN ('SALE_STATE_CD.SALE', 'SALE_STATE_CD.SOLDOUT', 'SALE_STATE_CD.STOP', 'SALE_STATE_CD.MDSTOP', 'SALE_STATE_CD.END')
+			</if>
+			ORDER BY TO_NUMBER(PP.PRODUCT_ID)
+		<include refid="ccs.common.pagingPost"/>
+	</select>
+	
+	<resultMap id="getProductInfo" autoMapping="true" type="gcp.pms.model.PmsProduct">
+		<id property="storeId" column="STORE_ID" />
+		<id property="productId" column="PRODUCT_ID" />
+		<result property="erpProductId" column="ERP_PRODUCT_ID" />
+		<result property="name" column="PRODUCT_NAME" />
+		<result property="adCopy" column="AD_COPY" />
+		<result property="brandName" column="BRAND_NAME" />
+		<result property="keyword" column="KEYWORD" />
+		<result property="categoryId" column="CATEGORY_ID" />
+		<result property="maker" column="MAKER" />
+		<result property="origin" column="ORIGIN" />
+		<result property="productTypeCd" column="PRODUCT_TYPE_CD" />
+		<result property="saleStateCd" column="SALE_STATE_CD" />
+		<result property="taxTypeCd" column="TAX_TYPE_CD" /> 
+		<result property="listPrice" column="LIST_PRICE" />
+		<result property="salePrice" column="SALE_PRICE" />
+		<result property="supplyPrice" column="SUPPLY_PRICE" />
+		<result property="optionYn" column="OPTION_YN" />
+		<result property="detail" column="DETAIL" javaType="java.lang.String" jdbcType="CLOB" />
+		<result property="productNoticeTypeCd" column="PRODUCT_NOTICE_TYPE_CD" />
+		<result property="claimInfo" column="CLAIM_INFO" javaType="java.lang.String" jdbcType="CLOB" />
+		<collection property="pmsSaleproducts" ofType="gcp.pms.model.PmsSaleproduct">
+			<id property="storeId" column="STORE_ID" />
+			<id property="productId" column="PRODUCT_ID" />
+			<id property="saleproductId" column="SALEPRODUCT_ID" />
+			<result property="name" column="SALEPRODUCT_NAME" />
+			<result property="realStockQty" column="REAL_STOCK_QTY" />
+			<result property="addSalePrice" column="ADD_SALE_PRICE" />
+			<result property="saleproductStateCd" column="SALEPRODUCT_STATE_CD" />
+		</collection>
+	</resultMap>
+	<select id="getProductList" parameterType="pmsSendgoodsSearch" resultMap="getProductInfo">
+		/* [external.sendgoods.getProductList][peter][2016. 6. 22.] */
+		SELECT 
+			PP.STORE_ID
+			, PP.PRODUCT_ID
+			, REPLACE(PP.ERP_PRODUCT_ID, ' ', '')	AS ERP_PRODUCT_ID
+			, PP.NAME								AS PRODUCT_NAME
+			, REPLACE(PP.AD_COPY, ' ', '')			AS AD_COPY
+			, (SELECT NAME FROM PMS_BRAND WHERE STORE_ID = PP.STORE_ID AND BRAND_ID = PP.BRAND_ID AND USE_YN = 'Y')		AS BRAND_NAME
+			, SUBSTR(PP.KEYWORD,1,60)		AS KEYWORD
+			, PP.CATEGORY_ID
+			, PP.MAKER
+			, DECODE(PP.ORIGIN, NULL, '기타', '', '기타', PP.ORIGIN)		AS ORIGIN
+			, PP.PRODUCT_TYPE_CD
+			, DECODE(PP.SALE_STATE_CD,'SALE_STATE_CD.SALE','2','SALE_STATE_CD.SOLDOUT','4','SALE_STATE_CD.STOP','3','SALE_STATE_CD.MDSTOP','3','SALE_STATE_CD.END','5','1')		AS SALE_STATE_CD
+			, DECODE(PP.TAX_TYPE_CD, 'TAX_TYPE_CD.FREE', '2', '1')		AS TAX_TYPE_CD
+			, PP.LIST_PRICE
+			, PP.SALE_PRICE
+			, PP.SUPPLY_PRICE
+			, PP.OPTION_YN
+			, PP.DETAIL
+			, PP.PRODUCT_NOTICE_TYPE_CD
+			, PP.CLAIM_INFO
+			, PS.SALEPRODUCT_ID
+			, PS.NAME			AS SALEPRODUCT_NAME
+			, PS.REAL_STOCK_QTY
+			, PS.ADD_SALE_PRICE
+			, DECODE(PS.SALEPRODUCT_STATE_CD, 'SALEPRODUCT_STATE_CD.SALE', '002', 'SALEPRODUCT_STATE_CD.SOLDOUT', '004', '005')		AS SALEPRODUCT_STATE_CD
+		FROM PMS_PRODUCT PP
+		INNER JOIN PMS_SALEPRODUCT PS
+				ON PS.STORE_ID = PP.STORE_ID
+			   AND PS.PRODUCT_ID = PP.PRODUCT_ID
+		INNER JOIN CCS_BUSINESS CB
+					ON CB.STORE_ID = PP.STORE_ID
+				   AND CB.BUSINESS_ID = PP.BUSINESS_ID
+				   AND CB.SALE_TYPE_CD = 'SALE_TYPE_CD.PURCHASE'
+				   AND CB.PURCHASE_YN = 'N'
+				   AND CB.BUSINESS_STATE_CD IN ('BUSINESS_STATE_CD.APPROVAL', 'BUSINESS_STATE_CD.RUN')
+		WHERE PP.STORE_ID = #{storeId}
+		  AND PP.PRODUCT_ID IN ( ${productIds} )
+		  AND PP.PRODUCT_TYPE_CD IN ('PRODUCT_TYPE_CD.GENERAL', 'PRODUCT_TYPE_CD.SET')
+		  AND PP.SALE_STATE_CD IN ('SALE_STATE_CD.SALE', 'SALE_STATE_CD.SOLDOUT', 'SALE_STATE_CD.STOP', 'SALE_STATE_CD.MDSTOP', 'SALE_STATE_CD.END')
+		  AND PP.RESERVE_YN = 'N'
+		  AND PP.USE_YN = 'Y'
+		  AND PP.CONTROL_NO IS NULL
+	</select>
+
+<!-- 	<select id="getSetproductOptionYn" parameterType="hashMap" resultType="String">
+		/* [external.sendgoods.getSetproductOptionYn][peter][2016. 7. 21.] */
+		SELECT
+			MAX(OPTION_YN)
+		  FROM PMS_PRODUCT PP
+		 WHERE STORE_ID = #{storeId}
+		   AND PRODUCT_ID IN (SELECT SUB_PRODUCT_ID
+		   						FROM PMS_SETPRODUCT
+		   					   WHERE STORE_ID = PP.STORE_ID
+		   					     AND PRODUCT_ID = #{productId})
+		   AND USE_YN = 'Y'
+	</select> -->
+	<select id="getSetproductOptionCount" parameterType="hashMap" resultType="hashMap">
+	/* [external.sendgoods.getSetproductOptionYn][peter][2016. 11. 16.] */
+	SELECT
+		PRODUCT_ID
+		, COUNT(*)	AS OPTION_CNT
+	  FROM PMS_SALEPRODUCT PS
+	 WHERE STORE_ID = #{storeId}
+	   AND PRODUCT_ID IN (SELECT SUB_PRODUCT_ID
+	   						FROM PMS_SETPRODUCT
+	   					   WHERE STORE_ID = #{storeId}
+	   					     AND PRODUCT_ID = #{productId})
+	GROUP BY PRODUCT_ID
+	</select>
+
+	<select id="getSubproductMinQtyOfSet" parameterType="hashMap" resultType="Integer">
+		/* [external.sendgoods.getSubproductMinQtyOfSet][peter][2016. 6. 22.] */
+		SELECT
+			MIN(CASE WHEN PSP.REAL_STOCK_QTY > PST.QTY THEN TRUNC(PSP.REAL_STOCK_QTY / PST.QTY)
+					 ELSE 0
+				END)	AS MIN_QTY
+		  FROM PMS_SETPRODUCT PST, PMS_SALEPRODUCT PSP
+		 WHERE PST.STORE_ID = #{storeId}
+		   AND PST.STORE_ID = PSP.STORE_ID
+		   AND PST.PRODUCT_ID = #{productId}
+		   AND PST.SUB_PRODUCT_ID = PSP.PRODUCT_ID
+	</select>
+
+	<select id="getCategoryTree" parameterType="pmsProduct" resultType="pmsCategory">
+		/* [external.sendgoods.getProductList][peter][2016. 6. 22.] */
+		SELECT 
+			LEVEL	AS DEPTH
+			, CATEGORY_ID
+			, NAME
+  		FROM PMS_CATEGORY
+ 		START WITH UPPER_CATEGORY_ID IS NULL
+		CONNECT BY PRIOR CATEGORY_ID = UPPER_CATEGORY_ID
+			AND STORE_ID = #{storeId}
+			AND CATEGORY_ID = #{categoryId}
+		ORDER BY LEVEL
+	</select>
+	
+	<select id="getProductImage" parameterType="pmsProduct" resultType="pmsProductimg">
+		/* [external.sendgoods.getProductImage][peter][2016. 6. 23.] */
+		SELECT 
+			IMG_NO
+			, IMG
+			, TEXT
+  		FROM PMS_PRODUCTIMG
+  		WHERE STORE_ID = #{storeId}
+		  AND PRODUCT_ID = #{productId}
+		ORDER BY IMG_NO
+	</select>
+	
+	<select id="getProductNoticeInfo" parameterType="pmsProduct" resultType="pmsProductnotice">
+		/* [external.sendgoods.getProductNoticeInfo][peter][2016. 6. 23.] */
+		SELECT 
+			PN.PRODUCT_NOTICE_TYPE_CD
+			, PF.SORT_NO
+			, REGEXP_REPLACE(PN.DETAIL, '@|#', ' ')		AS DETAIL
+			, PN.PRODUCT_NOTICE_FIELD_ID
+  		FROM PMS_PRODUCTNOTICE PN
+  		INNER JOIN PMS_PRODUCTNOTICEFIELD PF
+  				ON PF.PRODUCT_NOTICE_TYPE_CD = PN.PRODUCT_NOTICE_TYPE_CD
+  			   AND PF.PRODUCT_NOTICE_FIELD_ID = PN.PRODUCT_NOTICE_FIELD_ID
+  		WHERE PN.STORE_ID = #{storeId}
+		  AND PN.PRODUCT_ID = #{productId}
+		  AND PN.PRODUCT_NOTICE_TYPE_CD = #{productNoticeTypeCd}
+		ORDER BY PF.SORT_NO
+	</select>
+
+	<delete id="deleteSendgoods" parameterType="String">
+		/* [external.sendgoods.deleteSendgoods][peter][2016. 8. 25.] */
+		DELETE ZTS_TERM.SEND_GOODS
+		WHERE COMPAYNY_GOODS_CD = #{compaynyGoodsCd}
+	</delete>
+
+	<insert id="insertSendgoods" parameterType="pmsSendgoodsmapping">
+	/* [external.sendgoods.insertSendgoods][peter][2016. 6. 22.] */
+		<selectKey keyProperty="seq" resultType="Integer" order="BEFORE">
+		SELECT ZTS_TERM.SEQ_SEND_GOODS.NEXTVAL FROM DUAL
+		</selectKey>
+			INSERT INTO ZTS_TERM.SEND_GOODS (
+				SEQ
+				, GOODS_NM
+				, GOODS_KEYWORD
+				, MODEL_NM
+				, BRAND_NM
+				, COMPAYNY_GOODS_CD
+				, GOODS_SEARCH
+				, GOODS_GUBUN
+				, CLASS_CD1
+				, CLASS_CD2
+				, CLASS_CD3
+				, CLASS_CD4
+				, MAKER
+				, ORIGIN
+				, GOODS_SEASON
+				, SEX
+				, STATUS
+				, DELIV_ABLE_REGION
+				, TAX_YN
+				, DELV_TYPE
+				, DELV_COST
+				, BANPUM_AREA
+				, GOODS_COST
+				, GOODS_PRICE
+				, GOODS_CONSUMER_PRICE
+				, CHAR_1_NM
+				, CHAR_1_VAL
+				, IMG_PATH
+				, IMG_PATH1
+				, IMG_PATH2
+				, IMG_PATH3
+				, IMG_PATH4
+				, IMG_PATH5
+				, IMG_PATH6
+				, IMG_PATH7
+				, IMG_PATH8
+				, IMG_PATH9
+				, IMG_PATH10
+				, IMG_PATH11
+				, IMG_PATH12
+				, IMG_PATH13
+				, STOCK_USE_YN
+				, OPT_TYPE
+				, PROP_EDIT_YN
+				, PROP1_CD
+				, PROP_VAL1
+				, PROP_VAL2
+				, PROP_VAL3
+				, PROP_VAL4
+				, PROP_VAL5
+				, PROP_VAL6
+				, PROP_VAL7
+				, PROP_VAL8
+				, PROP_VAL9
+				, PROP_VAL10
+				, PROP_VAL11
+				, PROP_VAL12
+				, PROP_VAL13
+				, PROP_VAL14
+				, PROP_VAL15
+				, PROP_VAL16
+				, PROP_VAL17
+				, PROP_VAL18
+				, PROP_VAL19
+				, PROP_VAL20
+				, PROP_VAL21
+				, PROP_VAL22
+				, PROP_VAL23
+				, PROP_VAL24
+				, GOODS_NM_PR
+				, REGIST_DATE
+				, GOODS_REMARKS
+				, GOODS_REMARKS3
+			)
+			VALUES (
+				#{seq, jdbcType=INTEGER}
+				, #{goodsNm, jdbcType=VARCHAR}
+				, #{goodsKeyword, jdbcType=VARCHAR}
+				, #{modelNm, jdbcType=VARCHAR}
+				, #{brandNm, jdbcType=VARCHAR}
+				, #{compaynyGoodsCd, jdbcType=VARCHAR}
+				, #{goodsSearch, jdbcType=VARCHAR}
+				, '4'
+				, #{classCd1, jdbcType=VARCHAR}
+				, #{classCd2, jdbcType=VARCHAR}
+				, #{classCd3, jdbcType=VARCHAR}
+				, #{classCd4, jdbcType=VARCHAR}
+				, #{maker, jdbcType=VARCHAR}
+				, #{origin, jdbcType=VARCHAR}
+				, '7'
+				, '4'
+				, #{status, jdbcType=VARCHAR}
+				, '1'
+				, #{taxYn, jdbcType=VARCHAR}
+				, '1'
+				, #{delvCost, jdbcType=VARCHAR}
+				, ''
+				, #{goodsCost, jdbcType=VARCHAR}
+				, #{goodsPrice, jdbcType=VARCHAR}
+				, #{goodsConsumerPrice, jdbcType=VARCHAR}
+				, '선택'
+				, #{char1Val, jdbcType=VARCHAR}
+				, #{imgPath, jdbcType=VARCHAR}
+				, #{imgPath1, jdbcType=VARCHAR}
+				, #{imgPath2, jdbcType=VARCHAR}
+				, #{imgPath3, jdbcType=VARCHAR}
+				, #{imgPath4, jdbcType=VARCHAR}
+				, #{imgPath5, jdbcType=VARCHAR}
+				, #{imgPath6, jdbcType=VARCHAR}
+				, #{imgPath7, jdbcType=VARCHAR}
+				, #{imgPath8, jdbcType=VARCHAR}
+				, #{imgPath9, jdbcType=VARCHAR}
+				, #{imgPath10, jdbcType=VARCHAR}
+				, #{imgPath11, jdbcType=VARCHAR}
+				, #{imgPath12, jdbcType=VARCHAR}
+				, #{imgPath13, jdbcType=VARCHAR}
+				, 'N'
+				, '2'
+				, 'Y'
+				, #{prop1Cd, jdbcType=VARCHAR}
+				, #{propVal1, jdbcType=VARCHAR}
+				, #{propVal2, jdbcType=VARCHAR}
+				, #{propVal3, jdbcType=VARCHAR}
+				, #{propVal4, jdbcType=VARCHAR}
+				, #{propVal5, jdbcType=VARCHAR}
+				, #{propVal6, jdbcType=VARCHAR}
+				, #{propVal7, jdbcType=VARCHAR}
+				, #{propVal8, jdbcType=VARCHAR}
+				, #{propVal9, jdbcType=VARCHAR}
+				, #{propVal10, jdbcType=VARCHAR}
+				, #{propVal11, jdbcType=VARCHAR}
+				, #{propVal12, jdbcType=VARCHAR}
+				, #{propVal13, jdbcType=VARCHAR}
+				, #{propVal14, jdbcType=VARCHAR}
+				, #{propVal15, jdbcType=VARCHAR}
+				, #{propVal16, jdbcType=VARCHAR}
+				, #{propVal17, jdbcType=VARCHAR}
+				, #{propVal18, jdbcType=VARCHAR}
+				, #{propVal19, jdbcType=VARCHAR}
+				, #{propVal20, jdbcType=VARCHAR}
+				, #{propVal21, jdbcType=VARCHAR}
+				, #{propVal22, jdbcType=VARCHAR}
+				, #{propVal23, jdbcType=VARCHAR}
+				, #{propVal24, jdbcType=VARCHAR}
+				, #{goodsNmPr, jdbcType=VARCHAR}
+				, SYSDATE
+				, EMPTY_CLOB()
+				, #{goodsRemarks3, jdbcType=VARCHAR}
+			)
+	</insert>
+
+	<update id="updateGoodsRemarksData" parameterType="pmsSendgoodsmapping">
+		/* [external.sendgoods.updateGoodsRemarksData][peter][2016. 11. 14.] */
+		UPDATE ZTS_TERM.SEND_GOODS
+		   SET GOODS_REMARKS = #{goodsRemarks, jdbcType=CLOB}
+		 WHERE SEQ = #{seq}
+		   AND COMPAYNY_GOODS_CD = #{compaynyGoodsCd}
+	</update>
+
+	<update id="updateOutSendResult" parameterType="pmsSendgoodsSearch">
+		/* [external.sendgoods.updateOutSendResult][peter][2016. 6. 24.] */
+		UPDATE PMS_PRODUCT
+		   SET OUT_SEND_YN = 'Y'
+			   , OUT_SEND_DT = SYSDATE
+		 WHERE STORE_ID = #{storeId}
+		   AND PRODUCT_ID = #{productId}
+		   AND USE_YN = 'Y'
+		   AND OUT_SEND_YN = 'N'
+	</update>
+
+</mapper>

@@ -1,0 +1,464 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ccs.qna">
+	
+	<resultMap id="qnaListResult2" type="ccsInquiry" autoMapping="true">
+		<id property="inquiryNo" 				column="INQUIRY_NO"/>
+		<association property="mmsMemberzts" javaType="mmsMemberzts">
+			<result property="memGradeCd" column="MEM_GRADE_CD"/>
+		</association>
+		<association property="pmsBrand" javaType="pmsBrand">
+			<result property="brandId" column="BRAND_ID"/>
+			<result property="name" column="BRAND_NAME"/>
+		</association>		
+	</resultMap>
+	<select id="getQnaList" resultMap="qnaListResult2">
+	/* [ccs.qna.getQnaList][emily][2016. 6. 1.] */
+	SELECT I1.*,
+		       (SELECT ZTS.MEM_GRADE_CD
+		          FROM MMS_MEMBER_ZTS ZTS
+		         WHERE ZTS.MEMBER_NO = I1.MEMBER_NO)
+		          MEM_GRADE_CD,
+		       (SELECT BRD.NAME
+		          FROM PMS_BRAND BRD
+		         WHERE BRD.BRAND_ID = I1.BRAND_ID)
+		          BRAND_NAME,		          
+		       CASE
+		          WHEN I1.CONFIRM_ID IS NOT NULL
+		          THEN
+		                (SELECT USR.NAME
+		                   FROM CCS_USER USR
+		                  WHERE USR.USER_ID = I1.CONFIRM_ID)
+		          ELSE '' END CONFIRM_NAME,
+		        CASE
+		          WHEN I1.ANSWER_ID IS NOT NULL 
+		          THEN 
+		                (SELECT USR.NAME
+		                   FROM CCS_USER USR
+		                  WHERE USR.USER_ID = I1.ANSWER_ID)
+		             || '(' || I1.ANSWER_ID || ')/' || 
+						NVL((SELECT BUS.NAME
+		                   FROM CCS_USER USR, CCS_BUSINESS BUS
+		                  WHERE USR.USER_ID = I1.ANSWER_ID AND USR.BUSINESS_ID=BUS.BUSINESS_ID),'제로투세븐')		             
+		          ELSE '' END ANSWERER,
+		       CASE
+		          WHEN INQUIRY_CHANNEL_CD = 'INQUIRY_CHANNEL_CD.CALL'
+		          THEN
+		                (SELECT USR.NAME
+		                   FROM CCS_USER USR
+		                  WHERE USR.USER_ID = I1.INS_ID)
+		          ELSE '' END INS_NAME       
+	   FROM (       	
+		<include refid="ccs.common.pagingPre" />
+			  SELECT INQ.INQUIRY_NO,
+			         INQ.INQUIRY_TYPE_CD,
+			         INQ.INQUIRY_CHANNEL_CD,
+			         INQ.MEMBER_NO,
+			         INQ.CUSTOMER_NAME,
+			         INQ.TITLE,
+			         INQ.INQUIRY_STATE_CD,
+			         INQ.INS_ID,
+			         INQ.INS_DT,
+			         INQ.CONFIRM_ID,
+			         INQ.CONFIRM_DT,
+			         INQ.ANSWER_ID,
+			         INQ.ANSWER_DT,
+			         INQ.BRAND_ID,
+	                 MBR.MEMBER_ID,
+	                 MBR.MEMBER_NAME			         
+			    FROM CCS_INQUIRY INQ
+	                 LEFT OUTER JOIN MMS_MEMBER MBR
+	                    ON MBR.MEMBER_NO = INQ.MEMBER_NO		    
+			   WHERE 1 = 1
+			<if test="periodType != null and periodType != ''">
+				<if test="periodType == 'QNA_DATE'"><!-- 등록일기간 -->
+         			AND  INQ.INS_DT BETWEEN TO_DATE (#{startDate},
+                                        'YYYY-MM-DD HH24:MI:SS')
+                           AND TO_DATE (#{endDate},
+                                        'YYYY-MM-DD HH24:MI:SS')	   
+				</if>
+				<if test="periodType == 'ANSWER_DATE'"><!-- 답변일기간 -->				                    
+			         AND  INQ.ANSWER_DT BETWEEN TO_DATE (#{startDate},
+                                        'YYYY-MM-DD HH24:MI:SS')
+                           AND TO_DATE (#{endDate},
+                                        'YYYY-MM-DD HH24:MI:SS')
+				</if>
+				<if test="periodType == 'CONFIRM_DATE'"><!-- 확인일기간 -->			                               
+			         AND  INQ.CONFIRM_DT BETWEEN TO_DATE (#{startDate},
+                                        'YYYY-MM-DD HH24:MI:SS')
+                           AND TO_DATE (#{endDate},
+                                        'YYYY-MM-DD HH24:MI:SS')
+				</if>
+			</if>	             
+				<if test="keyword!=null and keyword!=''"><!-- 제목/타이틀 -->
+			         AND (INQ.TITLE LIKE '%' || #{keyword} || '%' OR INQ.DETAIL LIKE '%' || #{keyword} || '%')
+				</if>
+
+			    <if test="businessId!=null and businessId!=''"><!-- 업체ID -->
+			         AND INQ.BUSINESS_ID = #{businessId}
+			    </if>
+			    <if test="memGradeCds!=null and memGradeCds!=''"><!-- 회원등급 -->
+			         AND EXISTS
+			                (SELECT 1
+			                   FROM MMS_MEMBER_ZTS MEMZ
+			                  WHERE     MEMZ.MEMBER_NO = INQ.MEMBER_NO
+			                        AND MEMZ.MEM_GRADE_CD IN (${memGradeCds}))
+			    </if> 
+			    
+			    <if test="inquiryChannelCds!=null and inquiryChannelCds!=''"><!-- 문의채널 -->          
+			         AND INQ.INQUIRY_CHANNEL_CD IN (${inquiryChannelCds})
+			    </if>  
+			    <if test="inquiryStateCds!=null and inquiryStateCds!=''"><!-- 문의 상태 -->           
+			         AND INQ.INQUIRY_STATE_CD IN (${inquiryStateCds})
+			    </if>
+ 
+			    <if test="inquiryTypeCd!=null and inquiryTypeCd!=''"><!-- 문의유형 -->              
+			         AND INQ.INQUIRY_TYPE_CD = #{inquiryTypeCd}
+			    </if> 		
+			    <if test="brandId!=null and brandId!=''"><!-- 브랜드 -->              
+			         AND INQ.BRAND_ID = #{brandId}
+			    </if> 			    	    
+			<choose>
+ 				<when test='memberYn=="Y" and memberNo!=null and memberNo!=""'>
+			         AND INQ.MEMBER_NO = #{memberNo}
+			    </when>
+ 			    <when test='memberYn=="Y" and memberLoginId!=null and memberLoginId!=""'><!-- 회원ID -->                 
+			         AND EXISTS
+			                (SELECT 1
+			                   FROM MMS_MEMBER MEM
+			                  WHERE MEM.MEMBER_NO = INQ.MEMBER_NO AND MEM.MEMBER_ID = #{memberLoginId})
+			    </when>    
+		    	<when test='memberYn=="N" and customerName!=null and customerName!=""'><!-- 비회원명 -->    
+			         AND INQ.CUSTOMER_NAME = #{customerName}
+			         AND INQ.MEMBER_NO IS NULL
+			    </when>			    
+			</choose>				       
+			<choose>    
+			    <when test="csUserId!=null and csUserId!=''"><!-- CS문의 등록자 ID -->
+			         AND INQ.INS_ID = #{csUserId}
+			    </when>     
+			    <when test="csUserName!=null and csUserName!=''"><!-- CS문의 등록자 명 -->
+			         AND EXISTS
+			                (SELECT 1
+			                   FROM CCS_USER USR
+			                  WHERE USR.USER_ID = INQ.INS_ID AND USR.NAME = #{csUserName})
+			    </when>
+			</choose>    
+			<choose>    
+			    <when test="answerId!=null and answerId!=''"><!-- 답변자 ID -->          
+			         AND INQ.ANSWER_ID = #{answerId}
+			    </when>
+			    <when test="answererName!=null and answererName!=''"><!-- 답변자명 -->     
+			         AND EXISTS
+			                (SELECT 1
+			                   FROM CCS_USER USR
+			                  WHERE USR.USER_ID = INQ.ANSWER_ID AND USR.NAME = #{answererName})
+			    </when>
+			</choose>  
+			<if test='pagingYn=="Y"'> 			   
+			ORDER BY INQ.INS_DT DESC
+			</if>
+		<include refid="ccs.common.pagingPost"/>
+		)I1
+	</select>		
+	<resultMap id="getInquiryDetailResult" type="ccsInquiry" autoMapping="true">
+		<id property="inquiryNo" 				column="INQUIRY_NO"/>
+		<association property="mmsMemberzts" javaType="mmsMemberzts">
+			<result property="memGradeCd" column="MEM_GRADE_CD"/>
+		</association>
+		<association property="omsOrderproduct" javaType="omsOrderproduct">
+			<result property="orderId" 			column="ORDER_ID"/>
+			<result property="productId" 		column="PRODUCT_ID"/>
+			<result property="productName" 		column="PRODUCT_NAME"/>
+			<result property="saleproductId" 	column="SALEPRODUCT_ID"/>
+			<result property="saleproductName" 	column="SALEPRODUCT_NAME"/>
+		</association>
+		<association property="ccsBusiness" javaType="ccsBusiness">
+			<id property="businessId" 			column="BUSINESS_ID"/>
+			<result property="name" 			column="BUSINESS_NAME"/>
+		</association>		
+	</resultMap>
+	
+	<select id="getInquiryDetail" resultMap="getInquiryDetailResult">
+		/* [ccs.qna.getInquiryDetail][emily][2016. 6. 1.] */
+		SELECT INQ.*,
+		       CASE WHEN INQ.MEMBER_NO IS NULL THEN 'N' ELSE 'Y' END MEMBER_YN,
+		       (SELECT CB.NAME FROM CCS_BUSINESS CB WHERE INQ.BUSINESS_ID = CB.BUSINESS_ID AND CB.STORE_ID = INQ.STORE_ID)AS BUSINESS_NAME,
+		       (SELECT PR.NAME FROM PMS_PRODUCT PR WHERE INQ.PRODUCT_ID = PR.PRODUCT_ID AND PR.STORE_ID = INQ.STORE_ID)AS PRODUCT_NAME,
+		       (SELECT SP.NAME FROM PMS_SALEPRODUCT SP WHERE INQ.SALEPRODUCT_ID = SP.SALEPRODUCT_ID AND SP.STORE_ID = INQ.STORE_ID)AS SALEPRODUCT_NAME,
+		       (SELECT ZTS.MEM_GRADE_CD
+		          FROM MMS_MEMBER_ZTS ZTS
+		         WHERE ZTS.MEMBER_NO = INQ.MEMBER_NO)
+		          MEM_GRADE_CD,
+		       CASE
+		          WHEN INQ.CONFIRM_ID IS NOT NULL
+		          THEN
+		                (SELECT USR.NAME
+		                   FROM CCS_USER USR
+		                  WHERE USR.USER_ID = INQ.CONFIRM_ID)
+		             || '(' || INQ.CONFIRM_ID || ')'
+		          ELSE '' END CONFIRMER,
+		       CASE
+		          WHEN INQ.ANSWER_ID IS NOT NULL
+		          THEN
+		                (SELECT USR.NAME
+		                   FROM CCS_USER USR
+		                  WHERE USR.USER_ID = INQ.ANSWER_ID) 
+		             || '(' || INQ.ANSWER_ID || ')/' || 
+						NVL((SELECT BUS.NAME
+		                   FROM CCS_USER USR, CCS_BUSINESS BUS
+		                  WHERE USR.USER_ID = INQ.ANSWER_ID AND USR.BUSINESS_ID=BUS.BUSINESS_ID), '제로투세븐')		  		             
+		          ELSE '' END ANSWERER,
+		       MBR.MEMBER_NAME,
+		       MBR.MEMBER_ID,
+		       CASE
+		          WHEN INQUIRY_CHANNEL_CD = 'INQUIRY_CHANNEL_CD.CALL'
+		          THEN
+		                (SELECT USR.NAME
+		                   FROM CCS_USER USR
+		                  WHERE USR.USER_ID = INQ.INS_ID)
+		             || '(' || INQ.INS_ID || ')'
+		          ELSE MBR.MEMBER_NAME || '(' || MBR.MEMBER_ID || ')' END CREATOR
+		  FROM CCS_INQUIRY INQ
+		       LEFT OUTER JOIN MMS_MEMBER MBR
+		          ON MBR.MEMBER_NO = INQ.MEMBER_NO
+		 WHERE INQ.INQUIRY_NO = #{inquiryNo} AND INQ.STORE_ID = #{storeId}		
+	</select>
+	
+	<resultMap type="pmsProductqna" id="getProductQnaListResult" autoMapping="true">
+		<id property="productQnaNo" 			column="PRODUCT_QNA_NO"/>
+		<association property="pmsProduct" 	javaType="pmsProduct">
+			<id property="productId" 			column="PRODUCT_ID"/>
+			<result property="name" 			column="PRODUCT_NAME"/>
+		</association>
+		<association property="mmsMemberzts" 	javaType="mmsMemberZts">
+			<id property="memberNo" 			column="MEMBER_NO"/>
+			<result property="memGradeCd" 			column="MEM_GRADE_CD"/>
+		</association>		
+		<association property="ccsBusiness" 	javaType="ccsBusiness">
+			<id property="businessId" 			column="BUSINESS_ID"/>
+			<result property="name" 			column="BUSINESS_NAME"/>
+		</association>			
+	</resultMap>
+	
+	<select id="getProductQnaList" resultMap="getProductQnaListResult">
+	/* [ccs.qna.getProductQnaList][emily][2016. 6. 1.] */
+	SELECT I1.*,
+		       (SELECT ZTS.MEM_GRADE_CD
+		          FROM MMS_MEMBER_ZTS ZTS
+		         WHERE ZTS.MEMBER_NO = I1.MEMBER_NO)
+		          MEM_GRADE_CD,
+		       CASE
+		          WHEN I1.CONFIRM_ID IS NOT NULL
+		          THEN
+		                (SELECT USR.NAME
+		                   FROM CCS_USER USR
+		                  WHERE USR.USER_ID = I1.CONFIRM_ID)
+		          ELSE '' END CONFIRM_NAME,
+		       CASE
+		          WHEN I1.ANSWER_ID IS NOT NULL
+		          THEN
+		                (SELECT USR.NAME
+		                   FROM CCS_USER USR
+		                  WHERE USR.USER_ID = I1.ANSWER_ID)
+		             || '(' || I1.ANSWER_ID || ')/' || NVL(BUSINESS_NAME, '제로투세븐')
+		          ELSE '' END ANSWERER,
+		       MEMBER_NAME
+	   FROM (       	
+		<include refid="ccs.common.pagingPre" />
+			  SELECT /*+ LEADING(INQ) */
+			         INQ.PRODUCT_QNA_NO,
+			         INQ.PRODUCT_QNA_STATE_CD,
+			         INQ.MEMBER_NO,
+			         INQ.TITLE,
+			         INQ.INS_ID,
+			         INQ.INS_DT,
+			         INQ.CONFIRM_ID,
+			         INQ.CONFIRM_DT,
+			         INQ.ANSWER_ID,
+			         INQ.ANSWER_DT,
+	                 MBR.MEMBER_ID,
+	                 MBR.MEMBER_NAME,
+	                 INQ.PRODUCT_ID,
+	                 PRD.NAME PRODUCT_NAME,
+	                 BUS.BUSINESS_ID,
+	                 BUS.NAME BUSINESS_NAME
+			    FROM PMS_PRODUCTQNA INQ
+	                 LEFT OUTER JOIN MMS_MEMBER MBR
+	                    ON MBR.MEMBER_NO = INQ.MEMBER_NO	
+	                 INNER JOIN PMS_PRODUCT PRD
+	                    ON PRD.PRODUCT_ID = INQ.PRODUCT_ID AND PRD.STORE_ID = INQ.STORE_ID
+	                 LEFT OUTER JOIN CCS_BUSINESS BUS
+	                    ON BUS.BUSINESS_ID = PRD.BUSINESS_ID AND BUS.STORE_ID = INQ.STORE_ID	                    
+			   WHERE 1 = 1
+			     AND INQ.STORE_ID = #{storeId}
+			<if test="periodType != null and periodType != ''">
+				<if test="periodType == 'QNA_DATE'"><!-- 등록일기간 -->
+			         AND INQ.INS_DT BETWEEN TO_DATE(#{startDate},'YYYY-MM-DD HH24:MI:SS') AND TO_DATE(#{endDate},'YYYY-MM-DD HH24:MI:SS')
+				</if>
+				<if test="periodType == 'ANSWER_DATE'"><!-- 답변일기간 -->				                    
+			         AND INQ.ANSWER_DT  BETWEEN TO_DATE(#{startDate},'YYYY-MM-DD HH24:MI:SS') AND TO_DATE(#{endDate},'YYYY-MM-DD HH24:MI:SS')
+				</if>
+				<if test="periodType == 'CONFIRM_DATE'"><!-- 확인일기간 -->			                               
+			         AND INQ.CONFIRM_DT  BETWEEN TO_DATE(#{startDate},'YYYY-MM-DD HH24:MI:SS') AND TO_DATE(#{endDate},'YYYY-MM-DD HH24:MI:SS')
+				</if>
+			</if>	             
+				<if test="keyword!=null and keyword!=''"><!-- 제목/타이틀 -->
+			         AND (INQ.TITLE LIKE '%' || #{keyword} || '%' OR INQ.DETAIL LIKE '%' || #{keyword} || '%')
+				</if>
+			    <if test="businessId!=null and businessId!=''"><!-- 업체ID -->
+			         AND BUS.BUSINESS_ID = #{businessId}
+			    </if>			    
+			    <if test="productQnaStateCds!=null and productQnaStateCds!=''"><!-- 문의 상태 -->           
+			         AND INQ.PRODUCT_QNA_STATE_CD IN (${productQnaStateCds})
+			    </if>
+			    <if test="displayYnCds!=null and displayYnCds!=''"><!-- 공개여부 -->           
+			         AND INQ.DISPLAY_YN IN (${displayYnCds})
+			    </if>			    
+            <choose>
+            	<when test="prdSearchType=='ID' and searchPrdword!=null and searchPrdword!=''">
+            	     AND INQ.PRODUCT_ID = #{searchPrdword}
+            	</when>
+            	<when test="prdSearchType=='NAME' and searchPrdword!=null and searchPrdword!=''">
+            	     AND EXISTS
+            	            (SELECT 1
+            	               FROM PMS_PRODUCT PRD
+            	              WHERE PRD.PRODUCT_ID = INQ.PRODUCT_ID
+            	                AND PRD.NAME LIKE '%' || #{searchPrdword} || '%')
+            	</when>
+            </choose>
+			<choose>
+ 				<when test='memberNo!=null and memberNo!=""'>
+			         AND INQ.MEMBER_NO = #{memberNo}
+			    </when>
+ 			    <when test='memberLoginId!=null and memberLoginId!=""'><!-- 회원ID -->                 
+			         AND EXISTS
+			                (SELECT 1
+			                   FROM MMS_MEMBER MEM
+			                  WHERE MEM.MEMBER_NO = INQ.MEMBER_NO AND MEM.MEMBER_ID = #{memberLoginId})
+			    </when>    
+			</choose>				       
+			<choose>    
+			    <when test="answerId!=null and answerId!=''"><!-- 답변자 ID -->          
+			         AND INQ.ANSWER_ID = #{answerId}
+			    </when>
+			    <when test="answererName!=null and answererName!=''"><!-- 답변자명 -->     
+			         AND EXISTS
+			                (SELECT 1
+			                   FROM CCS_USER USR
+			                  WHERE USR.USER_ID = INQ.ANSWER_ID AND USR.NAME = #{answererName})
+			    </when>
+			</choose>   	
+		<if test='pagingYn=="Y"'>		   
+			ORDER BY INQ.INS_DT DESC
+		</if>
+		<include refid="ccs.common.pagingPost"/>
+		)I1
+	</select>	
+	<resultMap type="pmsProductqna" id="getProductQnaDetailResult" autoMapping="true">
+		<id property="productQnaNo" 			column="PRODUCT_QNA_NO"/>
+		<association property="pmsProduct" 	javaType="pmsProduct">
+			<id property="productId" 			column="PRODUCT_ID"/>
+			<result property="name" 			column="PRODUCT_NAME"/>
+		</association>
+		<association property="ccsBusiness" 	javaType="ccsBusiness">
+			<id property="businessId" 			column="BUSINESS_ID"/>
+			<result property="name" 			column="BUSINESS_NAME"/>
+		</association>	
+		<association property="pmsSaleproduct" javaType="pmsSaleproduct">
+			<id property="saleproductId" 	column="SALEPRODUCT_ID"/>
+			<result property="name" 	column="SALEPRODUCT_NAME"/>
+		</association>					
+	</resultMap>	
+	<select id="getProductQnaDetail" resultMap="getProductQnaDetailResult">
+		/* [pms.product.getProductQnaDetail][emily][2016. 6. 11.] */
+		SELECT INQ.*,
+		       BUS.NAME BUSINESS_NAME,
+		       BUS.BUSINESS_ID,
+		       PRD.NAME PRODUCT_NAME,		
+		       (SELECT SP.NAME FROM PMS_SALEPRODUCT SP WHERE INQ.SALEPRODUCT_ID = SP.SALEPRODUCT_ID AND SP.STORE_ID = INQ.STORE_ID)AS SALEPRODUCT_NAME,
+		       CASE
+		          WHEN INQ.CONFIRM_ID IS NOT NULL
+		          THEN
+		                (SELECT USR.NAME
+		                   FROM CCS_USER USR
+		                  WHERE USR.USER_ID = INQ.CONFIRM_ID)
+		             || '(' || INQ.CONFIRM_ID || ')'
+		          ELSE '' END CONFIRMER,
+		       CASE
+		          WHEN INQ.ANSWER_ID IS NOT NULL
+		          THEN
+		                (SELECT USR.NAME
+		                   FROM CCS_USER USR
+		                  WHERE USR.USER_ID = INQ.ANSWER_ID)
+		             || '(' || INQ.ANSWER_ID || ')/' || NVL(BUS.NAME, '제로투세븐')	 		             
+		          ELSE '' END ANSWERER,
+		       MBR.MEMBER_NAME,
+		       MBR.MEMBER_ID,
+		       MBR.MEMBER_NAME || '(' || MBR.MEMBER_ID || ')' QUESTIONER
+		  FROM PMS_PRODUCTQNA INQ
+		       INNER JOIN PMS_PRODUCT PRD
+		          ON PRD.PRODUCT_ID = INQ.PRODUCT_ID AND PRD.STORE_ID = INQ.STORE_ID
+		       LEFT OUTER JOIN CCS_BUSINESS BUS
+		          ON BUS.BUSINESS_ID = PRD.BUSINESS_ID
+		             AND BUS.STORE_ID = INQ.STORE_ID		  
+		       LEFT OUTER JOIN MMS_MEMBER MBR
+		          ON MBR.MEMBER_NO = INQ.MEMBER_NO
+		 WHERE INQ.PRODUCT_QNA_NO = #{productQnaNo} AND INQ.STORE_ID = #{storeId}			
+	</select>
+	<select id="getProductQnaListByProductId" resultType="pmsProductQna">
+	/* [pms.product.getProductQnaListByProductId][eddie][2016. 6. 11.] */
+		<include refid="ccs.common.pagingPre" />
+		  SELECT QNA.*, (SELECT MEMBER_ID
+					  FROM MMS_MEMBER
+					 WHERE MEMBER_NO = QNA.MEMBER_NO) MEMBER_ID
+		    FROM PMS_PRODUCTQNA QNA
+		   WHERE PRODUCT_ID = #{productId}
+		     AND STORE_ID = #{storeId}
+		     AND DISPLAY_YN = 'Y'
+		<if test='secretYn=="N"'>
+		     AND SECRET_YN = 'N'
+		</if>		
+		ORDER BY PRODUCT_QNA_NO DESC	
+		<include refid="ccs.common.pagingPost"/>
+	</select>
+	
+	<select id="getInquiryNo" parameterType="ccsInquiry" resultType="java.math.BigDecimal">
+		/* [ccs.qna.getInquiryNo][roy][2016. 9. 27.] */
+		SELECT NVL (INQUIRY_NO, 1) INQUIRY_NO
+		  FROM (SELECT MAX (TO_NUMBER (INQUIRY_NO)) INQUIRY_NO FROM CCS_INQUIRY WHERE STORE_ID= #{storeId}) DUAL
+	</select>
+	
+	<select id="getProductQnaNo" parameterType="pmsProductqna" resultType="java.math.BigDecimal">
+		/* [ccs.qna.getProductQnaNo][roy][2016. 9. 27.] */
+		SELECT NVL (PRODUCT_QNA_NO, 1) PRODUCT_QNA_NO
+		  FROM (SELECT MAX (TO_NUMBER (PRODUCT_QNA_NO)) PRODUCT_QNA_NO FROM PMS_PRODUCTQNA WHERE STORE_ID= #{storeId}) DUAL
+	</select>
+	
+	<update id="updateClob">
+	/* [ccs.qna.updateClob][roy][2016. 9. 27.] */ 
+		UPDATE CCS_INQUIRY
+		   SET STORE_ID = #{storeId}
+		   	<if test='detail != null and detail != ""'>
+	   			, DETAIL = #{detail,jdbcType=CLOB}
+		   </if>
+		   <if test='answer != null and answer != ""'>
+		   		, ANSWER = #{answer,jdbcType=CLOB}
+		   </if>
+		 WHERE INQUIRY_NO = #{inquiryNo} AND STORE_ID = #{storeId}
+		 
+	</update>
+	
+	<update id="updatePrdClob">
+	/* [ccs.qna.updatePrdClob][roy][2016. 9. 27.] */ 
+		UPDATE PMS_PRODUCTQNA
+		   SET STORE_ID = #{storeId}
+		   	<if test='detail != null and detail != ""'>
+	   			, DETAIL = #{detail,jdbcType=CLOB}
+		   </if>
+		   <if test='answer != null and answer != ""'>
+		   		, ANSWER = #{answer,jdbcType=CLOB}
+		   </if>
+		 WHERE PRODUCT_QNA_NO = #{productQnaNo} AND STORE_ID = #{storeId}
+	</update>
+</mapper>

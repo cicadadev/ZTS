@@ -1,0 +1,93 @@
+package gcp.crm.model.base;
+
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
+import intune.gsf.model.BaseEntity;
+import java.math.BigDecimal;
+import java.sql.Date;
+
+@EqualsAndHashCode(callSuper=true)
+@ToString(callSuper=true)
+@Data
+public class BaseCrmCustomer extends BaseEntity{
+	private static final long serialVersionUID = 1L;
+
+	private String customerno; //고객번호		[primary key, not null]
+	private String firstclasscode; //매체대분류코드		[null]
+	private String secondclasscode; //매체중분류코드		[null]
+	private String thirdclasscode; //매체소분류코드		[null]
+	private String customername; //고객명		[null]
+	private String companyname; //COMPANYNAME		[null]
+	private String partnername; //PARTNERNAME		[null]
+	private String position; //POSITION		[null]
+	private Date partnerbirthday; //PARTNERBIRTHDAY		[null]
+	private String partnersolarlunardist; //PARTNERSOLARLUNARDIST		[null]
+	private String sex; //성별		[null]
+	private Date birthday; //BIRTHDAY		[null]
+	private String solardist; //고객생일양음구분		[null]
+	private String email; //이메일주소		[null]
+	private String telephoneno; //TELEPHONENO		[null]
+	private String cellno; //휴대전화번호		[null]
+	private String zipcodehome1; //ZIPCODEHOME1		[null]
+	private String zipcodehome2; //ZIPCODEHOME2		[null]
+	private String addresshome1; //ADDRESSHOME1		[null]
+	private String addresshome2; //ADDRESSHOME2		[null]
+	private String zipcode1; //ZIPCODE1		[null]
+	private String zipcode2; //ZIPCODE2		[null]
+	private Date weddinganniversary; //WEDDINGANNIVERSARY		[null]
+	private String livetype; //LIVETYPE		[null]
+	private String academicbackgroundcode; //ACADEMICBACKGROUNDCODE		[null]
+	private String jobcode; //JOBCODE		[null]
+	private String monthlyincomecode; //MONTHLYINCOMECODE		[null]
+	private String bringupmethodcode; //BRINGUPMETHODCODE		[null]
+	private String workingtogether; //WORKINGTOGETHER		[null]
+	private String foreigndist; //외국인여부		[null]
+	private String emailreceiptflag; //이메일수신동의		[null]
+	private String dmreceiptflag; //DMRECEIPTFLAG		[null]
+	private String carflag; //CARFLAG		[null]
+	private String smsreceiptflag; //SMS수신동의		[null]
+	private String appreceiptflag; //APP푸쉬동의		[null]
+	private String updatemediacode; //UPDATEMEDIACODE		[null]
+	private String register; //REGISTER		[null]
+	private BigDecimal incvisitno; //INCVISITNO		[null]
+	private Date registdate; //REGISTDATE		[null]
+	private String updatereasoncode; //UPDATEREASONCODE		[null]
+	private String customerflagInc; //CUSTOMERFLAG_INC		[null]
+	private String useflag; //USEFLAG		[null]
+	private String customerflagDm; //CUSTOMERFLAG_DM		[null]
+	private String customerflagTm; //CUSTOMERFLAG_TM		[null]
+	private String customerflagCs; //CUSTOMERFLAG_CS		[null]
+	private String residencecertificate; //RESIDENCECERTIFICATE		[null]
+	private String id; //ID		[null]
+	private String passwd; //PASSWD		[null]
+	private Date customerregistdate; //CUSTOMERREGISTDATE		[null]
+	private String dmPermissionflag; //DM_PERMISSIONFLAG		[null]
+	private String dmRejectreasoncode; //DM_REJECTREASONCODE		[null]
+	private String editor; //EDITOR		[null]
+	private Date editdate; //EDITDATE		[null]
+	private String postaddress1; //POSTADDRESS1		[null]
+	private String postaddress2; //POSTADDRESS2		[null]
+	private String recommandemployeecode; //RECOMMANDEMPLOYEECODE		[null]
+	private String companyTel; //COMPANY_TEL		[null]
+	private String secondwantedpowdercode; //SECONDWANTEDPOWDERCODE		[null]
+	private String custflag; //실명구분		[null]
+	private String customerflagClm; //CUSTOMERFLAG_CLM		[null]
+	private String zipcodehome; //ZIPCODEHOME		[null]
+	private String namecheckdate; //NAMECHECKDATE		[null]
+	private BigDecimal uriiCustno; //URII_CUSTNO		[null]
+	private String domain; //DOMAIN		[null]
+	private String tmGrade; //TM_GRADE		[null]
+	private String tmInterestflag; //TM_INTERESTFLAG		[null]
+	private String certmethod; //CERTMETHOD		[null]
+	private String discrhash; //중복가입확인정보		[null]
+	private String civersion; //CI연계버전		[null]
+	private String ciscrhash; //CI연계값		[null]
+	private String ssnbirthday; //주민등록생일		[null]
+	private Date certchangedate; //CERTCHANGEDATE		[null]
+	private String addrFlag; //ADDR_FLAG		[null]
+	private String classId; //임직원여부		[null]
+	private String updateChannel; //수정Site		[null]
+	private String updateDate; //정보수정일		[null]
+
+}

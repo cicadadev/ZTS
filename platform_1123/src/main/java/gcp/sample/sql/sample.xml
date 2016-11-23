@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="sample">
+
+	<!-- ////////////////////////////////////////// -->
+	<!-- /////////// TEST 데이터 입력 START //////////// -->
+	<!-- ////////////////////////////////////////// -->
+	
+	<select id="oms_selectDeliveryAddressNo" parameterType="string" resultType="bigdecimal">
+		SELECT NVL (MAX (delivery_address_no), 0) + 1 as deliveryAddressNo FROM oms_deliveryaddress WHERE order_id= #{orderId}
+	</select>
+	
+	<resultMap type="pmsProduct" id="getProductListResult" autoMapping="true">
+		<id column="PRODUCT_ID" property="productId"/>
+		<collection property="pmsSaleproducts" column="{productId=PRODUCT_ID}" select="oms_order.getSaleproductList"/>
+	</resultMap>
+	<select id="oms_getProductList" resultMap="getProductListResult">
+		SELECT * FROM PMS_PRODUCT WHERE ROWNUM &lt; 5
+	</select>
+	<select id="oms_getSaleproductList" resultType="pmsSaleproduct">
+		SELECT * FROM PMS_SALEPRODUCT WHERE PRODUCT_ID = #{productId}
+	</select>
+	
+	<resultMap type="pmsSaleproduct" id="getSaleProductListResult" autoMapping="true">
+		<id property="storeId" column="store_id" />
+		<id property="productId" column="product_id" />
+		<id property="saleproductId" column="saleproduct_id" />
+		<association property="pmsProduct" column="product_id" javaType="pmsProduct" resultMap="productResult"/>
+<!-- 		<association property="pmsProduct" column="product_id" javaType="pmsProduct"/> -->
+	</resultMap>
+	<resultMap id="productResult" type="pmsProduct" autoMapping="true">
+<!-- 	<resultMap id="oms_productResult" type="pmsProduct"> -->
+	  <id property="storeId" column="store_id" />
+	  <id property="productId" column="prd_id"/>
+	  <result property="name" column="prd_name"/>
+	</resultMap>
+	
+	<select id="oms_selectSaleProductList" parameterType="string" resultMap="getSaleProductListResult">
+		SELECT 
+		       t1.product_id as prd_id
+		      ,t1.name as prd_name
+
+		 	  ,t1.ad_copy
+		      ,t1.age_type_cd
+		      ,t1.attribute1
+		      ,t1.attribute2
+		      ,t1.attribute3
+		      ,t1.box_delivery_yn
+		      ,t1.box_unit_cd
+		      ,t1.box_unit_qty
+		      ,t1.brand_id
+		      ,t1.business_id
+		      ,t1.business_product_id
+		      ,t1.category_id
+		      ,t1.claim_info
+		      ,t1.commission_rate
+		      ,t1.control_no
+		      ,t1.delivery_fee_free_yn
+		      ,t1.delivery_info
+		      ,t1.delivery_policy_no
+		      ,t1.detail
+		      ,t1.display_yn
+		      ,t1.erp_product_id
+		      ,t1.fixed_delivery_yn
+		      ,t1.gift_yn
+		      ,t1.group1
+		      ,t1.group2
+		      ,t1.group3
+		      ,t1.icon
+<!-- 		      ,t1.ins_dt -->
+<!-- 		      ,t1.ins_id -->
+		      ,t1.keyword
+		      ,t1.list_price
+		      ,t1.maker
+		      ,t1.md_notice
+		      ,t1.min_qty
+<!-- 		      ,t1.name -->
+		      ,t1.offshop_pickup_yn
+		      ,t1.option_yn
+		      ,t1.origin
+		      ,t1.out_send_dt
+		      ,t1.out_send_yn
+		      ,t1.overseas_purchase_yn
+		      ,t1.point_save_rate
+		      ,t1.price_apply_dt
+<!-- 		      ,t1.product_id -->
+		      ,t1.product_notice_type_cd
+		      ,t1.product_type_cd
+		      ,t1.regular_delivery_fee_free_yn
+		      ,t1.regular_delivery_max_cnt
+		      ,t1.regular_delivery_max_qty
+		      ,t1.regular_delivery_min_cnt
+		      ,t1.regular_delivery_point_save_yn
+		      ,t1.regular_delivery_price
+		      ,t1.regular_delivery_yn
+		      ,t1.reject_reason
+		      ,t1.reserve_delivery_dt
+		      ,t1.reserve_yn
+		      ,t1.sale_end_dt
+		      ,t1.sale_price
+		      ,t1.sale_start_dt
+		      ,t1.sale_state_cd
+		      ,t1.selling_point
+		      ,t1.stock_control_type_cd
+<!-- 		      ,t1.store_id -->
+		      ,t1.supply_price
+		      ,t1.tax_type_cd
+		      ,t1.text_option_name
+		      ,t1.text_option_yn
+		      ,t1.unit_qty
+<!-- 		      ,t1.upd_dt -->
+<!-- 		      ,t1.upd_id -->
+<!-- 		      ,t1.use_yn -->
+		      ,t1.wrap_volume
+		      ,t1.wrap_yn
+			  
+			  ,t2.*
+		  FROM pms_product t1 INNER JOIN pms_saleproduct t2 ON t1.product_id = t2.product_id
+		 WHERE t1.product_id = #{productId}
+	</select>
+	
+
+	
+	<select id="oms_selectDeliveryPolicy" parameterType="bigdecimal" resultType="ccsDeliverypolicy">
+			SELECT 
+				  dp.address1
+				 ,dp.address2
+				 ,dp.address3
+				 ,dp.address4
+				 ,dp.business_id
+				 ,dp.delivery_fee
+				 ,dp.delivery_fee_type_cd
+				 ,dp.delivery_policy_no
+				 ,dp.delivery_service_cd
+				 ,dp.ins_dt
+				 ,dp.ins_id
+				 ,NVL(dp.min_delivery_free_amt, 0) as min_delivery_free_amt
+				 ,dp.name
+				 ,dp.store_id
+				 ,dp.upd_dt
+				 ,dp.upd_id
+				 ,dp.zip_cd
+			FROM ccs_deliverypolicy dp
+		   WHERE dp.delivery_policy_no = #{deliveryPolicyNo}
+	</select>
+	
+	<!-- ////////////////////////////////////////// -->
+	<!-- /////////// TEST 데이터 입력 END //////////// -->
+	<!-- ////////////////////////////////////////// -->
+	
+	
+
+ 	<select id="oms_getSampleList"  resultType="gcp.sample.model.Sample">
+		/* [sample.getSampleList][dennis][2016. 4. 19.] */ 
+		SELECT *
+		  FROM table_sample
+	</select>
+	<insert id="oms_createSample">
+		/* [sample.createSample][dennis][2016. 4. 19.] */ 
+		insert into table_sample (sample_id, sample_name,INS_ID,INS_DT,UPD_ID,UPD_DT) values (nvl((select max(to_number(nvl(sample_id,0)))+1 from table_sample),0), #{sampleName},'TEST',SYSDATE,'TEST',SYSDATE)
+	</insert>
+	<!-- 
+	<select id="oms_getSample"  resultType="tableSample">
+		/* [sample.getSample][dennis][2016. 4. 19.] */ 
+		select *
+		  from table_sample 
+		 where sample_id = #{sampleId}
+	</select>
+	
+	<update id="oms_updateSample">
+		/* [sample.updateSample][dennis][2016. 4. 19.] */ 
+		update table_sample set sample_name=#{sampleName} where sample_id=#{sampleId}
+	</update>
+	<delete id="oms_deleteSample">
+		/* [sample.getSampleList][dennis][2016. 4. 19.] */ 
+		delete from table_sample where sample_id=#{sampleId}
+	</delete>
+	
+	<select id="oms_getPagingList" parameterType="dmsDisplaySearch" resultType="dmsDisplaySearch">
+		/* [sample.getPagingList][ian][2016. 4. 28.] */
+		<include refid="ccs.common.pagingPre" />
+		SELECT
+			STORE_ID
+			, DISPLAY_ID
+			, NAME
+			, DISPLAY_TYPE_CD
+			, DISPLAY_ITEM_TYPE_CD
+			, LEAF_YN
+			, DISPLAY_YN
+			, USE_YN
+			, UPPER_DISPLAY_ID
+			, SORT_NO
+			, INS_ID
+			, INS_DT
+			, UPD_DT
+			, UPD_ID
+		FROM DMS_DISPLAY
+		<trim prefix="WHERE" prefixOverrides="AND |OR ">
+			<if test="storeId != null and storeId != ''">
+				STORE_ID = #{storeId}
+			</if>
+			<if test="displayId != null and displayId != ''">
+				AND DISPLAY_ID = #{displayId}
+			</if>
+			<if test="insId != null and insId != ''">
+				AND INS_ID = #{insId}
+			</if>			
+		</trim>
+		<include refid="ccs.common.pagingPost" />
+	</select>
+
+	<select id="oms_getPageCnt" parameterType="dmsDisplaySearch" resultType="int">
+	/* [sample."getPageCnt"][ian][2016. 5. 2.] */
+		SELECT COUNT(*) AS TOTALITEMS
+		FROM DMS_DISPLAY
+		<trim prefix="WHERE" prefixOverrides="AND |OR ">
+			<if test="storeId != null and storeId != ''">
+				STORE_ID = #{storeId}
+			</if>
+			<if test="displayId != null and displayId != ''">
+				AND DISPLAY_ID = #{displayId}
+			</if>
+			<if test="insId != null and insId != ''">
+				AND INS_ID = #{insId}
+			</if>
+		</trim>
+	</select> -->
+</mapper>

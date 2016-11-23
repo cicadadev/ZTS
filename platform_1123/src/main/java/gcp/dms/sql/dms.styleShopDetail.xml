@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="dms.styleShopDetail">
+	
+	<select id="getStyleShopDetailList" resultType="mmsStyle">
+		/* [dms.exhibit.getStyleShopDetailList][allen][2016. 08. 29.] */
+		SELECT 
+				T1.MEMBER_NO
+			  , T1.STYLE_NO
+			  , T1.STYLE_INFO
+			  , T1.STYLE_IMG
+			  , T1.TITLE
+			  , T1.DETAIL
+			  , T1.LIKE_CNT
+			  , T1.STYLE_STATE_CD
+			  , T1.INS_DT
+			  , T1.INS_ID
+			  , T1.UPD_DT
+			  , T1.UPD_ID
+			  , T1.DISPLAY_YN
+			  , T2.MEMBER_NAME
+			  , T2.MEMBER_ID
+		 FROM MMS_STYLE T1
+		 JOIN MMS_MEMBER T2 
+		   ON T1.MEMBER_NO = T2.MEMBER_NO 
+		 WHERE 1 = 1
+		 <if test="infoType != null and infoType == 'USERID'">
+			<if test="searchKeyword != null and searchKeyword != ''">
+				AND T2.MEMBER_ID = #{searchKeyword}
+			</if>
+		</if>
+		<if test="infoType != null and infoType == 'NAME'">
+			<if test="searchKeyword != null and searchKeyword != ''">
+				AND T2.MEMBER_NAME = #{searchKeyword} 
+			</if>		
+		</if>
+		<if test="infoType != null and infoType == 'ID'">
+			<if test="searchKeyword != null and searchKeyword != ''">
+				AND T2.MEMBER_ID = #{searchKeyword} 
+			</if>		
+		</if>
+		
+		<if test="displayYnCds != null and displayYnCds != ''">           
+			AND T1.DISPLAY_YN IN (${displayYnCds})
+		</if>
+		
+		<if test="styleNo != null and styleNo != ''">           
+			AND T1.STYLE_NO  = #{styleNo} 
+		</if>
+		
+		<if test="startDate != null and startDate != ''">
+      	 	<if test="endDate != null and endDate != ''">
+				AND T1.INS_DT BETWEEN 
+				TO_DATE (#{startDate}, 'YYYY-MM-DD HH24:MI:SS') AND TO_DATE (#{endDate}, 'YYYY-MM-DD HH24:MI:SS') 
+			</if>
+     	 </if>
+		  
+	</select>
+	
+	<update id="updateStyleDisplayYn">
+		UPDATE MMS_STYLE
+		   SET 	 DISPLAY_YN = #{displayYn} 
+		       , UPD_DT = SYSDATE
+		       , UPD_ID = #{updId}
+		 WHERE STYLE_NO = #{styleNo}
+		   AND MEMBER_NO = ${memberNo}
+	</update>
+	
+		
+</mapper>

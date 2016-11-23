@@ -1,0 +1,1007 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="oms.claim.update">
+
+	<insert id="cancel" parameterType="omsClaim">
+		/* [oms.claim.update.cancel][victor][2016. 08. 30.] */
+		<selectKey keyProperty="claimNo" resultType="bigDecimal" order="BEFORE">
+			SELECT NVL(MAX(claim_no) + 1, 1) FROM oms_claim WHERE order_id = #{orderId}
+		</selectKey>
+		INSERT INTO oms_claim 
+			  (accept_dt
+			  ,cancel_dt
+			  ,claim_no
+			  ,claim_state_cd
+			  ,claim_type_cd
+			  ,complete_dt
+			  ,ins_dt
+			  ,ins_id
+			  ,product_coupon_dc_cancel_amt
+			  ,plus_coupon_dc_cancel_amt
+			  ,order_coupon_dc_cancel_amt
+			  ,order_id
+			  ,req_dt
+			  ,return_pickup_type_cd
+			  ,upd_dt
+			  ,upd_id)
+		VALUES
+			  (TO_DATE(#{acceptDt},'YYYY-MM-DD HH24:MI:SS')
+			  ,TO_DATE(#{cancelDt},'YYYY-MM-DD HH24:MI:SS')
+			  ,#{claimNo}
+			  ,#{claimStateCd}
+			  ,#{claimTypeCd}
+			  ,TO_DATE(#{completeDt},'YYYY-MM-DD HH24:MI:SS')
+			  ,TO_DATE(#{updDt},'YYYY-MM-DD HH24:MI:SS')
+			  ,#{updId}
+			  ,0
+			  ,0
+			  ,0
+<!-- 			  ,(select coupon_dc_amt - nvl(coupon_dc_cancel_amt,0)  -->
+<!-- 			  	  from oms_ordercoupon  -->
+<!-- 			  	 where order_id = #{orderId}  -->
+<!-- 			  	   and coupon_type_cd = 'COUPON_TYPE_CD.ORDER') -->
+			  ,#{orderId}
+			  ,TO_DATE(#{reqDt},'YYYY-MM-DD HH24:MI:SS')
+			  ,#{returnPickupTypeCd}
+			  ,TO_DATE(#{updDt},'YYYY-MM-DD HH24:MI:SS')
+			  ,#{updId})
+	</insert>
+	
+	<update id="productCouponCancel" parameterType="omsClaim">
+		/* [oms.claim.update.productCouponCancel][victor][2016. 08. 30.] */
+		UPDATE oms_claim
+		   SET upd_id = #{updId}
+			<if test='productCouponDcCancelAmt != null and productCouponDcCancelAmt != ""'>
+		   	  ,product_coupon_dc_cancel_amt = #{productCouponDcCancelAmt}
+			</if>
+			<if test='plusCouponDcCancelAmt != null and plusCouponDcCancelAmt != ""'>
+			  ,plus_coupon_dc_cancel_amt = #{plusCouponDcCancelAmt}
+			</if>
+			<if test='orderCouponDcCancelAmt != null and orderCouponDcCancelAmt != ""'>
+			  ,order_coupon_dc_cancel_amt = #{orderCouponDcCancelAmt}
+			</if>
+		 WHERE order_id = #{orderId}
+		   AND claim_no = #{claimNo}
+	</update>
+	
+	<update id="deliveryCouponCancel" parameterType="omsClaimdelivery">
+		/* [oms.claim.update.deliveryCouponCancel][victor][2016. 08. 30.] */
+		UPDATE oms_claimdelivery
+		   SET upd_id = #{updId}
+			<if test='orderDeliveryFee != null and orderDeliveryFee != ""'>
+		   	  ,order_delivery_fee = #{orderDeliveryFee}
+			</if>
+			<if test='returnDeliveryFee != null and returnDeliveryFee != ""'>
+			  ,return_delivery_fee = #{returnDeliveryFee}
+			</if>
+			<if test='exchangeDeliveryFee != null and exchangeDeliveryFee != ""'>
+			  ,exchange_delivery_fee = #{exchangeDeliveryFee}
+			</if>
+			
+			
+			<if test='refundDeliveryFee != null and refundDeliveryFee != ""'>
+		   	  ,refund_delivery_fee = #{refundDeliveryFee}
+			</if>
+			<if test='refundWrapFee != null and refundWrapFee != ""'>
+		   	  ,refund_wrap_fee = #{refundWrapFee}
+			</if>
+			
+			<if test='deliveryCouponDcCancelAmt != null and deliveryCouponDcCancelAmt != ""'>
+		   	  ,delivery_coupon_dc_cancel_amt = #{deliveryCouponDcCancelAmt}
+			</if>
+			<if test='wrapCouponDcCancelAmt != null and wrapCouponDcCancelAmt != ""'>
+			  ,wrap_coupon_dc_cancel_amt = #{wrapCouponDcCancelAmt}
+			</if>
+		 WHERE order_id = #{orderId}
+		   AND delivery_address_no = #{deliveryAddressNo}
+		   AND delivery_policy_no = #{deliveryPolicyNo}
+		   AND claim_no = #{claimNo}
+	</update>
+	
+	<update id="cancelProduct1" parameterType="omsClaim">
+		/* [oms.claim.update.cancelProduct1][victor][2016. 08. 30.] */
+		INSERT INTO oms_claimproduct 
+			  (order_id
+			  ,order_product_no
+			  ,claim_no
+			  ,claim_product_state_cd
+			  ,claim_qty
+			  ,ins_dt
+			  ,ins_id
+		      ,upd_dt
+		      ,upd_id)
+		SELECT order_id
+			  ,order_product_no
+			  ,#{claimNo}
+			  ,'CLAIM_PRODUCT_STATE_CD.CANCEL_ORDER'
+			  ,order_qty - cancel_qty
+			  ,TO_DATE(#{updDt},'YYYY-MM-DD HH24:MI:SS')
+			  ,#{updId}
+			  ,TO_DATE(#{updDt},'YYYY-MM-DD HH24:MI:SS')
+			  ,#{updId}
+		  FROM oms_orderproduct
+		 WHERE order_id = #{orderId}
+		   AND order_product_state_cd != 'ORDER_PRODUCT_STATE_CD.CANCEL'
+	</update>
+	<update id="cancelProduct2" parameterType="omsClaimproduct">
+		/* [oms.claim.update.cancelProduct2][victor][2016. 08. 30.] */
+		UPDATE oms_claimproduct
+		   SET claim_reason = #{claimReason}
+		      ,claim_reason_cd = #{claimReasonCd}
+		 WHERE order_id = #{orderId}
+		   AND order_product_no = #{orderProductNo}
+		   AND claim_no = #{claimNo}
+	</update>
+	<update id="returnProduct1" parameterType="omsClaimproduct">
+		/* [oms.claim.update.returnProduct1][victor][2016. 08. 30.] */
+		INSERT INTO oms_claimproduct 
+			  (order_id
+			  ,order_product_no
+			  ,claim_no
+			  ,claim_product_state_cd
+			  ,claim_qty
+			  ,claim_reason
+			  ,claim_reason_cd
+			  ,ins_dt
+			  ,ins_id
+		      ,upd_dt
+		      ,upd_id)
+		SELECT order_id
+			  ,order_product_no
+			  ,#{claimNo}
+			  ,#{claimProductStateCd}
+			  ,#{claimQty}
+			  ,#{claimReason}
+			  ,#{claimReasonCd}
+			  ,TO_DATE(#{updDt},'YYYY-MM-DD HH24:MI:SS')
+			  ,#{updId}
+			  ,TO_DATE(#{updDt},'YYYY-MM-DD HH24:MI:SS')
+			  ,#{updId}
+		  FROM oms_orderproduct
+		 WHERE order_id = #{orderId}
+		   AND order_product_no = #{orderProductNo} 
+	</update>
+	
+	<update id="cancelDelivery" parameterType="omsClaim">
+		/* [oms.claim.update.cancelDelivery][victor][2016. 08. 30.] */
+		INSERT INTO oms_claimdelivery 
+			  (claim_no
+			  ,delivery_address_no
+			  ,delivery_policy_no
+			  ,delivery_service_cd
+			  ,exchange_delivery_fee
+			  ,ins_dt
+			  ,ins_id
+			  ,order_delivery_fee
+			  ,order_id
+			  
+			  ,refund_delivery_fee
+			  ,refund_wrap_fee
+			  
+			  ,return_address1
+			  ,return_address2
+			  ,return_delivery_fee
+			  ,return_email
+			  ,return_name
+			  ,return_phone1
+			  ,return_phone2
+			  ,return_zip_cd
+			  ,store_id
+			  ,delivery_coupon_dc_cancel_amt
+			  ,wrap_coupon_dc_cancel_amt
+			  ,upd_dt
+			  ,upd_id)
+		SELECT #{claimNo}
+		      ,s.delivery_address_no
+		      ,s.delivery_policy_no
+		      ,s.delivery_service_cd
+		      ,0
+		      ,TO_DATE(#{updDt},'YYYY-MM-DD HH24:MI:SS')
+		      ,#{updId}
+		      ,s.order_delivery_fee
+			  ,s.order_id
+		      
+			  ,s.apply_delivery_fee
+			  ,s.apply_wrap_fee
+		      
+			  ,s.address1
+			  ,s.address2
+		      ,0
+			  ,s.email
+			  ,s.name1
+			  ,s.phone1
+			  ,s.phone2
+			  ,s.zip_cd
+		      ,s.store_id
+		      ,(select coupon_dc_amt - nvl(coupon_dc_cancel_amt, 0)
+      			  from oms_ordercoupon 
+      			 where order_id = s.order_id 
+      			   and coupon_id = s.delivery_coupon_id 
+      			   and coupon_issue_no = s.delivery_coupon_issue_no
+      			   and coupon_state_cd = 'COUPON_STATE_CD.APPLY')
+		      ,(select coupon_dc_amt - nvl(coupon_dc_cancel_amt, 0)
+      			  from oms_ordercoupon 
+      			 where order_id = s.order_id 
+      			   and coupon_id = s.wrap_coupon_id 
+      			   and coupon_issue_no = s.wrap_coupon_issue_no
+      			   and coupon_state_cd = 'COUPON_STATE_CD.APPLY')
+		      ,TO_DATE(#{updDt},'YYYY-MM-DD HH24:MI:SS')
+		      ,#{updId}
+		 FROM ( SELECT t2.delivery_address_no
+				      ,t2.delivery_policy_no
+				      ,t2.delivery_service_cd
+				      ,t2.order_delivery_fee
+					  ,t2.order_id
+				      
+					  ,t2.apply_delivery_fee - NVL(t3.tot_refund_delivery_fee,0) + NVL(t3.tot_order_delivery_fee,0) as apply_delivery_fee
+					  ,t2.apply_wrap_fee - NVL(t3.tot_refund_wrap_fee,0) as apply_wrap_fee
+				      
+					  ,t1.address1
+					  ,t1.address2
+					  ,t1.email
+					  ,t1.name1
+					  ,t1.phone1
+					  ,t1.phone2
+					  ,t1.zip_cd
+				      ,t2.store_id
+<!-- 				      ,DECODE (t2.delivery_policy_no, t3.delivery_policy_no, 1, 0) AS duple_flag -->
+					  ,t2.delivery_coupon_id
+					  ,t2.delivery_coupon_issue_no
+					  ,t2.wrap_coupon_id
+					  ,t2.wrap_coupon_issue_no
+				  FROM oms_deliveryaddress t1
+				       INNER JOIN oms_delivery t2
+				       		   ON t1.order_id = t2.order_id 
+				       		  AND t1.delivery_address_no = t2.delivery_address_no
+				  LEFT OUTER JOIN 
+						       	(	  
+								  SELECT order_id
+								        ,delivery_address_no
+								        ,delivery_policy_no
+								        ,SUM (NVL (refund_delivery_fee, 0)) AS tot_refund_delivery_fee
+								        ,SUM (NVL (refund_wrap_fee, 0)) AS tot_refund_wrap_fee
+								        ,SUM (NVL (order_delivery_fee, 0)) AS tot_order_delivery_fee	<!-- 추가배송비 -->
+								    FROM oms_claimdelivery
+								   WHERE order_id = #{orderId}
+								GROUP BY order_id, delivery_address_no, delivery_policy_no
+								) t3
+				       		   ON t2.order_id = t3.order_id 
+				       		  AND t2.delivery_address_no = t3.delivery_address_no
+				       		  AND t2.delivery_policy_no = t3.delivery_policy_no
+				 WHERE t1.order_id = #{orderId}
+		 		) s
+<!-- 		 WHERE (s.duple_flag = 0 OR (s.duple_flag = 1 AND (s.apply_delivery_fee > 0 OR s.apply_wrap_fee > 0))) -->
+	</update>
+
+	<update id="order" parameterType="omsClaim">
+		/* [oms.claim.update.order][victor][2016. 08. 30.] */
+		UPDATE oms_order
+		   SET cancel_dt = TO_DATE(#{updDt},'YYYY-MM-DD HH24:MI:SS')
+		      ,order_state_cd = 'ORDER_STATE_CD.CANCEL'
+		      ,order_delivery_state_cd = 'ORDER_DELIVERY_STATE_CD.CANCEL'
+		      ,upd_dt = TO_DATE(#{updDt},'YYYY-MM-DD HH24:MI:SS')
+		      ,upd_id = #{updId}
+		 WHERE order_id = #{orderId}
+	</update>
+	
+	<update id="orderProduct" parameterType="omsClaim">
+		/* [oms.claim.update.orderProduct][victor][2016. 08. 30.] */
+		UPDATE oms_orderproduct
+		   SET cancel_dt = TO_DATE(#{updDt},'YYYY-MM-DD HH24:MI:SS')
+		      ,cancel_qty = cancel_qty + (order_qty - cancel_qty)
+		      ,order_product_state_cd = 'ORDER_PRODUCT_STATE_CD.CANCEL'
+		      ,upd_dt = TO_DATE(#{updDt},'YYYY-MM-DD HH24:MI:SS')
+		      ,upd_id = #{updId}
+		 WHERE order_id = #{orderId} 
+	</update>
+	
+	<update id="orderCoupon" parameterType="omsClaim">
+		/* [oms.claim.update.orderCoupon][victor][2016. 08. 30.] */
+		UPDATE oms_ordercoupon
+		   SET coupon_dc_cancel_amt = coupon_dc_amt
+		      ,coupon_state_cd = 'COUPON_STATE_CD.CANCEL'
+		      ,upd_dt = TO_DATE(#{updDt},'YYYY-MM-DD HH24:MI:SS')
+		      ,upd_id = #{updId}
+		 WHERE order_id = #{orderId}
+	</update>
+<!-- 	<update id="spsCoupon" parameterType="omsClaim"> -->
+	<update id="spsCoupon" parameterType="omsOrdercoupon">
+		/* [oms.claim.update.spsCoupon][victor][2016. 08. 30.] */
+		<!--
+		UPDATE /*+ bypass_ujvc */
+		      (SELECT t1.use_dt
+		             ,t1.coupon_issue_state_cd
+		             ,t1.upd_dt
+		             ,t1.upd_id
+		         FROM sps_couponissue t1
+		              INNER JOIN oms_ordercoupon t2
+				              ON t1.coupon_id = t2.coupon_id
+				             AND t1.coupon_issue_no = t2.coupon_issue_no
+				             AND t1.store_id = t2.store_id
+		        WHERE t2.order_id = #{orderId})
+		   SET use_dt = NULL
+		      ,coupon_issue_state_cd = 'COUPON_ISSUE_STATE_CD.REG'
+		      ,upd_dt = TO_DATE (#{updDt}, 'YYYY-MM-DD HH24:MI:SS')
+		      ,upd_id = #{updId}
+		-->
+		<!-- 
+		UPDATE sps_couponissue
+		   SET use_dt = NULL
+		      ,coupon_issue_state_cd = 'COUPON_ISSUE_STATE_CD.REG'
+		      ,upd_dt = TO_DATE (#{updDt}, 'YYYY-MM-DD HH24:MI:SS')
+		      ,upd_id = #{updId}
+		WHERE EXISTS (
+				SELECT t1.coupon_id
+				      ,t1.coupon_issue_no
+				      ,t1.store_id
+				 FROM oms_ordercoupon t1
+				WHERE t1.order_id = #{orderId}
+				)
+		 -->
+		UPDATE sps_couponissue
+		   SET use_dt = NULL
+		      ,coupon_issue_state_cd = 'COUPON_ISSUE_STATE_CD.REG'
+		      ,upd_dt = TO_DATE (#{updDt}, 'YYYY-MM-DD HH24:MI:SS')
+		      ,upd_id = #{updId}
+		WHERE coupon_id = #{couponId}
+		  AND coupon_issue_no = #{couponIssueNo}
+		  AND store_id = #{storeId}
+	</update>
+	
+
+	
+	<update id="cancelPayment1" parameterType="omsPayment">
+		/* [oms.claim.update.cancelPayment1][victor][2016. 08. 30.] */
+		INSERT INTO oms_payment 
+			  (account_holder_name
+			  ,account_no
+			  ,cancel_dt
+			  ,cash_receipt_approval_no
+			  ,cash_receipt_type_cd
+			  ,claim_no
+			  ,creditcard_no
+			  ,depositor_name
+			  ,deposit_no
+			  ,escrow_if_result
+			  ,escrow_if_yn
+			  ,escrow_yn
+			  ,installment_cnt
+			  ,ins_dt
+			  ,ins_id
+			  ,interest_free_yn
+			  ,major_payment_yn
+			  ,member_no
+			  ,mobile_phone
+			  ,order_id
+			  ,partial_cancel_yn
+			  ,payment_amt
+			  ,payment_business_cd
+			  ,payment_business_nm
+			  ,payment_dt
+			  ,payment_fee
+			  ,payment_method_cd
+			  ,payment_no
+			  ,payment_state_cd
+			  ,payment_type_cd
+			  ,pg_approval_no
+			  ,pg_cancel_no
+			  ,pg_shop_id
+			  ,refund_account_no
+			  ,refund_reason_cd
+			  ,upd_dt
+			  ,upd_id
+			  ,virtual_account_deposit_end_dt
+			  ,virtual_account_deposit_order)
+		SELECT account_holder_name
+		      ,account_no
+		      ,TO_DATE(#{updDt},'YYYY-MM-DD HH24:MI:SS')
+		      ,cash_receipt_approval_no
+		      ,cash_receipt_type_cd
+		      ,#{claimNo}
+		      ,creditcard_no
+		      ,depositor_name
+		      ,#{depositNo}
+		      ,escrow_if_result
+		      ,escrow_if_yn
+		      ,escrow_yn
+		      ,installment_cnt
+		      ,TO_DATE(#{updDt},'YYYY-MM-DD HH24:MI:SS')
+		      ,#{updId}
+		      ,interest_free_yn
+		      ,major_payment_yn
+		      ,member_no
+		      ,mobile_phone
+		      ,order_id
+		      ,partial_cancel_yn
+		      ,payment_amt
+		      ,payment_business_cd
+		      ,payment_business_nm
+		      ,payment_dt
+		      ,payment_fee
+		      ,payment_method_cd
+		      ,(SELECT MAX(payment_no) + 1 FROM oms_payment)
+		      ,CASE
+      				WHEN payment_state_cd = 'PAYMENT_STATE_CD.PAYMENT_READY'
+      				THEN 'PAYMENT_STATE_CD.CANCEL'
+      				ELSE 'PAYMENT_STATE_CD.REFUND'
+		       END as payment_state_cd
+		      ,'PAYMENT_TYPE_CD.REFUND'
+		      ,pg_approval_no
+		      ,pg_cancel_no
+		      ,pg_shop_id
+		      ,refund_account_no
+		      ,'REFUND_REASON_CD.CANCEL'
+		      ,TO_DATE(#{updDt},'YYYY-MM-DD HH24:MI:SS')
+		      ,#{updId}
+		      ,virtual_account_deposit_end_dt
+		      ,virtual_account_deposit_order
+		  FROM oms_payment
+		 WHERE payment_no = #{paymentNo}
+<!--
+		 WHERE order_id = #{orderId}
+		   AND payment_type_cd = 'PAYMENT_TYPE_CD.PAYMENT'
+-->		  
+	</update>
+	<!--
+	<update id="cancelPayment2">
+		/* [oms.claim.update.cancelPayment][victor][2016. 08. 30.] */
+		INSERT INTO oms_payment 
+			  (account_holder_name
+			  ,account_no
+			  ,cancel_dt
+			  ,cash_receipt_approval_no
+			  ,cash_receipt_type_cd
+			  ,claim_no
+			  ,creditcard_no
+			  ,depositor_name
+			  ,deposit_no
+			  ,escrow_if_result
+			  ,escrow_if_yn
+			  ,escrow_yn
+			  ,installment_cnt
+			  ,ins_dt
+			  ,ins_id
+			  ,interest_free_yn
+			  ,major_payment_yn
+			  ,member_no
+			  ,mobile_phone
+			  ,order_id
+			  ,partial_cancel_yn
+			  ,payment_amt
+			  ,payment_business_cd
+			  ,payment_business_nm
+			  ,payment_dt
+			  ,payment_fee
+			  ,payment_method_cd
+			  ,payment_no
+			  ,payment_state_cd
+			  ,payment_type_cd
+			  ,pg_approval_no
+			  ,pg_cancel_no
+			  ,pg_shop_id
+			  ,refund_account_no
+			  ,refund_reason_cd
+			  ,upd_dt
+			  ,upd_id
+			  ,virtual_account_deposit_end_dt
+			  ,virtual_account_deposit_order)
+		SELECT CASE
+      				WHEN payment_state_cd = 'PAYMENT_STATE_CD.PAYMENT' AND payment_method_cd = 'PAYMENT_METHOD_CD.VIRTUAL'
+      				THEN #{accountHolderName}
+      				WHEN payment_state_cd = 'PAYMENT_STATE_CD.PAYMENT' AND payment_method_cd = 'PAYMENT_METHOD_CD.CASH'
+      				THEN #{accountHolderName}
+      				ELSE account_holder_name
+		       END as account_holder_name
+		      ,account_no
+		      ,TO_DATE(#{updDt},'YYYY-MM-DD HH24:MI:SS')
+		      ,cash_receipt_approval_no
+		      ,cash_receipt_type_cd
+		      ,#{claimNo}
+		      ,creditcard_no
+		      ,depositor_name
+		      ,deposit_no
+		      ,escrow_if_result
+		      ,escrow_if_yn
+		      ,escrow_yn
+		      ,installment_cnt
+		      ,TO_DATE(#{updDt},'YYYY-MM-DD HH24:MI:SS')
+		      ,#{updId}
+		      ,interest_free_yn
+		      ,major_payment_yn
+		      ,member_no
+		      ,mobile_phone
+		      ,order_id
+		      ,partial_cancel_yn
+		      ,payment_amt
+		      ,CASE
+      				WHEN payment_state_cd = 'PAYMENT_STATE_CD.PAYMENT' AND payment_method_cd = 'PAYMENT_METHOD_CD.VIRTUAL'
+      				THEN #{paymentBusinessCd}
+      				WHEN payment_state_cd = 'PAYMENT_STATE_CD.PAYMENT' AND payment_method_cd = 'PAYMENT_METHOD_CD.CASH'
+      				THEN #{paymentBusinessCd}
+      				ELSE payment_business_cd
+		       END as payment_business_cd
+		      ,CASE
+      				WHEN payment_state_cd = 'PAYMENT_STATE_CD.PAYMENT' AND payment_method_cd = 'PAYMENT_METHOD_CD.VIRTUAL'
+      				THEN #{paymentBusinessNm}
+      				WHEN payment_state_cd = 'PAYMENT_STATE_CD.PAYMENT' AND payment_method_cd = 'PAYMENT_METHOD_CD.CASH'
+      				THEN #{paymentBusinessNm}
+      				ELSE payment_business_nm
+		       END as payment_business_nm
+		      ,payment_dt
+		      ,payment_fee
+		      ,payment_method_cd
+		      ,(SELECT MAX(payment_no) + 1 FROM oms_payment)
+		      ,CASE
+      				WHEN payment_state_cd = 'PAYMENT_STATE_CD.PAYMENT_READY'
+      				THEN 'PAYMENT_STATE_CD.CANCEL'
+      				ELSE 'PAYMENT_STATE_CD.REFUND'
+		       END as payment_state_cd
+		      ,'PAYMENT_TYPE_CD.REFUND'
+		      ,pg_approval_no
+		      ,CASE
+      				WHEN payment_state_cd = 'PAYMENT_STATE_CD.PAYMENT' AND major_payment_yn = 'Y'
+      				THEN #{pgCancelNo}
+      				ELSE pg_cancel_no
+		       END as pg_cancel_no
+		      ,pg_shop_id
+		      ,CASE
+      				WHEN payment_state_cd = 'PAYMENT_STATE_CD.PAYMENT' AND payment_method_cd = 'PAYMENT_METHOD_CD.VIRTUAL'
+      				THEN #{refundAccountNo}
+      				WHEN payment_state_cd = 'PAYMENT_STATE_CD.PAYMENT' AND payment_method_cd = 'PAYMENT_METHOD_CD.CASH'
+      				THEN #{refundAccountNo}
+      				ELSE refund_account_no
+		       END as refund_account_no
+		      ,'REFUND_REASON_CD.CANCEL'
+		      ,TO_DATE(#{updDt},'YYYY-MM-DD HH24:MI:SS')
+		      ,#{updId}
+		      ,virtual_account_deposit_end_dt
+		      ,virtual_account_deposit_order
+		  FROM oms_payment
+		 WHERE order_id = #{orderId}
+		   AND payment_type_cd = 'PAYMENT_TYPE_CD.PAYMENT'
+	</update>
+	-->
+	
+	
+	
+
+
+
+
+	<update id="product" parameterType="omsClaimproduct">
+		/* [oms.claim.update.product][victor][2016. 08. 30.] */
+		UPDATE oms_claimproduct
+		   SET upd_dt = TO_DATE(#{updDt},'YYYY-MM-DD HH24:MI:SS')
+		      ,upd_id = #{updId}
+		      ,claim_product_state_cd = #{claimProductStateCd}
+		      
+		      <if test='claimQty != null and claimQty != ""'>
+		      ,claim_qty = #{claimQty}
+		      </if>
+		      <if test='claimReason != null and claimReason != ""'>
+		      ,claim_reason = #{claimReason}
+		      </if>
+		      <if test='claimReasonCd != null and claimReasonCd != ""'>
+		      ,claim_reason_cd = #{claimReasonCd}
+		      </if>
+		      <if test='returnDt != null and returnDt != ""'>
+		      ,return_dt = TO_DATE(#{returnDt},'YYYY-MM-DD HH24:MI:SS')
+		      </if>
+		      <if test='returnOrderDt != null and returnOrderDt != ""'>
+		      ,return_order_dt = TO_DATE(#{returnOrderDt},'YYYY-MM-DD HH24:MI:SS')
+		      </if>
+		 WHERE order_id = #{orderId} 
+		   AND claim_no = #{claimNo}
+		   AND order_product_no = #{orderProductNo}
+	</update>
+
+
+	<update id="selectInsert" parameterType="omsOrderproduct">
+		/* [oms.claim.update.selectInsert][victor][2016. 08. 30.] */
+		INSERT INTO oms_orderproduct 
+				(add_point
+				,add_sale_price
+				,alipay_trans_id
+				,box_delivery_yn
+				,box_unit_cd
+				,box_unit_qty
+				,brand_id
+				,business_id
+				,business_name
+				,business_phone
+				,business_product_id
+				,business_saleproduct_id
+				,calibrate_order_dc_amt
+				,calibrate_plus_dc_amt
+				,calibrate_point
+				,calibrate_product_dc_amt
+				,calibrate_sale_price
+<!-- 				,cancel_dt -->
+				,cancel_qty
+				,category_id
+				,claim_no
+				,commission_rate
+<!-- 				,confirm_dt -->
+				,currency_cd
+				,currency_price
+				,deal_id
+				,deal_name
+				,deal_product_no
+				,deal_type_cd
+				,delivery_address_no
+				,delivery_cancel_reason_cd
+<!-- 				,delivery_dt -->
+				,delivery_fee_free_yn
+<!-- 				,delivery_order_dt -->
+				,delivery_policy_no
+				,delivery_reserve_dt
+				,delivery_together_qty
+				,ems_no
+				,erp_business_id
+				,erp_color_id
+				,erp_product_id
+				,erp_saleproduct_id
+				,erp_size_id
+				,exchange_qty
+				,export_erp_product_id
+				,fixed_delivery_yn
+				,ins_dt
+				,ins_id
+				,list_price
+				,local_delivery_yn
+				,location_id
+				,lp_no
+				,offshop_id
+				,option_yn
+				,order_coupon_dc_amt
+				,order_coupon_id
+				,order_coupon_issue_no
+				,order_delivery_type_cd
+				,order_dt
+				,order_id
+				,order_product_no
+				,order_product_state_cd
+				,order_product_type_cd
+				,order_qty
+				,origin_order_product_no
+				,out_qty
+				,overseas_purchase_yn
+				,partner_trans_id
+				,payment_amt
+				,personal_customs_code
+				,plus_coupon_dc_amt
+				,plus_coupon_id
+				,plus_coupon_issue_no
+				,plus_single_apply_yn
+				,point_name
+				,point_save_id
+				,point_save_rate
+				,point_type_cd
+				,point_value
+				,present_id
+				,present_max_order_amt
+				,present_min_order_amt
+				,present_name
+				,product_coupon_dc_amt
+				,product_coupon_id
+				,product_coupon_issue_no
+				,product_id
+				,product_name
+				,product_notice_type_cd
+				,product_point
+				,product_single_apply_yn
+				,purchase_yn
+				,redelivery_qty
+				,reserve_yn
+				,return_qty
+				,sabang_order_id
+				,sabang_product_id
+				,sabang_saleproduct_id
+				,saleproduct_id
+				,saleproduct_name
+				,sale_price
+				,sale_type_cd
+<!-- 				,save_dt -->
+				,send_error_reason_cd
+				,send_error_yn
+				,set_qty
+<!-- 				,ship_dt -->
+				,site_product_id
+				,store_id
+				,style_no
+				,supply_price
+				,tax
+				,tax_type_cd
+				,text_option_name
+				,text_option_value
+				,text_option_yn
+				,total_point
+				,total_sale_price
+<!-- 				,upd_dt -->
+<!-- 				,upd_id -->
+				,upper_order_product_no
+				,virtual_out_qty
+				,virtual_return_qty
+				,warehouse_id
+				,waybill_url
+				,wrap_volume
+				,wrap_yn
+			    )
+   		  SELECT t1.add_point
+   		        ,t1.add_sale_price
+   		        ,t1.alipay_trans_id
+   		        ,t1.box_delivery_yn
+   		        ,t1.box_unit_cd
+   		        ,t1.box_unit_qty
+   		        ,t1.brand_id
+   		        ,t1.business_id
+   		        ,t1.business_name
+   		        ,t1.business_phone
+   		        ,t1.business_product_id
+   		        ,t2.business_saleproduct_id
+   			    ,t1.calibrate_order_dc_amt
+   			    ,t1.calibrate_plus_dc_amt
+   			    ,t1.calibrate_point
+   			    ,t1.calibrate_product_dc_amt
+   			    ,t1.calibrate_sale_price
+   <!-- 	  	  ,t1.cancel_dt -->
+   		  	    ,0
+   		        ,t1.category_id
+   		        ,#{claimNo}
+   		        ,t1.commission_rate
+   <!-- 	  	  ,t1.confirm_dt -->
+   		        ,t1.currency_cd
+   		        ,t1.currency_price
+   		        ,t1.deal_id
+   		        ,t1.deal_name
+   		        ,t1.deal_product_no
+   		        ,t1.deal_type_cd
+   		        ,#{deliveryAddressNo}
+   		        ,t1.delivery_cancel_reason_cd
+   <!-- 	  	  ,t1.delivery_dt -->
+   		        ,t1.delivery_fee_free_yn
+   <!-- 	  	  ,t1.delivery_order_dt -->
+   		        ,t1.delivery_policy_no
+   		  	    ,#{orderDt}
+   		        ,t1.delivery_together_qty
+   		        ,t1.ems_no
+   		        ,t1.erp_business_id
+   		        ,t2.erp_color_id
+   		        ,t1.erp_product_id
+   		        ,t2.erp_saleproduct_id
+   		        ,t2.erp_size_id
+   	  	  	    ,0
+   		        ,t1.export_erp_product_id
+   		        ,t1.fixed_delivery_yn
+   		        ,#{orderDt}
+   		        ,#{insId}
+   		        ,t1.list_price
+   		        ,t1.local_delivery_yn
+   		        ,t2.location_id
+   		        ,t1.lp_no
+   		        ,t1.offshop_id
+   		        ,t1.option_yn
+   		        ,t1.order_coupon_dc_amt
+   		        ,t1.order_coupon_id
+   		        ,t1.order_coupon_issue_no
+   		        ,#{orderDeliveryTypeCd}
+   		        ,#{orderDt}
+   		        ,t1.order_id
+   		        ,(select max(order_product_no) + 1 from oms_orderproduct where order_id = #{orderId})
+   		        ,#{orderProductStateCd}
+   		        ,t1.order_product_type_cd
+   		        ,#{orderQty}
+   		        ,t1.order_product_no
+   		  	    ,0
+   		        ,t1.overseas_purchase_yn
+   		        ,t1.partner_trans_id
+   		        ,t1.payment_amt<!-- TODO -->
+   		        ,t1.personal_customs_code
+   		        ,t1.plus_coupon_dc_amt
+   		        ,t1.plus_coupon_id
+   		        ,t1.plus_coupon_issue_no
+   			    ,t1.plus_single_apply_yn		      
+   		        ,t1.point_name
+   		        ,t1.point_save_id
+   		        ,t1.point_save_rate
+   		        ,t1.point_type_cd
+   		        ,t1.point_value
+   		        ,t1.present_id
+   		        ,t1.present_max_order_amt
+   		        ,t1.present_min_order_amt
+   		        ,t1.present_name
+   		        ,t1.product_coupon_dc_amt
+   		        ,t1.product_coupon_id
+   		        ,t1.product_coupon_issue_no
+   		        ,t1.product_id
+   		        ,t1.product_name
+   		        ,t1.product_notice_type_cd
+   		        ,t1.product_point
+   		        ,t1.product_single_apply_yn
+   		        ,t1.purchase_yn
+   	  	  	    ,0
+   		        ,t1.reserve_yn
+   		        ,0
+   		        ,t1.sabang_order_id
+   		        ,t1.sabang_product_id
+   		        ,t1.sabang_saleproduct_id
+   			    ,t2.saleproduct_id
+   			    ,t2.name
+   		        ,t1.sale_price
+   		        ,t1.sale_type_cd
+   <!-- 	  	  ,t1.save_dt -->
+   		        ,t1.send_error_reason_cd
+   		        ,t1.send_error_yn
+   		        ,t1.set_qty
+   <!-- 	  	  ,t1.ship_dt -->
+   		        ,t1.site_product_id
+   		        ,t1.store_id
+   		        ,t1.style_no
+   		        ,t1.supply_price
+   		        ,t1.tax
+   		        ,t1.tax_type_cd
+   		        ,t1.text_option_name
+   		        ,t1.text_option_value
+   		        ,t1.text_option_yn
+   		        ,t1.total_point
+   		        ,t1.total_sale_price
+   <!-- 	  	  ,t1.upd_dt -->
+   <!-- 	  	  ,t1.upd_id -->
+   		        ,t1.upper_order_product_no
+   <!-- 	  	      ,t1.virtual_out_qty -->
+   <!-- 	  	      ,t1.virtual_return_qty -->
+   		        ,0
+   		        ,0
+   		        ,t2.warehouse_id
+   		        ,t1.waybill_url
+   		        ,t1.wrap_volume
+   		        ,t1.wrap_yn
+   		    FROM oms_orderproduct t1 
+   		  	     INNER JOIN pms_saleproduct t2
+   		  	   		     ON t1.product_id = t2.product_id
+   		  	   		    AND t2.saleproduct_id = #{newSaleProductId}
+   		   WHERE t1.order_id = #{orderId}
+   		     AND t1.order_product_no = #{orderProductNo}
+	</update>
+
+
+	<update id="coupon" parameterType="omsOrdercoupon">
+		/* [oms.claim.update.coupon][victor][2016. 08. 31.] */
+		UPDATE oms_ordercoupon
+		   SET upd_dt = TO_DATE(#{updDt},'YYYY-MM-DD HH24:MI:SS')
+			  ,upd_id = #{updId}
+<!-- 		      (CASE -->
+<!-- 		      	WHEN coupon_dc_cancel_amt - #{couponDcCancelAmt} > 0 -->
+<!-- 		      	THEN 'COUPON_STATE_CD.APPLY' -->
+<!-- 		      	ELSE 'COUPON_STATE_CD.CANCEL' -->
+<!-- 		      END) -->
+			  <if test='couponStateCd != null and couponStateCd != ""'>
+		      ,coupon_state_cd = #{couponStateCd}
+		      </if>
+			  <if test='couponDcCancelAmt != null and couponDcCancelAmt != ""'>
+		      ,coupon_dc_cancel_amt = (NVL(coupon_dc_cancel_amt,0) + #{couponDcCancelAmt})
+		      </if>
+		 WHERE coupon_id = #{couponId}
+		   AND coupon_issue_no = #{couponIssueNo}
+		   AND store_id = #{storeId}
+		   AND order_id = #{orderId}
+	</update>
+
+
+
+	<update id="claim" parameterType="omsClaim">
+		/* [oms.claim.update.claim][victor][2016. 08. 31.] */
+		UPDATE oms_claim
+		   SET upd_dt = TO_DATE(#{updDt},'YYYY-MM-DD HH24:MI:SS')
+		      ,upd_id = #{updId}
+			  <if test='claimStateCd != null and claimStateCd != ""'>
+		      ,claim_state_cd = #{claimStateCd}
+		      </if>
+			  <if test='completeDt != null and completeDt != ""'>
+		      ,complete_dt = TO_DATE(#{completeDt},'YYYY-MM-DD HH24:MI:SS')
+		      </if>
+			  <if test='acceptDt != null and acceptDt != ""'>
+		      ,accept_dt = TO_DATE(#{acceptDt},'YYYY-MM-DD HH24:MI:SS')
+		      </if>
+		 WHERE order_id = #{orderId} 
+		   AND claim_no = #{claimNo}
+	</update>
+
+	<update id="claimProduct" parameterType="omsClaimproduct">
+		/* [oms.claim.update.claimProduct][victor][2016. 08. 31.] */
+		UPDATE oms_claimproduct
+		   SET upd_dt = TO_DATE(#{updDt},'YYYY-MM-DD HH24:MI:SS')
+		      ,upd_id = #{updId}
+			  <if test='claimProductStateCd != null and claimProductStateCd != ""'>
+		      ,claim_product_state_cd = #{claimProductStateCd}
+		      </if>
+			  <if test='returnOrderDt != null and returnOrderDt != ""'>
+		      ,return_order_dt = TO_DATE(#{returnOrderDt},'YYYY-MM-DD HH24:MI:SS')
+		      </if>
+		 WHERE order_id = #{orderId} 
+		   AND claim_no = #{claimNo}
+		 <if test='orderProductNo != null and orderProductNo != ""'>
+		   AND order_product_no = #{orderProductNo}
+		 </if>
+	</update>
+
+	<update id="claimDelivery" parameterType="omsClaimdelivery">
+		/* [oms.claim.update.claimDelivery][victor][2016. 08. 31.] */
+		UPDATE oms_claimdelivery
+		   SET upd_dt = TO_DATE(#{updDt},'YYYY-MM-DD HH24:MI:SS')
+		      ,upd_id = #{updId}
+			  <if test='orderDeliveryFee != null and orderDeliveryFee != ""'>
+		      ,order_delivery_fee = #{orderDeliveryFee}
+		      </if>
+			  <if test='refundDeliveryFee != null and refundDeliveryFee != ""'>
+		      ,refund_delivery_fee = #{refundDeliveryFee}
+		      </if>
+			  <if test='refundWrapFee != null and refundWrapFee != ""'>
+		      ,refund_wrap_fee = #{refundWrapFee}
+		      </if>
+			  <if test='returnAddress1 != null and returnAddress1 != ""'>
+		      ,return_address1 = #{returnAddress1}
+		      </if>
+			  <if test='returnAddress2 != null and returnAddress2 != ""'>
+		      ,return_address2 = #{returnAddress2}
+		      </if>
+			  <if test='returnDeliveryFee != null and returnDeliveryFee != ""'>
+		      ,return_delivery_fee = #{returnDeliveryFee}
+		      </if>
+			  <if test='returnEmail != null and returnEmail != ""'>
+		      ,return_email = #{returnEmail}
+		      </if>
+			  <if test='returnName != null and returnName != ""'>
+		      ,return_name = #{returnName}
+		      </if>
+			  <if test='returnPhone1 != null and returnPhone1 != ""'>
+		      ,return_phone1 = #{returnPhone1}
+		      </if>
+			  <if test='returnPhone2 != null and returnPhone2 != ""'>
+		      ,return_phone2 = #{returnPhone2}
+		      </if>
+			  <if test='returnZipCd != null and returnZipCd != ""'>
+		      ,return_zip_cd = #{returnZipCd}
+		      </if>
+		 WHERE order_id = #{orderId} 
+		   AND claim_no = #{claimNo}
+<!-- 		   AND delivery_address_no = :delivery_address_no -->
+<!-- 		   AND delivery_policy_no = :delivery_policy_no -->
+	</update>
+
+
+	<update id="logistics" parameterType="omsLogistics">
+		/* [oms.claim.update.logistics][victor][2016. 08. 31.] */
+		UPDATE oms_logistics
+		   SET upd_dt = TO_DATE(#{updDt},'YYYY-MM-DD HH24:MI:SS')
+		      ,upd_id = #{updId}
+			  <if test='logisticsStateCd != null and logisticsStateCd != ""'>
+		      ,logistics_state_cd = #{logisticsStateCd}
+		      </if>
+			  <if test='logisticsStateCd == null or logisticsStateCd == ""'>
+		      ,in_reserve_qty = #{inReserveQty}
+		      </if>
+		 WHERE order_id = #{orderId}
+		   AND order_product_no = #{orderProductNo}
+		   AND claim_no = #{claimNo}
+	</update>
+
+<!--
+	<update id="reject" parameterType="omsOrderproduct">
+		/* [oms.claim.update.reject][victor][2016. 08. 31.] */
+		UPDATE oms_orderproduct
+		   SET upd_dt = TO_DATE(#{updDt},'YYYY-MM-DD HH24:MI:SS')
+		      ,upd_id = #{updId}
+		      ,order_product_state_cd = #{orderProductStateCd}
+		 WHERE order_id = #{orderId}
+		   AND order_product_no = #{orderProductNo}
+		   AND claim_no = #{claimNo}
+	</update>
+-->
+	
+
+
+
+
+
+</mapper>

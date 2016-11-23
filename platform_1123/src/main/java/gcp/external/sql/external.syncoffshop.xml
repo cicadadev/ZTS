@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="external.syncoffshop">
+
+	<delete id="deleteCcsOffshop" parameterType="String">
+	/* [external.syncoffshop.deleteCcsOffshop][peter][2016. 8. 1.] */
+		UPDATE CCS_OFFSHOP
+		   SET OFFSHOP_PICKUP_YN = 'N'
+		   	 , OFFSHOP_STATE_CD = 'OFFSHOP_STATE_CD.STOP'
+		   	 , UPD_ID = #{updId, jdbcType=VARCHAR}
+			 , UPD_DT = SYSDATE
+	</delete>
+	
+	<delete id="deleteCcsOffshopHoliday">
+	/* [external.syncoffshop.deleteCcsOffshopHoliday][peter][2016. 8. 1.] */
+		DELETE CCS_OFFSHOPHOLIDAY
+	</delete>
+	
+	<delete id="deleteCcsOffshopBrand">
+	/* [external.syncoffshop.deleteCcsOffshopBrand][peter][2016. 8. 1.] */
+		DELETE CCS_OFFSHOPBRAND
+	</delete>
+
+	<update id="updateCcsOffshop" parameterType="gcp.ccs.model.CcsOffshop">
+	/* [external.syncoffshop.updateCcsOffshop][peter][2016. 7. 27.] */
+		MERGE INTO CCS_OFFSHOP
+		USING DUAL
+		ON (STORE_ID = #{storeId} AND OFFSHOP_ID = #{offshopId})
+		WHEN MATCHED THEN
+			UPDATE	SET
+				NAME = #{name, jdbcType=VARCHAR}
+				, OFFSHOP_TYPE_CD = #{offshopTypeCd, jdbcType=VARCHAR}
+				, ZIP_CD = #{zipCd, jdbcType=VARCHAR}
+				, ADDRESS1 = #{address1, jdbcType=VARCHAR}
+				, OFFSHOP_PHONE = #{offshopPhone, jdbcType=VARCHAR}
+				, MANAGER_PHONE = #{managerPhone, jdbcType=VARCHAR}
+				, OFFSHOP_PICKUP_YN = #{offshopPickupYn, jdbcType=VARCHAR}
+				, LATITUDE = #{latitude, jdbcType=VARCHAR}
+				, LONGITUDE = #{longitude, jdbcType=VARCHAR}
+				, OFFSHOP_AFFILIATION = #{offshopAffiliation, jdbcType=VARCHAR}
+				, AREA_DIV1 = #{areaDiv1, jdbcType=VARCHAR}
+				, AREA_DIV2 = #{areaDiv2, jdbcType=VARCHAR}
+				, HOLIDAY_INFO = #{holidayInfo, jdbcType=VARCHAR}
+				, OFFSHOP_STATE_CD = #{offshopStateCd, jdbcType=VARCHAR}
+				, UPD_ID = #{updId, jdbcType=VARCHAR}
+				, UPD_DT = SYSDATE
+		WHEN NOT MATCHED THEN
+			INSERT (
+				STORE_ID
+				, OFFSHOP_ID
+				, NAME
+				, OFFSHOP_TYPE_CD
+				, ZIP_CD
+				, ADDRESS1
+				, OFFSHOP_PHONE
+				, MANAGER_PHONE
+				, OFFSHOP_PICKUP_YN
+				, LATITUDE
+				, LONGITUDE
+				, OFFSHOP_AFFILIATION
+				, AREA_DIV1
+				, AREA_DIV2
+				, HOLIDAY_INFO
+				, OFFSHOP_STATE_CD
+				, INS_ID
+				, INS_DT
+				, UPD_ID
+				, UPD_DT
+			)
+			VALUES (
+				#{storeId, jdbcType=VARCHAR}
+				, #{offshopId, jdbcType=VARCHAR}
+				, #{name, jdbcType=VARCHAR}
+				, #{offshopTypeCd, jdbcType=VARCHAR}
+				, #{zipCd, jdbcType=VARCHAR}
+				, #{address1, jdbcType=VARCHAR}
+				, #{offshopPhone, jdbcType=VARCHAR}
+				, #{managerPhone, jdbcType=VARCHAR}
+				, #{offshopPickupYn, jdbcType=VARCHAR}
+				, #{latitude, jdbcType=VARCHAR}
+				, #{longitude, jdbcType=VARCHAR}
+				, #{offshopAffiliation, jdbcType=VARCHAR}
+				, #{areaDiv1, jdbcType=VARCHAR}
+				, #{areaDiv2, jdbcType=VARCHAR}
+				, #{holidayInfo, jdbcType=VARCHAR}
+				, #{offshopStateCd, jdbcType=VARCHAR}
+				, #{insId, jdbcType=VARCHAR}
+				, SYSDATE
+				, #{updId, jdbcType=VARCHAR}
+				, SYSDATE
+			)
+	</update>
+
+	<insert id="insertCcsOffshopHoliday" parameterType="gcp.ccs.model.CcsOffshopholiday">
+	/* [external.syncoffshop.insertCcsOffshopHoliday][peter][2016. 7. 27.] */
+		INSERT INTO CCS_OFFSHOPHOLIDAY
+		(
+			STORE_ID
+			, OFFSHOP_ID
+			, HOLIDAY
+			, INS_ID
+			, INS_DT
+			, UPD_ID
+			, UPD_DT
+		)
+		VALUES 
+		(
+			#{storeId, jdbcType=VARCHAR}
+			, #{offshopId, jdbcType=VARCHAR}
+			, #{holiday, jdbcType=VARCHAR}
+			, #{insId, jdbcType=VARCHAR}
+			, SYSDATE
+			, #{updId, jdbcType=VARCHAR}
+			, SYSDATE
+		)
+	</insert>
+
+	<select id="getPmsBrandInfo" parameterType="hashMap" resultType="String">
+	/* [external.syncoffshop.getPmsBrandInfo][peter][2016. 7. 28.] */
+		SELECT
+			BRAND_ID
+		  FROM PMS_BRAND
+		 WHERE STORE_ID = #{storeId}
+		   AND ERP_BRAND_ID = #{erpBrand}
+		   AND ROWNUM = 1
+	</select>
+
+	<insert id="insertCcsOffshopBrand" parameterType="gcp.ccs.model.CcsOffshopbrand">
+	/* [external.syncoffshop.insertCcsOffshopBrand][peter][2016. 7. 27.] */
+		INSERT INTO CCS_OFFSHOPBRAND
+		(
+			STORE_ID
+			, OFFSHOP_ID
+			, BRAND_ID
+			, INS_ID
+			, INS_DT
+			, UPD_ID
+			, UPD_DT
+		)
+		VALUES 
+		(
+			#{storeId, jdbcType=VARCHAR}
+			, #{offshopId, jdbcType=VARCHAR}
+			, #{brandId, jdbcType=VARCHAR}
+			, #{insId, jdbcType=VARCHAR}
+			, SYSDATE
+			, #{updId, jdbcType=VARCHAR}
+			, SYSDATE
+		)
+	</insert>
+ 
+ </mapper>

@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="pms.styleShop">
+	
+	<select id="getStyleProductList" resultType="pmsStyleproduct">
+		/* [pms.styleproduct.getStyleProductList][allen][2016. 8. 19.] */
+		<include refid="ccs.common.pagingPre" />
+			SELECT 
+			        T1.STORE_ID
+			      , T1.STYLE_PRODUCT_NO
+			      , T1.PRODUCT_ID
+			      , T1.STYLE_PRODUCT_ITEM_CD
+			      , T1.STYLE_PRODUCT_COLOR_CD
+			      , T1.IMG
+			      , T1.USE_YN
+			      , T1.INS_DT
+			      , T1.INS_ID
+			      , T1.UPD_ID
+			      , (SELECT NAME  FROM CCS_USER WHERE USER_ID = T1.INS_ID) INS_NAME 
+			      , T1.UPD_DT
+			      , (SELECT NAME  FROM CCS_USER WHERE USER_ID = T1.UPD_ID) UPD_NAME 
+			      , T2.NAME                     AS PRODUCT_NAME
+			      , T2.BRAND_ID
+			      , T3.NAME                     AS BRAND_NAME
+			 FROM PMS_STYLEPRODUCT T1
+			 LEFT JOIN PMS_PRODUCT T2
+			   ON T1.PRODUCT_ID = T2.PRODUCT_ID
+			 LEFT JOIN PMS_BRAND T3
+			   ON T2.BRAND_ID = T3.BRAND_ID
+			 WHERE T1.STORE_ID = #{storeId}
+			 <if test="useYnCds != null and useYnCds != ''">
+			 	AND T1.USE_YN IN (${useYnCds})
+			 </if>
+			 <if test="styleProductItemCd != null and styleProductItemCd != ''">
+			 	AND T1.STYLE_PRODUCT_ITEM_CD = #{styleProductItemCd}
+			 </if>
+			 <if test="brandId != null and brandId != ''">
+			 	AND T3.BRAND_ID = #{brandId}
+			 </if>
+			 <if test="productInfoType != null and productInfoType == 'NAME'">
+				<if test="productSearchKeyword != null and productSearchKeyword != ''">
+					AND T2.NAME LIKE '%' || #{productSearchKeyword} || '%'
+				</if>
+			</if>
+			<if test="productInfoType != null and productInfoType == 'PRODUCTID'">
+				<if test="productSearchKeyword != null and productSearchKeyword != ''">
+					AND T2.PRODUCT_ID = #{productSearchKeyword}
+				</if>		
+			</if>
+			<if test="startDate != null and startDate != ''">
+			<if test="endDate != null and endDate != ''">
+				AND	T1.INS_DT &gt;= TO_DATE (#{startDate}, 'YYYY-MM-DD HH24:MI:SS')
+				AND T1.INS_DT &lt;= TO_DATE (#{endDate}, 'YYYY-MM-DD HH24:MI:SS')
+			</if>
+		</if> 
+			 ORDER BY STYLE_PRODUCT_NO DESC
+		<include refid="ccs.common.pagingPost" />
+	</select>
+	
+	<select id="getStyleProductDetail" resultType="pmsStyleproduct">
+	/* [pms.styleproduct.getStyleProductDetail][allen][2016. 8. 19.] */
+		SELECT 
+				   T1.STORE_ID
+			      , T1.STYLE_PRODUCT_NO
+			      , T1.PRODUCT_ID
+			      , T1.STYLE_PRODUCT_ITEM_CD
+			      , T1.STYLE_PRODUCT_COLOR_CD
+			      , T1.IMG
+			      , T1.USE_YN
+			      , T1.INS_DT
+			      , T1.INS_ID
+			      , T1.UPD_ID
+			      , (SELECT NAME ||'(' || USER_ID || ')'  FROM CCS_USER WHERE USER_ID = T1.INS_ID) INS_ID 
+			      , T1.UPD_DT
+			      , (SELECT NAME ||'(' || USER_ID || ')'  FROM CCS_USER WHERE USER_ID = T1.UPD_ID) UPD_ID 
+			      , T2.NAME                     AS PRODUCT_NAME	
+		 FROM PMS_STYLEPRODUCT T1
+		 LEFT JOIN PMS_PRODUCT T2
+		   ON T1.PRODUCT_ID = T2.PRODUCT_ID
+		 WHERE T1.STORE_ID = #{storeId}
+		   AND T1.STYLE_PRODUCT_NO = #{styleProductNo} 
+	</select>
+	
+	<resultMap type="dmsDisplayCategory" id="categoryMap" autoMapping="true">
+		<id column="UPPER_DISPLAY_CATEGORY_ID" property="upperDisplayCategoryId"/>
+		<result column="DISPLAY_CATEGORY_ID" property="displayCategoryId"/>
+		<result column="CATEGORY_NAME" property="categoryName"/>
+		<collection property="dmsDisplaycategoryproducts" ofType="gcp.dms.model.DmsDisplaycategoryproduct">
+			<id column="DISPLAY_CATEGORY_ID" property="displayCategoryId"/>
+			<result column="PRODUCT_ID" property="productId"/>
+			<association property="pmsProduct" column="PRODUCT_ID" javaType="pmsProduct">
+				<id property="productId" column="PRODUCT_ID" />
+				<id property="name" column="PRODUCT_NAME" />
+				<id property="offshopImg" column="OFFSHOP_IMG" />
+				<result property="salePrice" column="PRODUCT_SALE_PRICE" />
+				<result property="offshopPickupDcRate" column="OFFSHOP_PICKUP_DC_RATE" />
+				<result property="pickupPrice" column="PICKUP_PRICE" />
+				<association property="pmsProductprice" column="PRODUCT_ID" javaType="pmsProductprice">
+					<id property="productId" 					column="PRODUCT_ID" />
+					<result property="salePrice"				column="PRODUCT_SALE_PRICE" />
+					<result property="pointYn" 					column="POINT_YN" />
+					<result property="deliveryFeeFreeYn" 		column="DELIVERY_FEE_FREE_YN" />
+					<result property="couponId" 				column="COUPON_ID" />
+					<result property="prestigeSalePrice"		column="PRESTIGE_SALE_PRICE" />
+					<result property="prestigePointYn"			column="PRESTIGE_POINT_YN" />
+					<result property="prestigeDeliveryFeeFreeYn" column="PRESTIGE_DELIVERY_FEE_FREE_YN" />
+					<result property="prestigeCouponId"			column="PRESTIGE_COUPON_ID" />
+					<result property="vipCouponId" 				column="VIP_SALE_PRICE" />
+					<result property="vipPointYn" 				column="VIP_POINT_YN" /> 
+					<result property="vipDeliveryFeeFreeYn" 	column="VIP_DELIVERY_FEE_FREE_YN" />
+					<result property="vipCouponId" 				column="VIP_COUPON_ID" />
+					<result property="goldSalePrice"			column="GOLD_SALE_PRICE" />
+					<result property="goldPointYn" 				column="GOLD_POINT_YN" />
+					<result property="goldDeliveryFeeFreeYn"	column="GOLD_DELIVERY_FEE_FREE_YN" />
+					<result property="goldCouponId"				column="GOLD_COUPON_ID" />
+					<result property="silverSalePrice"			column="SILVER_SALE_PRICE" />
+					<result property="silverPointYn"			column="SILVER_POINT_YN" />
+					<result property="silverDeliveryFeeFreeYn"	column="SILVER_DELIVERY_FEE_FREE_YN" />
+					<result property="silverCouponId"			column="SILVER_COUPON_ID" />
+					<result property="familySalePrice"			column="FALIMY_SALE_PRICE" />
+					<result property="familyPointYn"			column="FALIMY_POINT_YN" />
+					<result property="familyDeliveryFeeFreeYn"	column="FALIMY_DELIVERY_FEE_FREE_YN" />
+					<result property="familyCouponId"			column="FALIMY_COUPON_ID" />
+					<result property="welcomeSalePrice" 		column="WELCOME_SALE_PRICE" />
+					<result property="welcomePointYn" 			column="WELCOME_POINT_YN" />
+					<result property="welcomeDeliveryFeeFreeYn" column="WELCOME_DELIVERY_FEE_FREE_YN" />
+					<result property="welcomeCouponId" 			column="WELCOME_COUPON_ID" />
+				</association>
+			</association>
+		</collection>
+	</resultMap>
+	
+	<select id="getStyleCategoryProductList" resultMap="categoryMap">
+	/* [pms.styleproduct.getStyleCategoryProductList][allen][2016. 8. 19.] */
+		SELECT 
+             CASE A.DEPTH   WHEN 3 THEN (SELECT NAME FROM DMS_DISPLAYCATEGORY WHERE DISPLAY_CATEGORY_ID = A.UPPER_DISPLAY_CATEGORY_ID AND STORE_ID = #{storeId})
+                          WHEN 1 THEN (SELECT NAME FROM DMS_DISPLAYCATEGORY WHERE UPPER_DISPLAY_CATEGORY_ID = A.DISPLAY_CATEGORY_ID AND STORE_ID = #{storeId})
+                          ELSE A.NAME
+                          END CATEGORY_NAME
+                         , A.*
+                         , B.PRODUCT_ID
+          FROM (
+                    SELECT T4.*, LEVEL AS DEPTH 
+                    FROM DMS_DISPLAYCATEGORY T4
+                    WHERE T4.STORE_ID = #{storeId} AND T4.DISPLAY_YN = 'Y'
+                      AND T4.LEAF_YN = 'Y'
+                    START WITH T4.UPPER_DISPLAY_CATEGORY_ID = #{rootCategoryId}
+                    CONNECT BY PRIOR T4.DISPLAY_CATEGORY_ID = T4.UPPER_DISPLAY_CATEGORY_ID
+                ) A JOIN 
+
+                (
+                    SELECT  /*+ leading(t1) use_nl(t2) */  
+                    	T1.PRODUCT_ID, T3.DISPLAY_CATEGORY_ID
+                      FROM PMS_STYLEPRODUCT T1
+                      JOIN PMS_PRODUCT T2
+                        ON T1.PRODUCT_ID = T2.PRODUCT_ID AND T2.STORE_ID = #{storeId}
+                      JOIN DMS_DISPLAYCATEGORYPRODUCT T3
+                       ON T2.PRODUCT_ID = T3.PRODUCT_ID AND T3.STORE_ID = #{storeId}
+                      WHERE T1.USE_YN = 'Y'
+                ) B
+            ON A.DISPLAY_CATEGORY_ID = B.DISPLAY_CATEGORY_ID
+	</select>
+	
+	
+	<select id="getAppStyleProductList" resultType="pmsStyleproduct">
+	/* [pms.styleproduct.getAppStyleProductList][allen][2016. 8. 19.] */
+          
+           SELECT 
+             CASE A.DEPTH   WHEN 3 THEN (SELECT NAME FROM DMS_DISPLAYCATEGORY WHERE DISPLAY_CATEGORY_ID = A.UPPER_DISPLAY_CATEGORY_ID AND STORE_ID = #{storeId})
+                          WHEN 1 THEN (SELECT NAME FROM DMS_DISPLAYCATEGORY WHERE UPPER_DISPLAY_CATEGORY_ID = A.DISPLAY_CATEGORY_ID AND STORE_ID = #{storeId})
+                          ELSE A.NAME
+                          END CATEGORY_NAME
+                         , B.*
+          FROM (
+                    SELECT T4.*, LEVEL AS DEPTH 
+                    FROM DMS_DISPLAYCATEGORY T4
+                    WHERE T4.STORE_ID = #{storeId} AND T4.DISPLAY_YN = 'Y'
+                      AND T4.LEAF_YN = 'Y'
+                    START WITH T4.UPPER_DISPLAY_CATEGORY_ID = #{rootCategoryId}
+                    CONNECT BY PRIOR T4.DISPLAY_CATEGORY_ID = T4.UPPER_DISPLAY_CATEGORY_ID
+                ) A JOIN 
+
+                (
+                    SELECT /*+ leading(t1) use_nl(t2) */ 
+                    		T1.*
+               , (SELECT COUNT(*) FROM MMS_STYLEPRODUCT WHERE PRODUCT_ID = T1.PRODUCT_ID) AS POPULAR_CNT
+               , T3.DISPLAY_CATEGORY_ID
+                , T2.BRAND_ID
+                      FROM PMS_STYLEPRODUCT T1
+                      JOIN PMS_PRODUCT T2
+                       ON T1.PRODUCT_ID = T2.PRODUCT_ID AND T2.STORE_ID = #{storeId}
+                      JOIN DMS_DISPLAYCATEGORYPRODUCT T3
+                       ON T2.PRODUCT_ID = T3.PRODUCT_ID AND T3.STORE_ID = #{storeId}
+                      WHERE T1.USE_YN = 'Y'
+                ) B
+            ON A.DISPLAY_CATEGORY_ID = B.DISPLAY_CATEGORY_ID
+	</select>
+</mapper>
+

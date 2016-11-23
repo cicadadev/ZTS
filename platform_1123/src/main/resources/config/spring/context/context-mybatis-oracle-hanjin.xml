@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd">
+	
+	<!-- jdbc config -->	
+	<bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="locations" >
+			<value>classpath:config/system/jdbc.xml</value>
+		</property>
+	</bean>
+	
+	<!-- datasource -->
+	<bean id="dataSourceSpied3" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
+		<property name="driverClassName" value="${jdbc.driverClass}" />
+		<property name="url" value="${jdbc.url.hanjin}" />
+		<property name="username" value="${jdbc.username.hanjin}" />
+		<property name="password" value="${jdbc.password.hanjin}" />
+		<property name="maxIdle" value="${jdbc.maxIdle}" />
+		<property name="maxActive" value="${jdbc.maxActive}" />
+		<property name="poolPreparedStatements" value="${jdbc.poolPreparedStatements}" />
+	</bean>
+	<bean id="dataSource3" class="net.sf.log4jdbc.Log4jdbcProxyDataSource">
+        <constructor-arg ref="dataSourceSpied3" />
+        <property name="logFormatter">
+            <bean class="net.sf.log4jdbc.tools.Log4JdbcCustomFormatter">
+                <property name="loggingType" value="MULTI_LINE" />
+                <property name="sqlPrefix" value="SQL         :  "/>
+            </bean>
+        </property>
+    </bean>
+	
+	<bean id="sqlSessionFactory3" class="intune.gsf.common.supports.RefreshableSqlSessionFactoryBean" lazy-init="true">
+<!-- 	<bean id="sqlSessionFactory3" class="org.mybatis.spring.SqlSessionFactoryBean" lazy-init="true"> -->
+		<property name="dataSource" ref="dataSource3" />
+		<property name="configLocation" value="classpath:/config/mybatis/sql-map-config.xml" />
+		<property name="mapperLocations" value="classpath*:/gcp/**/sql/*.xml" />
+		<property name="plugins">
+			<array>
+				<bean class="gcp.common.interceptor.MybatisInterceptor"/>
+			</array>
+		</property>
+	</bean>
+	
+	<bean id="ediSession" class="org.mybatis.spring.SqlSessionTemplate" destroy-method="clearCache">
+		<constructor-arg ref="sqlSessionFactory3" />
+	</bean>
+	
+	<!-- transaction -->
+	<bean id="transactionManager3" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource3" />
+	</bean>
+	
+	<tx:advice id="txAdvice3" transaction-manager="transactionManager3" >
+		<tx:attributes>
+			<tx:method name="*" propagation="REQUIRED" />
+			<tx:method name="select*" read-only="true" />
+			<tx:method name="get*" read-only="true" />
+			<tx:method name="find*" read-only="true" />
+			<tx:method name="list*" read-only="true" />
+			<tx:method name="view*" read-only="true" />
+			<tx:method name="search*" read-only="true" />
+			
+			<tx:method name="insert*" rollback-for="Exception" propagation="REQUIRED" />
+			<tx:method name="create*" rollback-for="Exception" propagation="REQUIRED" />
+			<tx:method name="update*" rollback-for="Exception" propagation="REQUIRED" />
+			<tx:method name="delete*" rollback-for="Exception" propagation="REQUIRED" />
+			
+			<tx:method name="insert*NewTx" rollback-for="Exception" propagation="REQUIRES_NEW" />
+			<tx:method name="create*NewTx" rollback-for="Exception" propagation="REQUIRES_NEW" />
+			<tx:method name="update*NewTx" rollback-for="Exception" propagation="REQUIRES_NEW" />
+			<tx:method name="delete*NewTx" rollback-for="Exception" propagation="REQUIRES_NEW" />
+		</tx:attributes>
+	</tx:advice>
+	
+	<aop:config>
+		<aop:pointcut id="serviceMethods3" expression="execution(* *..service..*.*(..))" />
+		<aop:advisor advice-ref="txAdvice3" pointcut-ref="serviceMethods3" />
+	</aop:config>
+		
+
+</beans>

@@ -1,0 +1,290 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="sps.present">
+	
+	<select id="getPresentPromotionList" parameterType="spsPresentSearch" resultType="spsPresent">
+	/* [sps.present.getPresentPromotionList][ian][2016. 5. 4.] */
+	<include refid="ccs.common.pagingPre" />
+		SELECT 
+			T1.*
+			,(SELECT US.NAME FROM CCS_USER US WHERE T1.INS_ID = US.USER_ID AND ROWNUM=1) AS INS_NAME
+			,(SELECT US.NAME FROM CCS_USER US WHERE T1.UPD_ID = US.USER_ID AND ROWNUM=1) AS UPD_NAME
+		FROM 
+			SPS_PRESENT T1
+		WHERE
+			T1.STORE_ID = #{storeId}
+		  	<if test="startDate != null and startDate != ''" >
+				<if test="endDate != null and endDate != ''" >
+					AND ( T1.START_DT <![CDATA[<=]]> TO_DATE (#{endDate}, 'YYYY-MM-DD HH24:MI:SS')
+						AND T1.END_DT <![CDATA[>=]]> TO_DATE (#{startDate}, 'YYYY-MM-DD HH24:MI:SS') )	
+				</if>
+			</if>
+			<if test="presentTypeCds != null and presentTypeCds != '' ">
+				AND T1.PRESENT_TYPE_CD IN ( ${presentTypeCds} )
+			</if>
+			<if test="presentStateCds != null and presentStateCds != '' ">
+				AND T1.PRESENT_STATE_CD IN ( ${presentStateCds} ) 
+			</if>
+            <if test="searchKeyword != null and searchKeyword !=''">
+                <if test=" 'NAME'.equals(infoType)">
+            	AND T1.NAME LIKE '%' || #{searchKeyword} || '%'
+                </if>
+                <if test=" 'ID'.equals(infoType)">
+            	AND T1.PRESENT_ID = #{searchKeyword}
+                </if>
+            </if>
+			<if test="productId != null and productId != '' ">
+		        <include refid="ccs.common.existsCheckApplytarget" />
+			</if>
+		ORDER BY T1.INS_DT DESC
+		<include refid="ccs.common.pagingPost" />
+	</select>
+
+	<select id="getPresentDeal" parameterType="spsPresent" resultType="spsPresentdeal">
+	/* [sps.present.getPresentDeal][ian][2016. 6. 14.] */
+		SELECT STORE_ID, DEAL_ID
+		  FROM SPS_DEAL
+		 WHERE STORE_ID = #{storeId} AND DEAL_TYPE_CD IN (${dealTypeCds})
+	</select>
+	
+	<select id="deletePresentDeal" parameterType="spsPresent">
+	/* [sps.present.deletePresentDeal][ian][2016. 6. 15.] */
+		DELETE 
+		  FROM SPS_PRESENTDEAL 
+		 WHERE STORE_ID = #{storeId} 
+		   AND PRESENT_ID = #{presentId} 
+	</select>
+
+	<resultMap id="presentProduct" autoMapping="true" type="spsPresentproduct">
+		<id property="storeId" column="STORE_ID" />
+		<id property="productId" column="PRODUCT_ID" />
+		
+		<association property="pmsProduct" javaType="pmsProduct">
+			<result property="productId" column="PRODUCT_ID" />
+			<result property="name" column="NAME" />
+			<result property="useYn" column="USE_YN" />
+		</association>
+		<association property="pmsSaleproduct" javaType="pmsSaleproduct">
+			<result property="realStockQty" column="REAL_STOCK_QTY" />	    
+	    </association>
+	</resultMap>
+	<select id="getPresentPromotionProduct" resultMap="presentProduct">
+	/* [sps.present.getPresentPromotionProduct][ian][2016. 5. 27.] */
+		SELECT COUNT (*) OVER () AS TOTAL_COUNT, 
+			   SP.PRESENT_ID,
+	    	   SP.PRODUCT_ID,
+	    	   PP.PRODUCT_ID,
+	           PP.NAME,
+	           PP.USE_YN,
+	           PS.REAL_STOCK_QTY,
+	           SP.INS_ID,
+	           SP.INS_DT,
+	           SP.UPD_ID,
+	           SP.UPD_DT,
+	           (SELECT US.NAME FROM CCS_USER US WHERE SP.INS_ID = US.USER_ID AND ROWNUM=1) AS INS_NAME,
+			   (SELECT US.NAME FROM CCS_USER US WHERE SP.UPD_ID = US.USER_ID AND ROWNUM=1) AS UPD_NAME
+	           
+	      FROM SPS_PRESENTPRODUCT SP
+	           INNER JOIN PMS_PRODUCT PP
+	              ON PP.PRODUCT_ID = SP.PRODUCT_ID
+	              	 AND PP.STORE_ID = SP.STORE_ID
+	           INNER JOIN PMS_SALEPRODUCT PS
+	              ON     PS.PRODUCT_ID = PP.PRODUCT_ID
+	                 AND PS.STORE_ID = SP.STORE_ID
+	              WHERE SP.STORE_ID = #{storeId}
+	              AND SP.PRESENT_ID = #{presentId}
+	</select>
+	
+	<resultMap id="getPresentPromotionDetails" autoMapping="true" type="spsPresent" >
+		<id property="storeId" column="STORE_ID"/>
+		<id property="presentId" column="PRESENT_ID"/>
+		
+		<association property="ccsApply" javaType="ccsApply">
+			<id property="applyNo" column="APPLY_NO" />
+            <result property="targetTypeCd" column="TARGET_TYPE_CD" />                
+		</association>
+		<collection property="spsDeals" ofType="spsDeal">
+			<id property="dealId" column="DEAL_ID"/>
+			<result property="dealTypeCd" column="DEAL_TYPE_CD" />
+		</collection>
+	</resultMap>
+	<select id="getPresentPromotionDetail" parameterType="spsPresent" resultMap="getPresentPromotionDetails">
+	/* [sps.present.getPresentPromotionDetail][ian][2016. 5. 25.] */
+		SELECT
+			   DISTINCT SD.DEAL_TYPE_CD,
+			   SP.*,
+		       CA.TARGET_TYPE_CD
+		  FROM    SPS_PRESENT SP
+		       INNER JOIN CCS_APPLY CA
+		          ON CA.STORE_ID = SP.STORE_ID AND CA.APPLY_NO = SP.APPLY_NO
+		       LEFT OUTER JOIN SPS_PRESENTDEAL SPD
+		          ON SPD.STORE_ID = SP.STORE_ID AND SPD.PRESENT_ID = SP.PRESENT_ID
+		       LEFT OUTER JOIN SPS_DEAL SD
+		          ON SD.STORE_ID = SPD.STORE_ID AND SD.DEAL_ID = SPD.DEAL_ID
+		 WHERE     SP.STORE_ID = #{storeId}
+		       AND SP.PRESENT_ID = #{presentId}
+	</select>
+	
+	<select id="getExistsPresentProductList" parameterType="spsPresentSearch" resultType="String">
+	/* [sps.present.getExistsPresentProductList][ian][2016. 8. 4.] */
+		SELECT PRODUCT_ID
+		  FROM SPS_PRESENTPRODUCT
+		 WHERE STORE_ID = #{storeId} AND PRESENT_ID = #{presentId}
+	</select>
+	
+	<resultMap type="spsPresent" id="getApplyPresentListResult" autoMapping="true">
+		<id column="STORE_ID" property="storeId"/>
+		<id column="PRESENT_ID" property="presentId"/>
+		<association property="ccsApply" javaType="ccsApply">
+			<result column="TARGET_TYPE_CD" property="targetTypeCd"/>
+		</association>
+		<collection property="spsPresentproducts" ofType="spsPresentproduct">
+			<id column="PRESENT_ID" property="presentId"/>
+			<id column="PRODUCT_ID" property="productId"/>
+			<association property="pmsProduct" javaType="pmsProduct">
+				<id column="PRODUCT_ID" property="productId"/>
+				<result column="PRODUCT_NAME" property="name"/>
+				<collection property="pmsSaleproducts" ofType="pmsSaleproduct" resultMap="getApplyPresentListResult1"/>
+			</association>
+		</collection>
+	</resultMap>
+	<resultMap type="pmsSaleproduct" id="getApplyPresentListResult1" autoMapping="true">
+		<result column="PRODUCT_ID" property="productId"/>
+		<result column="SALEPRODUCT_ID" property="saleproductId"/>
+		<result column="SUB_NAME" property="name"/>
+		<result column="SALEPRODUCT_STATE_CD" property="saleproductStateCd"/>
+	</resultMap>
+	<select id="getApplyPresentList" resultMap="getApplyPresentListResult" flushCache="true">
+		/* [sps.present.getApplyPresentList][dennis][2016. 6. 29.] 사은품 조회*/
+		SELECT  /*+ORDERED*/
+			   SP.*,
+		       SPP.PRODUCT_ID,
+		       PP.NAME AS PRODUCT_NAME,
+		       AP.TARGET_TYPE_CD,
+		       PS.SALEPRODUCT_ID,
+		       PS.NAME AS SUB_NAME,
+		       PS.SALEPRODUCT_STATE_CD,
+		       PS.REAL_STOCK_QTY
+		FROM SPS_PRESENT SP,
+		     SPS_PRESENTPRODUCT SPP,
+		     (
+		        SELECT MAX(AP.TYPE_SEQ) OVER (PARTITION BY SP.PRESENT_ID) AS MAX_TYPE_SEQ,
+		        	   AP.TYPE_SEQ,
+		        	   AP.TARGET_TYPE_CD,
+		               SP.PRESENT_ID ,
+		               SP.STORE_ID                         
+		          FROM SPS_PRESENT SP
+		          	   LEFT OUTER JOIN SPS_PRESENTDEAL SD
+		          	   ON SP.PRESENT_ID = SD.PRESENT_ID
+		          	   AND SP.STORE_ID = SD.STORE_ID
+		          	   AND SD.DEAL_ID = #{dealId}
+		          	   JOIN        
+		               (SELECT APPLY_NO,TYPE_SEQ,TARGET_TYPE_CD
+		                FROM (
+		                    SELECT CT.APPLY_NO,
+		                           1 AS TYPE_SEQ,
+		                           CT.TARGET_ID,
+		                           CA.TARGET_TYPE_CD 
+		                    FROM CCS_APPLYTARGET CT,
+		                         CCS_APPLY CA 
+		                    WHERE CT.APPLY_NO = CA.APPLY_NO 
+		                    AND CT.STORE_ID = CA.STORE_ID
+		                    AND CA.TARGET_TYPE_CD = 'TARGET_TYPE_CD.PRODUCT' 
+		                    AND CT.TARGET_ID = #{productId}
+		                    UNION ALL
+		                    SELECT CT.APPLY_NO,
+		                           2 AS TYPE_SEQ,
+		                           CT.TARGET_ID,
+		                           CA.TARGET_TYPE_CD 
+		                    FROM CCS_APPLYTARGET CT,
+		                         CCS_APPLY CA 
+		                    WHERE CT.APPLY_NO = CA.APPLY_NO 
+		                    AND CT.STORE_ID = CA.STORE_ID
+		                    AND CT.STORE_ID = #{storeId}
+		                    AND CA.TARGET_TYPE_CD = 'TARGET_TYPE_CD.BRAND' 
+		                    AND CT.TARGET_ID = (SELECT PP.BRAND_ID 
+		                    					  FROM PMS_PRODUCT PP 
+		                    					 WHERE PP.STORE_ID = #{storeId} 
+		                    					 AND PP.PRODUCT_ID = #{productId})
+		                    UNION ALL
+		                    SELECT CT.APPLY_NO,
+		                           3 AS TYPE_SEQ,
+		                           CT.TARGET_ID,
+		                           CA.TARGET_TYPE_CD 
+		                    FROM CCS_APPLYTARGET CT,
+		                         CCS_APPLY CA 
+		                    WHERE CT.APPLY_NO = CA.APPLY_NO 
+		                    AND CT.STORE_ID = CA.STORE_ID
+		                    AND CT.STORE_ID = #{storeId}
+		                    AND CA.TARGET_TYPE_CD = 'TARGET_TYPE_CD.CATEGORY' 
+		                    AND CT.TARGET_ID IN (SELECT DISTINCT(DD.DISPLAY_CATEGORY_ID) 
+		                    					   FROM DMS_DISPLAYCATEGORY DD,
+		                    					   		DMS_DISPLAYCATEGORYPRODUCT DP
+		                    					  WHERE DD.DISPLAY_CATEGORY_ID = DP.DISPLAY_CATEGORY_ID
+		                    					  AND DD.STORE_ID = DP.STORE_ID
+		                    					  AND DD.LEAF_YN = 'Y'
+		                    					  AND DD.DISPLAY_YN = 'Y'
+		                    					  AND DP.DISPLAY_YN = 'Y'
+		                    					  AND DP.PRODUCT_ID = #{productId})
+		                    UNION ALL
+		                    SELECT CE.APPLY_NO,
+		                           99 AS TYPE_SEQ,
+		                           CE.PRODUCT_ID,
+		                           CA.TARGET_TYPE_CD
+		                    FROM CCS_EXCPRODUCT CE,
+		                         CCS_APPLY CA
+		                    WHERE CE.APPLY_NO = CA.APPLY_NO
+		                    AND CE.STORE_ID = CA.STORE_ID
+		                    AND CA.TARGET_TYPE_CD != 'TARGET_TYPE_CD.PRODUCT'
+		                    AND CE.PRODUCT_ID = #{productId}
+		                    AND CE.STORE_ID = #{storeId}
+		                    UNION ALL
+		                    SELECT CA.APPLY_NO,
+		                           98 AS TYPE_SEQ,
+		                           #{productId} AS PRODUCT_ID,
+		                           CA.TARGET_TYPE_CD
+		                    FROM CCS_APPLY CA
+		                    WHERE CA.TARGET_TYPE_CD = 'TARGET_TYPE_CD.ALL'	
+		                    AND CA.STORE_ID = #{storeId}	                    
+		                )) AP
+		         		ON SP.APPLY_NO = AP.APPLY_NO
+		         WHERE SP.PRESENT_STATE_CD = 'PRESENT_STATE_CD.RUN'
+		         <if test="presentTypeCd != null and presentTypeCd != ''">
+			         AND SP.PRESENT_TYPE_CD = #{presentTypeCd}
+		         </if> 
+		         <if test="dealId != null and dealId !=''">
+			     	AND SP.DEAL_APPLY_YN = 'Y'
+			     	AND SD.DEAL_ID = #{dealId}
+			     </if>	         
+		         AND SP.START_DT &lt;= SYSDATE
+		         AND SP.END_DT &gt;= SYSDATE	
+		      ) AP,
+		      PMS_PRODUCT PP,
+		      PMS_SALEPRODUCT PS
+		WHERE SP.PRESENT_ID = SPP.PRESENT_ID
+		AND SP.PRESENT_ID = AP.PRESENT_ID
+		AND SPP.PRODUCT_ID = PP.PRODUCT_ID
+		AND SPP.PRODUCT_ID = PS.PRODUCT_ID
+		AND PP.USE_YN = 'Y'	
+		AND PS.REAL_STOCK_QTY &gt; 0
+		AND AP.MAX_TYPE_SEQ &lt; 99	 
+<!-- 		AND SP.STORE_ID = SPP.STORE_ID -->
+<!-- 		AND SP.STORE_ID = AP.STORE_ID -->
+<!-- 		AND SPP.STORE_ID = PP.STORE_ID -->
+<!-- 		AND PP.STORE_ID = PS.STORE_ID	 -->
+		ORDER BY SP.PRESENT_TYPE_CD DESC
+	</select>
+    
+    <delete id="deletePresentProdcut" parameterType="SpsPresentproduct">
+    /* [sps.present.deletePresentProdcut][ian][2016. 8. 4.] */
+        DELETE SPS_PRESENTPRODUCT
+         WHERE STORE_ID = #{storeId} AND PRESENT_ID = #{presentId}
+    </delete>
+    
+    <update id="updatePresentState">
+		/* [sps.present.updatePresentState][ian][2016. 8. 22.] */
+		UPDATE SPS_PRESENT
+		   SET PRESENT_STATE_CD = #{presentStateCd}, UPD_ID = #{updId}, UPD_DT = SYSDATE
+		 WHERE STORE_ID = #{storeId} AND PRESENT_ID = #{presentId}
+	</update>
+</mapper>

@@ -1,0 +1,360 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ccs.menu">
+	<resultMap type="ccsMenuGroup" id="getMenuGroupUserRoleAuthResult" autoMapping="true">
+		<id property="menuGroupId" column="MENU_GROUP_ID"/>
+		<collection property="ccsMenus" 		ofType="ccsMenu">
+			<result property="menuId" 					column="MENU_ID"/>
+			<result property="url" 						column="URL"/>
+			<result property="name" 					column="MENU_NAME"/>
+			<result property="sortNo" 					column="MENU_SORT_NO"/>
+			<result property="systemTypeCd" 			column="SYSTEM_TYPE_CD"/>
+			<collection property="ccsFunctions" 		ofType="ccsFunction">
+				<result property="functionId" 					column="FUNCTION_ID"/>
+				<result property="name" 						column="FUNCTION_NAME"/>
+			</collection>
+		</collection>
+	</resultMap>
+	<select id="getMenuGroupUserRoleAuth" resultMap="getMenuGroupUserRoleAuthResult">
+		/* [ccs.menu.getMenuGroupUserRoleAuth][dennis][2016. 4. 27.] */
+		
+		  SELECT G.MENU_GROUP_ID,
+		         G.NAME,
+		         G.SORT_NO,
+		         R.ROLE_ID,
+		         M.SYSTEM_TYPE_CD,
+		         M.MENU_ID,
+		         M.URL,
+		         M.NAME AS MENU_NAME,
+		         M.SORT_NO AS MENU_SORT_NO,
+		         F.FUNCTION_ID,
+		         F.NAME AS FUNCTION_NAME
+		    FROM CCS_ROLE R,
+		         CCS_ACCESSMENU A,
+		         CCS_MENUGROUP G,
+		         CCS_MENU M LEFT OUTER JOIN CCS_FUNCTION F ON M.MENU_ID = F.MENU_ID AND F.USE_YN = 'Y' 
+		                    LEFT OUTER JOIN CCS_ACCESSFUNCTION AF ON AF.FUNCTION_ID = F.FUNCTION_ID AND AF.MENU_ID = F.MENU_ID AND AF.ROLE_ID = #{roleId}
+		
+		   WHERE     R.ROLE_ID = A.ROLE_ID
+		         AND A.MENU_ID = M.MENU_ID
+		         AND M.MENU_GROUP_ID = G.MENU_GROUP_ID
+		         AND M.USE_YN = 'Y'
+		         AND G.USE_YN = 'Y'
+		         AND R.ROLE_ID = #{roleId}
+		         <if test="systemTypeCd=='PO'">
+					AND M.SYSTEM_TYPE_CD = 'SYSTEM_TYPE_CD.PO'
+				</if>
+				<if test="systemTypeCd=='BO'">
+					AND M.SYSTEM_TYPE_CD = 'SYSTEM_TYPE_CD.BO'
+				</if>
+		ORDER BY G.SORT_NO, M.SORT_NO
+	</select>
+	
+	<resultMap type="CcsMenu" id="getMenuUserRoleAuthResult" autoMapping="true">
+		<result column="MENU_ID" property="menuId"/>
+		<collection property="ccsFunctions" notNullColumn="FUNCTION_ID" column="{menuId=MENU_ID,roleId=ROLE_ID,langCd=LANG_CD}" javaType="java.util.ArrayList" select="ccs.menu.getMenuFunctionUserRoleAuth"/>
+	</resultMap>	
+	<select id="getMenuUserRoleAuth" resultMap="getMenuUserRoleAuthResult">
+		/* [ccs.menu.getMenuUserRoleAuth][dennis][2016. 4. 27.] */
+		SELECT	
+				M.MENU_ID,
+				M.NAME,
+				M.URL,
+				M.SORT_NO,
+				R.ROLE_ID,
+				#{langCd} AS LANG_CD
+		FROM CCS_ROLE R,
+			 CCS_ACCESSMENU A,
+			 CCS_MENU M
+		WHERE R.ROLE_ID = A.ROLE_ID
+		AND A.MENU_ID = M.MENU_ID
+<!-- 		AND R.USE_YN = 'Y' -->
+		AND M.USE_YN = 'Y'		
+		AND M.MENU_GROUP_ID = #{menuGroupId}
+		AND R.ROLE_ID = #{roleId}
+		<if test="systemTypeCd != null and systemTypeCd != ''">
+			AND M.SYSTEM_TYPE_CD = #{systemTypeCd}
+		</if>
+		ORDER BY M.SORT_NO
+	</select>
+
+	<select id="getMenuFunctionUserRoleAuth" resultType="ccsFunction">
+		/* [ccs.menu.getMenuFunctionUserRoleAuth][dennis][2016. 5. 3.] */
+		SELECT  F.FUNCTION_ID, 
+				NVL(L.NAME,F.NAME) AS NAME
+		  FROM CCS_ACCESSFUNCTION AF, CCS_FUNCTION F
+		  LEFT OUTER JOIN CCS_FUNCTIONLANG L
+		  ON F.MENU_ID = L.MENU_ID
+		 	AND F.FUNCTION_ID = L.FUNCTION_ID
+		 	AND L.LANG_CD = #{langCd}
+		 WHERE AF.MENU_ID = F.MENU_ID 
+		 AND AF.FUNCTION_ID = F.FUNCTION_ID
+		 AND F.USE_YN = 'Y' 
+		 AND AF.ROLE_ID = #{roleId}
+		 AND AF.MENU_ID = #{menuId}
+		 ORDER BY F.SORT_NO
+	</select>
+	
+	<select id="getMenuAuthCheck" resultType="java.lang.String">
+		/* [ccaAccessmenu.getMenuAuthCheck][dennis][2016. 5. 4.] */
+		SELECT NVL(
+			 (
+				SELECT	MIN(CASE WHEN M.USE_YN != 'Y' OR (M.MENU_ID IS NOT NULL AND A.MENU_ID IS NULL)
+								 THEN 'N'
+								 ELSE 'Y'
+								 END) AS RESULT				
+				FROM CCS_MENU M
+					 LEFT OUTER JOIN
+					 (SELECT A.MENU_ID
+					 	FROM CCS_ROLE R,
+					 		 CCS_ACCESSMENU A
+					   WHERE R.ROLE_ID = A.ROLE_ID
+<!-- 					   AND R.USE_YN = 'Y' -->
+					   AND R.ROLE_ID = #{roleId}
+					 ) A
+					on M.MENU_ID = A.MENU_ID
+				WHERE M.URL = #{url}
+					<if test="systemTypeCd=='PO'">
+						AND M.SYSTEM_TYPE_CD = 'SYSTEM_TYPE_CD.PO'
+					</if>
+					<if test="systemTypeCd=='BO'">
+						AND M.SYSTEM_TYPE_CD = 'SYSTEM_TYPE_CD.BO'
+					</if>
+			)
+			,'Y')
+		FROM DUAL		
+	</select>
+	
+	<select id="getRoleList" resultType="ccsRole">
+		/* [ccs.menu.getRoleList][steve][2016. 5. 03.] */
+		SELECT	
+				*
+		FROM CCS_ROLE R
+		WHERE R.STORE_ID = #{storeId}
+	</select>
+	
+	<select id="getRole" resultType="ccsRole">
+		/* [ccs.menu.getRole][steve][2016. 5. 03.] */
+		SELECT	
+				*
+		FROM CCS_ROLE R
+		WHERE R.ROLE_ID = #{roleId}
+	</select>
+	
+	<insert id="insertRole">
+		/* [ccs.menu.insertRole][steve][2016. 5. 03.] */
+		INSERT INTO CCS_ROLE (ROLE_ID,
+                      STORE_ID,
+                      NAME,
+                      NOTE,
+<!--                       USE_YN, -->
+                      INS_DT,
+                      INS_ID,
+                      UPD_DT,
+                      UPD_ID)
+     	VALUES (nvl((select max(to_number(nvl(role_id,0)))+1 from ccs_role),0),
+     			#{storeId},
+     			#{name},
+     			'',
+<!--      			'Y', -->
+     			SYSDATE,
+     			#{insId},
+     			SYSDATE,
+     			#{updId})
+	</insert>
+	
+	<update id="updateRole">
+		/* [ccs.menu.updateRole][steve][2016. 5. 03.] */ 
+		UPDATE CCS_ROLE
+		SET    NAME     = #{name},
+		       UPD_DT   = SYSDATE,
+		       UPD_ID   = #{updId}
+		WHERE  ROLE_ID  = #{roleId}
+	</update>
+	
+	<delete id="deleteRole">
+		/* [ccs.menu.deleteRole][steve][2016. 5. 03.] */ 
+		DELETE FROM CCS_ROLE
+		WHERE  ROLE_ID  = #{roleId}
+	</delete>
+	
+	<select id="getAmfListByRole" resultType="map">
+		/* [ccs.menu.getAmfListByRole][steve][2016. 4. 27.] */
+		SELECT	
+				M.MENU_ID,
+				NVL(ML.NAME,M.NAME) AS MENU_NAME,
+				A.MENU_ID AS ACCESS_MENU_ID,
+				F.FUNCTION_ID,
+				NVL(FL.NAME,F.NAME) AS FUNCTION_NAME,
+				AF.FUNCTION_ID AS ACCESS_FUNCTION_ID
+		FROM CCS_MENU M 
+			 LEFT OUTER JOIN CCS_MENULANG ML
+			 ON M.MENU_ID = ML.MENU_ID
+			 	AND ML.LANG_CD = #{langCd}
+			 LEFT OUTER JOIN CCS_ACCESSMENU A
+			 ON M.MENU_ID = A.MENU_ID
+			 	AND A.ROLE_ID = #{roleId}
+			 LEFT OUTER JOIN CCS_FUNCTION F
+			 ON M.MENU_ID = F.MENU_ID
+			 	AND F.USE_YN = 'Y'
+			 LEFT OUTER JOIN CCS_FUNCTIONLANG FL
+			 ON F.MENU_ID = FL.MENU_ID
+			 	AND F.FUNCTION_ID = FL.FUNCTION_ID
+			 	AND FL.LANG_CD = #{langCd}
+			 LEFT OUTER JOIN CCS_ACCESSFUNCTION AF
+			 ON F.MENU_ID = AF.MENU_ID
+			 	AND F.FUNCTION_ID = AF.FUNCTION_ID
+			 	AND AF.ROLE_ID = #{roleId}
+		WHERE M.USE_YN = 'Y'		
+		ORDER BY M.SORT_NO, F.SORT_NO
+	</select>
+	
+	<select id="getMenugroupList" resultType="ccsMenugroup">
+		/* [ccs.menu.getMenugroupList][roy][2016. 6. 16.] */
+		SELECT	*
+		FROM CCS_MENUGROUP MG
+		ORDER BY MG.SORT_NO
+	</select>
+	
+	<resultMap id="menuListResult" type="ccsMenu" autoMapping="true">
+		<id property="menuGroupId" 				column="MENU_GROUP_ID"/>
+	</resultMap>
+	
+	<select id="getMenuList" resultMap="menuListResult">
+		/* [ccs.code.getMenuList][roy][2016. 6. 13.] */
+		<include refid="ccs.common.pagingPre" />
+			SELECT M.*
+					,CASE
+				          WHEN M.INS_ID IS NOT NULL
+				          THEN
+				                (SELECT USR.NAME
+				                   FROM CCS_USER USR
+				                  WHERE USR.USER_ID = M.INS_ID)
+				          ELSE '' END INS_NAME
+				    ,CASE
+				          WHEN M.UPD_ID IS NOT NULL
+				          THEN
+				                (SELECT USR.NAME
+				                   FROM CCS_USER USR
+				                  WHERE USR.USER_ID = M.UPD_ID)
+				          ELSE '' END UPD_NAME
+			FROM CCS_MENU M
+			WHERE M.SYSTEM_TYPE_CD = 'SYSTEM_TYPE_CD.BO'
+					<if test="menuGroupId != null and menuGroupId != ''">
+						AND	M.MENU_GROUP_ID = #{menuGroupId}
+					</if>
+			ORDER BY M.SORT_NO			
+		<include refid="ccs.common.pagingPost"/>
+	</select>
+	
+	<resultMap id="codegroupListResult" type="ccsCodegroup" autoMapping="true">
+	</resultMap>
+	
+	<select id="selectMenuGroup" resultType="ccsMenugroup">
+		/* [ccs.menu.selectMenuGroup][roy][2016. 6. 13.] */
+			SELECT *
+			FROM CCS_MENUGROUP MG
+			WHERE MG.MENU_GROUP_ID = #{menuGroupId}
+			ORDER BY MG.SORT_NO
+	</select>
+	
+	<select id="selectMenuGroupOne" resultType="string">
+		/* [ccs.menu.selectMenuGroup][roy][2016. 6. 13.] */
+			SELECT 1
+			FROM CCS_MENUGROUP MG
+			WHERE MG.MENU_GROUP_ID = #{menuGroupId}
+	</select>
+	
+	<delete id="deleteMenu" parameterType="ccsMenugroup">
+	/* [ccs.menu.deleteMenu][roy][2016. 6. 16.] */
+		DELETE FROM CCS_MENU
+		WHERE MENU_GROUP_ID = #{menuGroupId}
+	</delete>
+	
+	<delete id="deleteMenuIDAccessFunc" parameterType="ccsMenugroup">
+	/* [ccs.menu.deleteMenuIDAccessFunc][roy][2016. 6. 23.] */
+		DELETE FROM CCS_ACCESSFUNCTION
+		WHERE MENU_ID in (SELECT MENU_ID FROM CCS_MENU WHERE MENU_GROUP_ID = #{menuGroupId})
+	</delete>
+	
+	<delete id="deleteMenuIDAccessMenu" parameterType="ccsMenugroup">
+	/* [ccs.menu.deleteMenuIDAccessMenu][roy][2016. 6. 23.] */
+		DELETE FROM CCS_ACCESSMENU
+		WHERE MENU_ID in (SELECT MENU_ID FROM CCS_MENU WHERE MENU_GROUP_ID = #{menuGroupId})
+	</delete>
+	
+	<delete id="deleteMenuIDFuncLang" parameterType="ccsMenugroup">
+	/* [ccs.menu.deleteMenuIDFuncLang][roy][2016. 6. 23.] */
+		DELETE FROM CCS_FUNCTIONLANG
+		WHERE MENU_ID in (SELECT MENU_ID FROM CCS_MENU WHERE MENU_GROUP_ID = #{menuGroupId})
+	</delete>
+	
+	<delete id="deleteMenuIDFunc" parameterType="ccsMenugroup">
+	/* [ccs.menu.deleteMenuIDFunc][roy][2016. 6. 23.] */
+		DELETE FROM CCS_FUNCTION
+		WHERE MENU_ID in (SELECT MENU_ID FROM CCS_MENU WHERE MENU_GROUP_ID = #{menuGroupId})
+	</delete>
+	
+	<delete id="deleteMenuIDMenuLang" parameterType="ccsMenugroup">
+	/* [ccs.menu.deleteMenuIDMenuLang][roy][2016. 6. 23.] */
+		DELETE FROM CCS_MENULANG
+		WHERE MENU_ID in (SELECT MENU_ID FROM CCS_MENU WHERE MENU_GROUP_ID = #{menuGroupId})
+	</delete>
+
+	<delete id="deleteMenuIDMenuGrpLang" parameterType="ccsMenugroup">
+	/* [ccs.menu.deleteMenuIDMenuGrpLang][roy][2016. 6. 23.] */
+		DELETE FROM CCS_MENUGROUPLANG
+		WHERE MENU_GROUP_ID = #{menuGroupId}
+	</delete>
+	
+	<delete id="deleteMenuChildAccessFunc" parameterType="ccsMenu">
+	/* [ccs.menu.deleteMenuChildAccessFunc][roy][2016. 6. 23.] */
+		DELETE FROM CCS_ACCESSFUNCTION
+		WHERE MENU_ID = #{menuId}
+	</delete>
+	
+	<delete id="deleteMenuChildAccessMenu" parameterType="ccsMenu">
+	/* [ccs.menu.deleteMenuChildAccessMenu][roy][2016. 6. 23.] */
+		DELETE FROM CCS_ACCESSMENU
+		WHERE MENU_ID = #{menuId}
+	</delete>
+	
+		<delete id="deleteMenuChildFuncLang" parameterType="ccsMenu">
+	/* [ccs.menu.deleteMenuChildFuncLang][roy][2016. 6. 23.] */
+		DELETE FROM CCS_FUNCTIONLANG
+		WHERE MENU_ID = #{menuId}
+	</delete>
+	
+		<delete id="deleteMenuChildFunc" parameterType="ccsMenu">
+	/* [ccs.menu.deleteMenuChildFunc][roy][2016. 6. 23.] */
+		DELETE FROM CCS_FUNCTION
+		WHERE MENU_ID = #{menuId}
+	</delete>
+	
+	<delete id="deleteMenuChildMenuLang" parameterType="ccsMenu">
+	/* [ccs.menu.deleteMenuChildMenuLang][roy][2016. 6. 23.] */
+		DELETE FROM CCS_MENULANG
+		WHERE MENU_ID = #{menuId}
+	</delete>
+	
+	<select id="selectMenuId" resultType="string">
+		/* [ccs.menu.selectMenuId][roy][2016. 6. 13.] */
+			SELECT 1
+			FROM CCS_MENU
+			WHERE MENU_ID = #{menuId}
+	</select>
+	<select id="getBlackListUrl" resultType="java.lang.String">
+	/* [ccs.menu.getBlackListUrl][eddie][2016. 6. 13.] */
+		SELECT URL NOTACCESSBLE_URL
+		  FROM CCS_FUNCTIONURL T1
+		 WHERE NOT EXISTS
+		          (SELECT FU.URL
+		             FROM CCS_ACCESSMENU AM
+		                  INNER JOIN CCS_ACCESSFUNCTION A
+		                     ON A.ROLE_ID = AM.ROLE_ID AND A.MENU_ID = AM.MENU_ID
+		                  INNER JOIN CCS_FUNCTIONURL FU
+		                     ON     FU.FUNCTION_ID = A.FUNCTION_ID
+		                        AND FU.MENU_ID = AM.MENU_ID
+		            WHERE AM.ROLE_ID = #{roleId} AND FU.URL = T1.URL)	
+	</select>            
+</mapper>

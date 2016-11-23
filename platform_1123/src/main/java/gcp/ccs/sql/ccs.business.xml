@@ -1,0 +1,389 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ccs.business">
+	<select id="getBusinessList" resultType="ccsBusiness">
+		/* [ccs.business.getBusinessList][dennis][2016. 5. 23.] */
+		<include refid="ccs.common.pagingPre"/>
+		SELECT *
+		  FROM CCS_BUSINESS A
+		  LEFT OUTER JOIN CCS_BUSINESSLANG L
+		  ON A.STORE_ID = L.STORE_ID
+		  AND A.BUSINESS_ID = L.BUSINESS_ID
+		  AND L.LANG_CD = #{langCd}
+		 WHERE A.STORE_ID = #{storeId}
+		 <if test="businessIds != null and businessIds != ''">
+	       AND A.BUSINESS_ID IN ( ${ businessIds } )
+	 	</if>
+		 <if test="erpBusinessId != null and erpBusinessId != ''">
+	       AND A.ERP_BUSINESS_ID = #{ erpBusinessId }
+	 	</if>	 	
+		 <if test="businessTypeCd != null and businessTypeCd != ''">
+		 AND A.BUSINESS_TYPE_CD = #{businessTypeCd}
+		 </if>
+		 <if test="businessStateCd != null and businessStateCd != ''">
+		 AND A.BUSINESS_STATE_CD = #{businessStateCd}
+		 </if>
+		 <if test="searchKeyword != null and searchKeyword != ''">
+		 	<if test="type == 'NAME'">
+		 	AND NVL(L.NAME,A.NAME) LIKE '%'|| #{searchKeyword} ||'%'
+		 	</if>
+		 	<if test="type == 'ID'">
+		 	AND A.BUSINESS_ID = #{searchKeyword}
+		 	</if>
+		 	<if test="type == '' or type == null">
+		 		AND A.BUSINESS_ID = #{searchKeyword}
+		 		AND NVL(L.NAME,A.NAME) LIKE '%'|| #{searchKeyword} ||'%'
+		 	</if>
+		 </if>
+		 <if test="searchBusinessName != null and searchBusinessName != ''">
+				AND A.NAME LIKE '%' || #{searchBusinessName} || '%'
+		</if>
+		 <if test="searchBusinessId != null and searchBusinessId != ''">
+			AND A.BUSINESS_ID = #{searchBusinessId}
+		</if>  
+		 <include refid="ccs.common.pagingPost"/>
+	</select>
+	<select id="selectDeliverypolicyByBusinessId" resultType="ccsDeliverypolicy">
+	/* [ccs.business.selectDeliverypolicyByBusinessId][eddie][2016. 6. 14.] */
+		SELECT POL.*
+		  FROM    CCS_BUSINESS BUS
+		       INNER JOIN
+		          CCS_DELIVERYPOLICY POL
+		       ON BUS.BUSINESS_ID = POL.BUSINESS_ID
+		 WHERE BUS.STORE_ID = #{storeId} AND BUS.BUSINESS_ID = #{businessId}
+	</select>
+	
+	<resultMap type="ccsBusiness" id="getBusinessListInfoResult" autoMapping="true">
+		<id property="storeId" 					column="STORE_ID"/>
+		<id property="businessId" 				column="BUSINESS_ID"/>
+		<result property="productNoticeType"  	column="PRODUCT_NOTICE_TYPE"/>
+		<association property="ccsStore" 		javaType="ccsStore">
+			<result property="name" 				column="STORE_NAME"/>
+		</association>
+	</resultMap>
+	<select id="getBusinessListInfo" resultMap="getBusinessListInfoResult">
+		/* [ccs.business.getBusinessListInfo][emily][2016. 6. 16.] */
+		<include refid="ccs.common.pagingPre"/>
+		SELECT BA.*
+        FROM ( SELECT CB.*,
+					CS.NAME AS STORE_NAME
+					,CASE
+				          WHEN CB.INS_ID IS NOT NULL
+				          THEN
+				                (SELECT USR.NAME
+				                   FROM CCS_USER USR
+				                  WHERE USR.USER_ID = CB.INS_ID)
+				          ELSE '' END INS_NAME
+				    ,CASE
+				          WHEN CB.UPD_ID IS NOT NULL
+				          THEN
+				                (SELECT USR.NAME
+				                   FROM CCS_USER USR
+				                  WHERE USR.USER_ID = CB.UPD_ID)
+				          ELSE '' END UPD_NAME
+				FROM CCS_BUSINESS CB,
+						CCS_STORE CS
+				WHERE CS.STORE_ID = CS.STORE_ID
+        )BA
+        WHERE BA.STORE_ID = #{storeId}
+		<if test="startDate != null and startDate != ''">
+			<if test="endDate != null and endDate != ''">
+				 AND BA.INS_DT BETWEEN TO_DATE (#{startDate},
+                                                'YYYY-MM-DD HH24:MI:SS')
+                                   AND TO_DATE (#{endDate},
+                                                'YYYY-MM-DD HH24:MI:SS')	 	
+			</if>
+		</if>
+		<if test="businessTypeCds != null and businessTypeCds != ''">
+			AND BA.BUSINESS_TYPE_CD IN (${businessTypeCds})
+		</if>
+		<if test="businessStateCds != null and businessStateCds != ''">
+			AND BA.BUSINESS_STATE_CD IN (${businessStateCds})
+		</if>
+		<if test="saleTypeCds != null and saleTypeCds != ''">
+			AND BA.SALE_TYPE_CD IN (${saleTypeCds})
+		</if>
+		
+		<if test="businessIds != null and businessIds != ''">
+			AND BA.BUSINESS_ID IN (${businessIds})
+		</if>
+		<if test="businessId != null and businessId !=''">
+			AND BA.BUSINESS_ID = #{businessId}
+		</if>
+		<if test="businessName != null and businessName != ''">
+			AND BA.NAME LIKE '%'|| #{businessName} ||'%'
+		</if>
+		<if test="businessName2 != null and businessName2 != ''">
+			AND BA.NAME LIKE '%'|| #{businessName2} ||'%'
+		</if>
+		
+		ORDER BY BA.INS_DT DESC
+		 <include refid="ccs.common.pagingPost"/>
+	</select>
+	
+	<resultMap type="ccsDeliverypolicy" id="getDeliverypolicyListResult" autoMapping="true">
+		<id property="storeId" 				column="STORE_ID"/>
+		<id property="deliveryPolicyNo" 	column="DELIVERY_POLICY_NO"/>
+		<id property="businessId" 			column="BUSINESS_ID"/>
+	</resultMap>
+	<select id="getDeliverypolicyList" resultMap="getDeliverypolicyListResult">
+		/* [ccs.business.getDeliverypolicyList][emily][2016. 6. 16.] */
+		<include refid="ccs.common.pagingPre"/>
+		SELECT  DP.ADDRESS1, 
+		        DP.ADDRESS2, 
+		        DP.ADDRESS3, 
+		        DP.ADDRESS4, 
+		        DP.BUSINESS_ID, 
+		        DP.DELIVERY_FEE, 
+		        DP.DELIVERY_FEE_TYPE_CD, 
+		        DP.DELIVERY_POLICY_NO, 
+		        DP.DELIVERY_SERVICE_CD, 
+		        DP.INS_DT, 
+		        DP.INS_ID, 
+		        DP.MIN_DELIVERY_FREE_AMT, 
+		        DP.NAME, 
+		        DP.STORE_ID, 
+		        DP.UPD_DT, 
+		        DP.UPD_ID, 
+		        DP.ZIP_CD,
+		        ( '('|| DP.ZIP_CD  ||') '|| DP.ADDRESS1 ||' '|| DP.ADDRESS2 ||' '|| DP.ADDRESS3 ||' '|| DP.ADDRESS4) AS ADDRESS 
+		        ,CASE
+			          WHEN DP.INS_ID IS NOT NULL
+			          THEN
+			                (SELECT USR.NAME
+			                   FROM CCS_USER USR
+			                  WHERE USR.USER_ID = DP.INS_ID)
+			          ELSE '' END INS_NAME
+		       ,CASE
+			          WHEN DP.UPD_ID IS NOT NULL
+			          THEN
+			                (SELECT USR.NAME
+			                   FROM CCS_USER USR
+			                  WHERE USR.USER_ID = DP.UPD_ID)
+			          ELSE '' END UPD_NAME
+			FROM CCS_DELIVERYPOLICY DP
+			LEFT OUTER JOIN CCS_DELIVERYPOLICYLANG DL
+			ON(DP.DELIVERY_POLICY_NO = DL.DELIVERY_POLICY_NO)
+			LEFT OUTER JOIN CCS_DELIVERYFEE DF
+			ON(DP.DELIVERY_POLICY_NO = DF.DELIVERY_POLICY_NO)    
+			WHERE DP.STORE_ID = #{storeId}    
+			AND DP.BUSINESS_ID = #{businessId}
+			ORDER BY DP.INS_DT DESC
+		 	<include refid="ccs.common.pagingPost"/>
+	</select>
+	
+	<select id="getBusinessHolidayList" resultType="ccsBusinessholiday" >
+		/* [ccs.business.getBusinessHolidayList][emily][2016. 6. 16.] */
+		<include refid="ccs.common.pagingPre"/>
+		SELECT CB.BUSINESS_ID, 
+				(SUBSTR(CB.HOLIDAY, 1,4) ||'-'|| SUBSTR(CB.HOLIDAY, 5, 2) ||'-'|| SUBSTR(CB.HOLIDAY, 7, 2)) AS HOLIDAY, 
+				CB.INS_DT, 
+				CB.INS_ID, 
+				CB.STORE_ID,
+				CB.UPD_DT, 
+				CB.UPD_ID
+				,CASE
+			          WHEN CB.INS_ID IS NOT NULL
+			          THEN
+			                (SELECT USR.NAME
+			                   FROM CCS_USER USR
+			                  WHERE USR.USER_ID = CB.INS_ID)
+			          ELSE '' END INS_NAME
+				,CASE
+			          WHEN CB.UPD_ID IS NOT NULL
+			          THEN
+			                (SELECT USR.NAME
+			                   FROM CCS_USER USR
+			                  WHERE USR.USER_ID = CB.UPD_ID)
+			          ELSE '' END UPD_NAME
+			FROM CCS_BUSINESSHOLIDAY CB
+			WHERE STORE_ID = #{storeId}
+			AND BUSINESS_ID = #{businessId}
+			ORDER BY CB.HOLIDAY
+			<include refid="ccs.common.pagingPost"/>
+	</select>
+	
+	<resultMap type="ccsBusiness" id="getBusinessDetailResult" autoMapping="true">
+		<id property="storeId" 					column="STORE_ID"/>
+		<id property="businessId" 				column="BUSINESS_ID"/>
+		<result property="userName" 			column="USER_NAME"/>
+		<association property="ccsStore" 		javaType="ccsStore">
+			<result property="name" 				column="STORE_NAME"/>
+		</association>
+	</resultMap>
+	<select id="getBusinessDetail" resultMap="getBusinessDetailResult">
+		/* [ccs.business.getBusinessDetail][emily][2016. 6. 16.] */
+			SELECT CB.*,		
+				CS.NAME AS STORE_NAME, 
+				(SELECT U.NAME FROM CCS_USER U WHERE CB.USER_ID = U.USER_ID AND ROWNUM=1) AS USER_NAME
+			FROM CCS_BUSINESS CB,
+					CCS_STORE CS
+			WHERE CS.STORE_ID = CS.STORE_ID
+		       AND CB.STORE_ID = #{storeId}
+		       AND CB.BUSINESS_ID = #{businessId}
+	</select>
+	
+	<insert id="insertBusiness">
+		/* [ccs.business.insertBusiness][emily][2016. 6. 16.] */
+		<selectKey keyProperty="businessId" resultType="String" order="BEFORE">
+			SELECT NVL (BUSINESS_ID, 1) businessId
+		  		FROM (SELECT MAX (TO_NUMBER (BUSINESS_ID)) + 1 BUSINESS_ID FROM CCS_BUSINESS WHERE STORE_ID= #{storeId}) DUAL
+		</selectKey>
+		INSERT INTO CCS_BUSINESS (
+						STORE_ID,
+						BUSINESS_ID,
+						NAME,
+						ERP_BUSINESS_ID,
+						BUSINESS_TYPE_CD,
+						SALE_TYPE_CD,
+						PURCHASE_YN,
+						ZIP_CD,
+						ADDRESS1,
+						ADDRESS2,
+						ADDRESS3,
+						ADDRESS4,
+						PHONE,
+						MANAGER_NAME,
+						MANAGER_PHONE1,
+						MANAGER_PHONE2,
+						MANAGER_EMAIL,
+						USER_ID,
+						BUSINESS_STATE_CD,
+						INS_DT,
+						INS_ID,
+						UPD_DT,
+						UPD_ID,
+						REP_NAME,
+						REG_NO,
+						BUSINESS_CONDITION,
+						BUSINESS_TYPE,
+						TAX_TYPE_CD,
+						SUPPLY_ITEM,
+						NOTE,
+						FAX,
+						MEMO,
+						BANK_NAME,
+						DEPOSITOR_NAME,
+						ACCOUNT_NO) 
+			VALUES ( #{storeId, jdbcType=VARCHAR},
+					 #{businessId, jdbcType=VARCHAR},
+					 #{name, jdbcType=VARCHAR},
+					 #{erpBusinessId, jdbcType=VARCHAR},	
+					 #{businessTypeCd, jdbcType=VARCHAR},
+					 #{saleTypeCd, jdbcType=VARCHAR},
+					 #{purchaseYn, jdbcType=VARCHAR},
+					 #{zipCd, jdbcType=VARCHAR},
+					 #{address1, jdbcType=VARCHAR},
+					 #{address2, jdbcType=VARCHAR},
+					 #{address3, jdbcType=VARCHAR},
+					 #{address4, jdbcType=VARCHAR},
+					 #{phone, jdbcType=VARCHAR},
+					 #{managerName, jdbcType=VARCHAR},
+					 #{managerPhone1, jdbcType=VARCHAR},
+					 #{managerPhone2, jdbcType=VARCHAR},
+					 #{managerEmail, jdbcType=VARCHAR},
+					 #{userId, jdbcType=VARCHAR},			
+					 #{businessStateCd, jdbcType=VARCHAR},
+					 SYSDATE,
+		             #{insId, jdbcType=VARCHAR},
+		             SYSDATE,
+		             #{updId, jdbcType=VARCHAR},
+		             #{repName, jdbcType=VARCHAR},
+		             #{regNo, jdbcType=VARCHAR},
+		             #{businessCondition, jdbcType=VARCHAR},
+		             #{businessType, jdbcType=VARCHAR},
+		             #{taxTypeCd, jdbcType=VARCHAR},
+		             #{supplyItem, jdbcType=VARCHAR},
+		             #{note, jdbcType=VARCHAR},
+		             #{fax, jdbcType=VARCHAR},
+		             #{memo, jdbcType=VARCHAR},
+		             #{bankName, jdbcType=VARCHAR},
+		             #{depositorName, jdbcType=VARCHAR},
+		             #{accountNo, jdbcType=VARCHAR}
+					 )
+	</insert>
+	
+	<select id="getBusinessHolidayDuplicate" resultType="int">
+		/* [ccs.business.getBusinessHolidayDuplicate][emily][2016. 6. 24.] */
+		SELECT COUNT(*)
+		FROM CCS_BUSINESSHOLIDAY CB
+		WHERE HOLIDAY = #{holiday}
+		AND BUSINESS_ID = #{businessId}
+		AND STORE_ID = #{storeId}
+	</select>
+	
+	<resultMap type="pmsCategory" id="getCommissionResult" autoMapping="true">
+		<id  property="categoryId" 					column="CATEGORY_ID"/>
+		<result property="strCommissionRate" 		column="STR_COMMISSION_RATE"/>
+		<result property="userId" 					column="USER_ID"/>
+		<result property="name" 					column="NAME"/>
+		<result property="depthFullName" 			column="depthFullName"/>
+		<association property="ccsUser" 		javaType="ccsUser">
+			<id  property="userId" 						column="USER_ID"/>
+			<result property="name" 					column="USER_NAME"/>
+		</association>	
+	</resultMap>
+	<select id="getCommissionList" resultMap="getCommissionResult">
+		/* [ccs.business.getCommissionList][emily][2016. 6. 27.] */
+		SELECT
+				I1.STORE_ID            
+			  ,	I1.BUSINESS_ID         
+			  ,	I1.CATEGORY_ID         
+			  , I1.NAME                
+			  , I1.USER_ID  
+			  , (SELECT NAME FROM CCS_USER U1 WHERE U1.USER_ID=I1.USER_ID) USER_NAME
+			  , I1.depthFullName	
+			  , I1.STR_COMMISSION_RATE	
+		FROM (		
+		SELECT 
+				CC.STORE_ID
+			  , CC.BUSINESS_ID
+			  , CC.CATEGORY_ID
+			  ,	PC.NAME
+			  ,	PC.USER_ID AS USER_ID
+			  , (SELECT LTRIM (SYS_CONNECT_BY_PATH (C.NAME, ' > '), ' > ')
+         		   FROM PMS_CATEGORY C
+         		  WHERE C.STORE_ID = #{storeId}
+             	    AND C.USE_YN = 'Y'
+                    AND C.CATEGORY_ID = PC.CATEGORY_ID
+         		  START WITH C.UPPER_CATEGORY_ID IS NULL
+         		  CONNECT BY PRIOR 
+              	  C.CATEGORY_ID = C.UPPER_CATEGORY_ID
+        		 ) AS depthFullName
+        	 , (SELECT LISTAGG (COMMISSION_RATE, ',') WITHIN GROUP (ORDER BY COMMISSION_RATE)
+        	      FROM CCS_COMMISSION WHERE BUSINESS_ID = #{businessId} AND CATEGORY_ID = PC.CATEGORY_ID GROUP BY CATEGORY_ID) AS STR_COMMISSION_RATE
+		   FROM CCS_COMMISSION CC, PMS_CATEGORY PC
+		   WHERE CC.STORE_ID = PC.STORE_ID
+			 AND CC.CATEGORY_ID = PC.CATEGORY_ID
+			 AND CC.STORE_ID = #{storeId}
+			 AND CC.BUSINESS_ID = #{businessId}	) I1
+			 GROUP BY STORE_ID,	BUSINESS_ID, CATEGORY_ID, NAME, USER_ID, depthFullName, STR_COMMISSION_RATE			
+	</select>
+	
+	<select id="getCommissionListByCategory" resultType="ccsCommission">
+		/* [ccs.business.getCommissionListByCategory][eddie][2016. 6. 27.] */
+		SELECT *
+			FROM CCS_COMMISSION 
+			WHERE STORE_ID = #{storeId}
+			AND BUSINESS_ID = #{businessId}			
+			AND CATEGORY_ID = #{categoryId}			
+	</select>
+	
+	
+	<delete id="deleteBatchCommission">
+		/* [ccs.business.deleteBatchCommission][allen][2016.08.03] */
+		DELETE 
+		  FROM CCS_COMMISSION 
+		 WHERE STORE_ID = #{storeId} 
+		   AND BUSINESS_ID = #{businessId} 
+	</delete>
+	
+	<update id="updateBusinessProducts" parameterType="ccsBusiness">
+	/* [ccs.business.updateBusinessProducts][roy][2016. 11. 17.] */
+		UPDATE PMS_PRODUCT
+		SET  SALE_STATE_CD = 'SALE_STATE_CD.STOP'
+		     ,UPD_ID = #{updId, jdbcType=VARCHAR}
+		     ,UPD_DT = SYSDATE
+		WHERE SALE_STATE_CD in ('SALE_STATE_CD.STOP', 'SALE_STATE_CD.SALE') AND STORE_ID =  #{storeId} AND BUSINESS_ID = #{businessId}
+	</update>
+</mapper>

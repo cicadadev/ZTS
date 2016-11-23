@@ -1,0 +1,477 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ccs.offshop">
+	
+	<select id="getOffshopPopupList" resultType="ccsOffshop">
+		 /* [ccs.offshop.getOffshopPopupList][emily][2016. 6. 23.] */
+		<include refid="ccs.common.pagingPre"/>
+		SELECT 
+				  STORE_ID
+       			, OFFSHOP_ID
+       			, NAME
+       			, OFFSHOP_TYPE_CD
+       			, ZIP_CD
+       			, ADDRESS1
+       			, ADDRESS2
+       			, ADDRESS3
+       			, ADDRESS4
+       			, MANAGER_PHONE
+       			, OFFSHOP_PICKUP_YN
+       			, LATITUDE
+       			, LONGITUDE
+       			, OFFSHOP_STATE_CD
+       			, INS_DT
+       			, INS_ID
+       			, UPD_DT
+       			, UPD_ID
+       			, OFFSHOP_AFFILIATION
+       			, ADDRESS_INFO
+       			, AREA_DIV1
+       			, AREA_DIV2
+       			, HOLIDAY_INFO
+       			, ADDRESS1 ||' '|| ADDRESS2 ||' '|| ADDRESS3 ||' '|| ADDRESS4 AS ADDRESS
+       			, (SELECT REPLACE(WM_CONCAT(T2.NAME), ',', ', ') BRAND_NAME from CCS_OFFSHOPBRAND T1 JOIN PMS_BRAND T2 ON T1.BRAND_ID = T2.BRAND_ID WHERE T1.OFFSHOP_ID = T3.OFFSHOP_ID) OFFSHOPBRANDS
+			FROM CCS_OFFSHOP T3
+				WHERE 1=1
+				<if test="storeId != null and storeId != ''">
+					AND STORE_ID = #{storeId}
+				</if>
+				<if test="offshopTypeCd != null and offshopTypeCd != ''">
+					AND OFFSHOP_TYPE_CD = #{offshopTypeCd}
+				</if>
+				<if test="offName != null and offName != ''">
+					AND NAME = #{offName}
+				</if>
+			ORDER BY INS_DT DESC
+			<include refid="ccs.common.pagingPost"/>
+	</select>
+	
+	<select id="getOffshopInfo" resultType="ccsOffshop">
+		 /* [ccs.offshop.getOffshopInfo][emily][2016. 8. 04.] */
+		SELECT 
+				  STORE_ID
+       			, OFFSHOP_ID
+       			, NAME
+       			, OFFSHOP_TYPE_CD
+       			, ZIP_CD
+       			, ADDRESS1
+       			, ADDRESS2
+       			, ADDRESS3
+       			, ADDRESS4
+       			, (CASE WHEN OFFSHOP_PHONE IS NULL THEN MANAGER_PHONE ELSE OFFSHOP_PHONE END)		AS OFFSHOP_PHONE
+       			, OFFSHOP_PICKUP_YN
+       			, LATITUDE
+       			, LONGITUDE
+       			, INS_DT
+       			, INS_ID
+       			, UPD_DT
+       			, UPD_ID
+       			, OFFSHOP_AFFILIATION
+       			, ADDRESS1 ||' '|| ADDRESS2 ||' '|| ADDRESS3 ||' '|| ADDRESS4 AS ADDRESS
+       			, (SELECT REPLACE(WM_CONCAT(T2.NAME), ',', ', ') BRAND_NAME from CCS_OFFSHOPBRAND T1 JOIN PMS_BRAND T2 ON T1.BRAND_ID = T2.BRAND_ID WHERE T1.OFFSHOP_ID = T3.OFFSHOP_ID) OFFSHOPBRANDS
+       			, HOLIDAY_INFO
+       			, ADDRESS_INFO
+			FROM CCS_OFFSHOP T3
+			WHERE STORE_ID = #{storeId}
+			  AND OFFSHOP_ID = #{offshopId}
+	</select>
+	
+	<resultMap type="ccsOffshop" id="getCcsOffshopByBrandResult" autoMapping="true">
+		<collection property="ccsOffshopholidays" column="{offshopId=OFFSHOP_ID,storeId=STORE_ID}" select="getCcsOffshopholiday"/>
+		<collection property="openDays" column="{offshopId=OFFSHOP_ID}" select="getOffshopOpendayList" ofType="map"/>
+	</resultMap>
+	<select id="getCcsOffshop" resultMap="getCcsOffshopByBrandResult">
+		/* [ccs.offshop.getCcsOffshop][dennis][2016. 7. 4.] */
+		SELECT C.*
+		FROM CCS_OFFSHOP C
+		WHERE C.STORE_ID = #{storeId}
+		AND C.OFFSHOP_ID = #{offshopId}
+		AND C.OFFSHOP_STATE_CD = 'OFFSHOP_STATE_CD.RUN'						
+		AND C.OFFSHOP_PICKUP_YN = 'Y'
+<!-- 		AND C.OFFSHOP_TYPE_CD = '' -->
+	</select>
+	
+	<select id="getCcsOffshopholiday" resultType="ccsOffshopholiday">
+		/* [ccs.offshop.getCcsOffshopholiday][dennis][2016. 7. 4.] */
+		SELECT CH.*
+		FROM CCS_OFFSHOPHOLIDAY CH
+		WHERE CH.OFFSHOP_ID = #{offshopId}
+		AND CH.STORE_ID = #{storeId}
+		AND TO_DATE(CH.HOLIDAY || '000000','YYYYMMDD HH24MISS') &gt;= SYSDATE
+		ORDER BY CH.HOLIDAY
+	</select>
+		
+	<sql id="getOffshopOpenday" >
+		SELECT 
+				TO_CHAR (PICKUP_DATE, 'YYYYMMDD') AS OPEN_DATE_VAL,
+				TO_CHAR (PICKUP_DATE, 'YYYY-MM-DD') AS OPEN_DATE,
+				TO_CHAR (PICKUP_DATE, 'YYYY-MM-DD') || ' (' || TO_CHAR(PICKUP_DATE,'dy','NLS_DATE_LANGUAGE=korean') || ')' AS OPEN_DATE_WEEK
+				
+		  FROM (  SELECT A.*,
+		  				 RANK() OVER (ORDER BY PICKUP_DATE) AS RN,
+		  				 (CASE
+		                     WHEN SYSDATE &gt;
+		                             TO_DATE (
+		                                TO_CHAR (SYSDATE, 'YYYYMMDD') || '160000',
+		                                'YYYYMMDDHH24MISS')
+		                     THEN
+		                        1
+		                     ELSE
+		                        0
+		                  END)
+		                    AS START_CNT,
+<!-- 		                 (CASE -->
+<!-- 		                     WHEN SYSDATE &gt; -->
+<!-- 		                             TO_DATE ( -->
+<!-- 		                                TO_CHAR (SYSDATE, 'YYYYMMDD') || '160000', -->
+<!-- 		                                'YYYYMMDDHH24MISS') -->
+<!-- 		                     THEN -->
+<!-- 		                        5 -->
+<!-- 		                     ELSE -->
+<!-- 		                        4 -->
+<!-- 		                  END) -->
+		                   4 AS END_CNT
+		            FROM (    SELECT SYSDATE + LEVEL -1 AS PICKUP_DATE, TO_CHAR(SYSDATE + LEVEL - 1, 'YYYYMMDD') AS JOINDATE 
+		                        FROM DUAL
+		                  CONNECT BY LEVEL &lt; 30) A,
+		                 (SELECT HOLIDAY
+		                    FROM CCS_OFFSHOPHOLIDAY
+		                   WHERE OFFSHOP_ID = #{offshopId}    
+		                   AND SYSDATE &lt;
+		                                TO_DATE (HOLIDAY || '235959',
+		                                         'YYYYMMDDHH24MISS')
+		                         AND SYSDATE + 30 &gt;
+		                                TO_DATE (HOLIDAY || '235959',
+		                                         'YYYYMMDDHH24MISS')) B
+		           WHERE A.JOINDATE = B.HOLIDAY(+) AND B.HOLIDAY IS NULL
+		        ORDER BY PICKUP_DATE)
+		 WHERE RN &lt;= END_CNT AND RN &gt; START_CNT
+	</sql>
+	
+	<sql id="offshopIdParam">
+	#{offshopId}
+	</sql>
+	
+	<select id="getOffshopOpendayList" resultType="map">
+		/* [ccs.offshop.getOffshopOpendayList][dennis][2016. 8. 11.] */
+		<bind name="offshopId" value="offshopId"/>
+		<include refid="getOffshopOpenday"/>				
+	</select>
+
+	<select id="getOffshopType" resultType="String">
+		/* [ccs.offshop.getOffshopType][stella][2016. 8. 22.] */
+		SELECT
+			OFFSHOP_AFFILIATION
+		  FROM
+		  	CCS_OFFSHOP
+		 WHERE
+		 	STORE_ID = #{storeId}
+		 GROUP BY
+		 	OFFSHOP_AFFILIATION
+	</select>
+	
+	<resultMap type="ccsOffshop" id="offshopResultAll" autoMapping="true">
+		<id property="offshopId" column="OFFSHOP_ID" />
+		<collection property="ccsOffshopbrands" column="{storeId=STORE_ID,offshopId=OFFSHOP_ID}" javaType="java.util.ArrayList" select="ccs.offshop.getOffshopBrandNameList" />
+	</resultMap>	
+	<select id="getOffshopList" resultMap="offshopResultAll">
+		/* [ccs.offshop.getOffshopList][stella][2016. 8. 22.] */
+		SELECT
+			<if test="cntLimit != null and cntLimit != ''">
+				*
+			 FROM
+			 	(SELECT
+			</if>
+			S.STORE_ID
+		    , S.OFFSHOP_ID
+		    , S.NAME
+		    , S.ADDRESS1
+		    , (CASE WHEN S.OFFSHOP_PHONE IS NULL THEN S.MANAGER_PHONE ELSE S.OFFSHOP_PHONE END)		AS OFFSHOP_PHONE
+		    , S.OFFSHOP_PICKUP_YN
+		    , S.LATITUDE
+		    , S.LONGITUDE
+		    , S.ADDRESS_INFO
+		    , S.AREA_DIV1
+		    , S.AREA_DIV2
+		    , S.HOLIDAY_INFO
+		    , NVL((SELECT BRAND_ID FROM PMS_BRAND WHERE STORE_ID = S.STORE_ID AND NAME = #{offshopBrand}), '')		AS OFFSHOP_BRAND_ID
+	  		<if test="isMobile != null and isMobile != ''">
+				<if test="isMobile == 'Y'.toString()">
+			  		, RTRIM( TO_CHAR( ROUND( 6371 * ACOS (        
+							                                 COS( #{latitude} * 0.017453293 )                                   
+							                               * COS( S.LATITUDE * 0.017453293 )                             
+							                               * COS( (S.LONGITUDE * 0.017453293) - (#{longitude} * 0.017453293)) 
+							                               + SIN( #{latitude} * 0.017453293 )                                 
+							                               * SIN( S.LATITUDE * 0.017453293 )                             
+							                            ), 1), 'FM9990D99'), '.')  AS DISTANCE					
+				</if>
+			</if>		
+			, (CASE WHEN #{memberNo} IS NULL THEN 'N' 
+					WHEN (SELECT OFFSHOP_ID 
+							FROM MMS_INTERESTOFFSHOP
+						   WHERE STORE_ID = S.STORE_ID
+						   		 AND MEMBER_NO = #{memberNo}
+						   		 AND OFFSHOP_ID = S.OFFSHOP_ID) IS NOT NULL THEN 'Y'END)	AS INTEREST_YN
+		FROM CCS_OFFSHOP S
+		WHERE
+		    S.STORE_ID = #{storeId}
+		    AND S.OFFSHOP_STATE_CD = 'OFFSHOP_STATE_CD.RUN'
+		    <if test="defaultYn != null and defaultYn != ''">
+		    	<if test="defaultYn == 'Y'.toString()">
+		    		AND S.AREA_DIV1 LIKE '%서울%'
+		    	</if>
+		    </if>
+		    <if test="offshopBrand != null and offshopBrand != ''">
+		    	AND S.OFFSHOP_ID IN (SELECT OFFSHOP_ID 
+		    						   FROM CCS_OFFSHOPBRAND
+		    						  WHERE STORE_ID = S.STORE_ID
+		    						  		AND BRAND_ID = (SELECT BRAND_ID
+		    						  						  FROM PMS_BRAND
+		    						  						 WHERE STORE_ID = S.STORE_ID
+		    						  						 		AND NAME = #{offshopBrand}))
+		    </if>
+		    <if test="offshopArea1 != null and offshopArea1 != ''">
+		    	AND S.AREA_DIV1 LIKE '%' || #{offshopArea1} || '%'
+		    </if>
+		    <if test="offshopArea2 != null and offshopArea2 != ''">
+		    	AND S.AREA_DIV2 LIKE '%' || #{offshopArea2} || '%'
+		    </if>
+		    <!-- <if test="offshopAffiliation != null and offshopAffiliation != ''">
+		    	AND S.OFFSHOP_AFFILIATION = #{offshopAffiliation}
+		    </if> -->
+		    <if test="searchKeyword != null and searchKeyword != ''">
+		    	AND S.NAME LIKE '%' || #{searchKeyword} || '%')
+		    </if>
+		    <if test="pickupYn != null and pickupYn != ''">
+		    	AND S.OFFSHOP_PICKUP_YN = #{pickupYn}
+		    </if>
+			<if test="isMobile != null and isMobile != ''">
+			ORDER BY
+				<if test="isMobile == 'N'.toString()">
+					S.NAME
+				</if>
+				<if test="isMobile == 'Y'.toString()">
+					TO_NUMBER(DISTANCE)
+				</if>
+			</if>
+		<if test="cntLimit != null and cntLimit != ''">
+			)
+		WHERE ROWNUM <![CDATA[<=]]> #{cntLimit}
+		</if>
+	</select>
+	
+	<select id="getOffshopBrandNameList" resultType="ccsOffshopbrand">
+		/* [ccs.offshop.getOffshopBrandNameList][stella][2016. 8. 22.] */
+		SELECT
+			B.NAME
+		  FROM
+		  	CCS_OFFSHOPBRAND SB
+		  	JOIN PMS_BRAND B
+		  		ON B.STORE_ID = SB.STORE_ID
+		  		AND B.BRAND_ID = SB.BRAND_ID
+		 WHERE
+		 	SB.STORE_ID = #{storeId}
+		 	AND SB.OFFSHOP_ID = #{offshopId}
+		 GROUP BY
+		 	B.NAME, B.SORT_NO
+		 ORDER BY
+		 	TO_NUMBER(B.SORT_NO)
+	</select>
+	<select id="getOffshopAreaDiv1List" resultType="ccsOffshop">
+	/* [ccs.offshop.getOffshopAreaDiv1List][eddie][2016. 8. 22.] */
+		SELECT SHOP.AREA_DIV1
+		  FROM    PMS_OFFSHOPSTOCK STOCK
+		       INNER JOIN
+		          CCS_OFFSHOP SHOP
+		       ON     SHOP.OFFSHOP_ID = STOCK.OFFSHOP_ID AND SHOP.STORE_ID = STOCK.STORE_ID
+		       <if test="saleproductId!=null and saleproductId!=''">
+		          AND STOCK.SALEPRODUCT_ID  = #{saleproductId}	         
+		       </if> 
+		          AND STOCK.REAL_STOCK_QTY > 0
+		       <if test="pickupYn!=null and pickupYn!=''">      
+		          AND SHOP.OFFSHOP_PICKUP_YN = #{pickupYn}
+		       </if>
+		       <if test="offshopId != null and offshopId != ''">
+		       	  AND SHOP.OFFSHOP_ID = #{offshopId} 
+		       </if>   
+		          <!-- AND SHOP.AREA_DIV1 = #{offshopArea1} -->
+		          AND SHOP.OFFSHOP_STATE_CD = 'OFFSHOP_STATE_CD.RUN'
+		<if test="brandId!=null and brandId!=''">
+			WHERE SHOP.OFFSHOP_ID IN (SELECT OFFSHOP_ID FROM CCS_OFFSHOPBRAND 
+										WHERE STORE_ID = SHOP.STORE_ID AND BRAND_ID = #{brandId})
+		</if>	          
+	GROUP BY SHOP.AREA_DIV1
+	</select>	
+	<select id="getOffshopAreaDiv2List" resultType="ccsOffshop">
+	/* [ccs.offshop.getOffshopAreaDiv2List][eddie][2016. 8. 22.] */
+		SELECT SHOP.AREA_DIV2
+		  FROM    PMS_OFFSHOPSTOCK STOCK
+		       INNER JOIN
+		          CCS_OFFSHOP SHOP
+		       ON     SHOP.OFFSHOP_ID = STOCK.OFFSHOP_ID AND SHOP.STORE_ID = STOCK.STORE_ID
+		       <if test="saleproductId!=null and saleproductId!=''">
+		          AND STOCK.SALEPRODUCT_ID  = #{saleproductId}	         
+		       </if>
+		          AND STOCK.REAL_STOCK_QTY > 0
+		       <if test="pickupYn!=null and pickupYn!=''">      
+		          AND SHOP.OFFSHOP_PICKUP_YN = #{pickupYn}
+		       </if>   
+		          AND SHOP.AREA_DIV1 = #{offshopArea1}
+		          AND SHOP.OFFSHOP_STATE_CD = 'OFFSHOP_STATE_CD.RUN'
+		<if test="brandId!=null and brandId!=''">
+			WHERE SHOP.OFFSHOP_ID IN (SELECT OFFSHOP_ID FROM CCS_OFFSHOPBRAND 
+										WHERE STORE_ID = SHOP.STORE_ID AND BRAND_ID = #{brandId})
+		</if>		          
+	GROUP BY SHOP.AREA_DIV2      		          
+	</select>
+	<select id="getOffshopList2" resultType="ccsOffshop">
+	/* [ccs.offshop.getOffshopList2][eddie][2016. 8. 22.] */
+		SELECT SHOP.NAME, SHOP.OFFSHOP_ID, REAL_STOCK_QTY
+		  FROM    PMS_OFFSHOPSTOCK STOCK
+		       INNER JOIN
+		          CCS_OFFSHOP SHOP
+		       ON     SHOP.OFFSHOP_ID = STOCK.OFFSHOP_ID
+		          AND SHOP.STORE_ID = STOCK.STORE_ID
+		          AND SHOP.AREA_DIV1 = #{offshopArea1}
+		          AND SHOP.AREA_DIV2 = #{offshopArea2}
+		       <if test="saleproductId!=null and saleproductId!=''">
+		          AND STOCK.SALEPRODUCT_ID  = #{saleproductId}	         
+		       </if>          
+		          AND STOCK.REAL_STOCK_QTY > 0
+		          AND SHOP.OFFSHOP_PICKUP_YN = 'Y'	
+		          AND SHOP.OFFSHOP_STATE_CD = 'OFFSHOP_STATE_CD.RUN'	
+	</select>
+	<resultMap type="gcp.pms.model.custom.PmsOffpickupProduct" id="getSaleproductPickupshopInfoResult" autoMapping="true">
+		<id property="saleproductId" 							column="SALEPRODUCT_ID"/>
+		<result property="productName" 							column="PRODUCT_NAME"/>
+		<result property="productId" 							column="PRODUCT_ID"/>
+		<result property="saleproductName" 						column="SALERPDOCUT_NAME"/>
+	    <association property="ccsOffshop" column="offshopId" javaType="ccsOffshop">
+	    	<id property="offshopId" 	column="OFFSHOP_ID"/>
+	    	<result property="areaDiv1" column="AREA_DIV1"/>
+	    	<result property="areaDiv2" column="AREA_DIV2"/>
+	    	<result property="name" 	column="OFFSHOP_NAME"/>	    
+	    </association>		
+	</resultMap>		
+	<select id="getSaleproductPickupshopInfo" resultMap="getSaleproductPickupshopInfoResult" >
+	/* [ccs.offshop.getSaleproductPickupshopInfo][eddie][2016. 8. 22.] */
+		SELECT PRD.NAME PRODUCT_NAME,
+		       PRD.PRODUCT_ID,
+		       SPRD.SALEPRODUCT_ID,
+		       SPRD.NAME SALERPDOCUT_NAME,
+			<if test="offshopId!= null and offshopId!=''">
+		       SHOP.OFFSHOP_ID,
+		       SHOP.AREA_DIV1,
+		       SHOP.AREA_DIV2,
+		       SHOP.NAME OFFSHOP_NAME,
+			</if>		       
+		    <if test="offshopId== null or offshopId==''">
+		       '' OFFSHOP_ID,
+		       '' AREA_DIV1,
+		       '' AREA_DIV2,
+		       '' OFFSHOP_NAME,
+		    </if>
+		       (SELECT MAX (REAL_STOCK_QTY)
+		          FROM PMS_OFFSHOPSTOCK STOCK
+		         WHERE SPRD.SALEPRODUCT_ID = STOCK.SALEPRODUCT_ID AND SPRD.STORE_ID = STOCK.STORE_ID)
+		          REAL_STOCK_QTY
+		  FROM    PMS_SALEPRODUCT SPRD
+		       INNER JOIN
+		          PMS_PRODUCT PRD
+		       ON PRD.PRODUCT_ID = SPRD.PRODUCT_ID AND PRD.STORE_ID = SPRD.STORE_ID
+			<if test="offshopId!= null and offshopId!=''">
+		       INNER JOIN PMS_OFFSHOPSTOCK STOCK
+		          ON STOCK.SALEPRODUCT_ID = SPRD.SALEPRODUCT_ID AND STOCK.STORE_ID = SPRD.STORE_ID			
+		       INNER JOIN CCS_OFFSHOP SHOP
+		          ON     (    SHOP.OFFSHOP_ID = STOCK.OFFSHOP_ID
+		                  AND SHOP.STORE_ID = SPRD.STORE_ID
+		                  AND SHOP.OFFSHOP_PICKUP_YN = 'Y'
+		                  AND SHOP.AREA_DIV1 IS NOT NULL
+		                  AND SHOP.OFFSHOP_STATE_CD = 'OFFSHOP_STATE_CD.RUN'
+		                  AND SHOP.OFFSHOP_ID = #{offshopId}  )		         	 
+			</if>  		       
+		 WHERE SPRD.SALEPRODUCT_ID = #{saleproductId} AND SPRD.STORE_ID = #{storeId}			         
+	</select>
+	
+	
+	
+	<resultMap type="mmsInterestoffshop" id="shopOnOffshopMap" autoMapping="true">
+		<id column="OFFSHOP_ID" property="offshopId" />
+		<result column="TOP_YN" property="topYn" />
+		<association property="ccsOffshop" column="offshopId" javaType="ccsOffshop">
+			<id column="OFFSHOP_ID" property="offshopId" />
+			<result column="OFFSHOP_TYPE_CD" property="offshopTypeCd"/>
+			<result column="NAME" property="name"/>
+			<result column="OFFSHOP_AFFILIATION" property="offshopAffiliation"/>
+			<result column="ADDRESS_INFO" property="addressInfo"/>
+			<result column="AREA_DIV1" property="areaDiv1"/>
+			<result column="AREA_DIV2" property="areaDiv2"/>
+			<result column="HOLIDAY_INFO" property="holidayInfo"/>
+			<result column="ZIP_CD" property="zipCd"/>
+			<result column="ADDRESS1" property="address1"/>
+			<result column="ADDRESS2" property="address2"/>
+			<result column="ADDRESS3" property="address3"/>
+			<result column="ADDRESS4" property="address4"/>
+			<result column="MANAGER_PHONE" property="managerPhone"/>
+			<result column="OFFSHOP_PICKUP_YN" property="offshopPickupYn"/>
+			<result column="LATITUDE" property="latitude"/>
+			<result column="LONGITUDE" property="longitude"/>
+			<result column="OFFSHOP_STATE_CD" property="offshopStateCd"/>
+			<collection property="ccsOffshopbrands" ofType="gcp.ccs.model.CcsOffshopbrand">
+				<result column="OFFSHOP_ID" property="offshopId" />
+				<result column="BRAND_NAME" property="name"/>
+			</collection>
+		</association>
+		
+	</resultMap>
+	<select id="getShopOnOffShopInfoList" resultMap="shopOnOffshopMap">
+	/* [ccs.offshop.getShopOnOffShopInfoList][allen][2016. 10. 16.] */	
+		SELECT 
+				result1.*, result2.NAME AS BRAND_NAME
+		  FROM (
+	             SELECT 
+	                      ROWNUM RNUM
+	                    , T1.STORE_ID
+						, T1.OFFSHOP_ID
+						, T1.OFFSHOP_TYPE_CD
+						, T1.NAME
+						, T1.OFFSHOP_AFFILIATION
+						, T1.ADDRESS_INFO
+						, T1.AREA_DIV1
+						, T1.AREA_DIV2
+						, T1.HOLIDAY_INFO
+						, T1.ZIP_CD
+						, T1.ADDRESS1
+						, T1.ADDRESS2
+						, T1.ADDRESS3
+						, T1.ADDRESS4
+						, T1.MANAGER_PHONE
+						, T1.OFFSHOP_PICKUP_YN
+						, T1.LATITUDE
+						, T1.LONGITUDE
+						, T1.OFFSHOP_STATE_CD
+						, T2.TOP_YN
+	              FROM CCS_OFFSHOP T1
+	              JOIN MMS_INTERESTOFFSHOP T2
+	                ON T1.OFFSHOP_ID = T2.OFFSHOP_ID
+	             WHERE T2.MEMBER_NO = #{memberNo}
+	             AND T1.OFFSHOP_STATE_CD = 'OFFSHOP_STATE_CD.RUN'
+	             <if test="pagingYn != null">
+	             	AND ROWNUM &lt; 6
+	             </if>
+	             ) result1
+	             JOIN
+	             (
+	             SELECT T1.OFFSHOP_ID, T3.BRAND_ID, T3.NAME
+	               FROM CCS_OFFSHOP T1
+	               JOIN CCS_OFFSHOPBRAND T2
+	                 ON T1.OFFSHOP_ID = T2.OFFSHOP_ID
+	              JOIN PMS_BRAND T3
+	                ON T2.BRAND_ID = T3.BRAND_ID
+	               AND T3.DISPLAY_YN = 'Y'
+             ) result2
+           ON result1.OFFSHOP_ID = result2.OFFSHOP_ID 
+            ORDER BY result1.TOP_YN DESC, result1.OFFSHOP_ID
+	</select>
+	
+</mapper>
