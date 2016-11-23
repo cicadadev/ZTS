@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd" >
+<properties>
+	<comment>local admin setting</comment>
+	<entry key="system.type">BO</entry>
+			
+	<entry key="admin.domain.url">http://local.0to7.com:7001</entry>
+	
+	<entry key="zeroto7.business.id">1</entry> <!-- 0TO7 자사 업체 id -->
+	<entry key="partner.user.role.id">8</entry> <!-- 파트너 사용자 기본 권한 -->
+	
+	<entry key="upload.base.path">/Z7_SHOP_NAS/devshare/upload</entry>
+	<entry key="excel.download.path.template">${admin.domain.url}/resources/excel/template</entry>		
+
+	<entry key="partner.rootcategory">5001</entry><!-- 업체 root 표준 카테고리 -->
+	<entry key="partner.rootdmscategory">00001</entry><!-- 업체 root 전시 카테고리 -->
+	
+	<!-- 접속 허용IP -->
+	
+	<entry key="allow.ip">192.2.0.0/16, 118.46.152.0/24, 101.231.144.0/24</entry>
+	
+	
+<!--  /8 ; A class : /255.0.0.0 과 같음 -->
+<!-- /16 ; B class : /255.255.0.0 과 같음 -->
+<!-- /24 ; C class : /255.255.255.0 과 같음 -->
+<!-- /32 ; 그 ip 만 지정 : /255.255.255.255 와 같음 -->
+<!-- -      제로투세븐 본사: 192.2.71.0/24 ~ 192.2.73.0/24 -->
+<!-- -      제로투세븐 물류센터: 192.2.70.0/24 -->
+<!-- -      메타넷 C/S 센터로 추측(확인 중): 118.46.152, 101.231.144 -->
+	
+	<!-- 개인정보이력 체크 및 저장 URL -->
+	<entry key="read.history.check.url">/mms/member/popup/detail,/mms/member/list,/oms/refund/list,/sps/event/popup/joinList</entry>
+</properties>

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+	<title>0to7 BO</title>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+	<meta http-equiv="Pragma" content="no-cache" />
+	<script type="text/javascript" src="js/jquery-1.12.0.min.js"></script>
+	<script type="text/javascript" src="js/ui.js"></script>
+	<link rel="stylesheet" href="css/common.css" />
+	<script type="text/javascript">
+		$(window).load(function() {
+			$(".iframe1", parent.document).height($(".wrap").height());
+		});
+	</script>
+</head>
+
+<body>
+	<div class="wrap wrap_iframe">
+		<!-- ### content ### -->
+		<section class="content">
+			<div class="inner">
+				<!-- ### 1번 탭 ### -->
+				<article class="con_box">
+					<!-- ### 전화문의 등록 ### -->
+					<h2 class="sub_title1">전화문의 등록</h2>
+					<div class="box_type1">
+						<h3 class="sub_title2">
+							전화문의 상세
+						</h3>
+
+						<table class="tb_type1">
+							<colgroup>
+								<col class="col_142" />
+								<col class="col_auto" />
+								<col class="col_142" />
+								<col class="col_auto" />
+							</colgroup>
+							<tbody>
+								<tr>
+									<th>문의자</th>
+									<td>
+										김길동(ID)
+										<button type="button" class="btn_type2">
+											<b>회원검색</b>
+										</button>
+									</td>
+									<th>문의일시</th>
+									<td>
+										<input type="text" value="문의일" placeholder="" />
+										<button type="button" class="btn_date">달력</button>
+									</td>
+								</tr>
+								<tr>
+									<th>문의유형</th>
+									<td>
+										<select style="width:120px;">
+											<option value="">주문/결제</option>
+										</select>
+
+										<select style="width:120px;">
+											<option value="">결제</option>
+										</select>
+									</td>
+									<th>주문번호</th>
+									<td>
+										20160322-0000001
+										<button type="button" class="btn_type2">
+											<b>주문조회</b>
+										</button>
+									</td>
+								</tr>
+								<tr>
+									<th>문의상품</th>
+									<td colspan="3">
+										<input type="checkbox" value="" id="chk8" />
+										<label for="chk8">전체</label>
+
+										<input type="checkbox" value="" id="chk9" />
+										<label for="chk9">상품명</label>
+
+										<input type="checkbox" value="" id="chk10" />
+										<label for="chk10">상품명</label>
+
+										<input type="checkbox" value="" id="chk11" />
+										<label for="chk11">상품명</label>
+									</td>
+								</tr>
+								<tr>
+									<th>문의제목</th>
+									<td colspan="3">
+										<input type="text" value="문의일" placeholder="" style="width:55%;" />
+									</td>
+								</tr>
+								<tr>
+									<th>문의상품</th>
+									<td colspan="3">
+										<textarea cols="30" rows="5" placeholder="" style="height:145px;">00:00  전화 상담시작 </textarea>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+
+					<div class="btn_alignR">
+						<button type="button" class="btn_type1">
+							<b>취소</b>
+						</button>
+						<button type="button" class="btn_type1 btn_type1_purple">
+							<b>등록</b>
+						</button>
+					</div>
+					<!-- ### //전화문의 등록 ### -->
+				</article>
+				<!-- ### //1번 탭 ### -->
+			</div>
+		</section>
+		<!-- ### //content ### -->
+	</div>
+</body>
+</html>

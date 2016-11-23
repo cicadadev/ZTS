@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns="http://www.springframework.org/schema/beans"	
+    xmlns:context="http://www.springframework.org/schema/context"
+    xmlns:mvc="http://www.springframework.org/schema/mvc"
+    xmlns:util="http://www.springframework.org/schema/util"    
+    xsi:schemaLocation="
+    http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc.xsd
+    http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+    http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd    
+    http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+    http://www.springframework.org/schema/aop
+	http://www.springframework.org/schema/aop/spring-aop-3.0.xsd">  
+	    
+    <mvc:annotation-driven />      
+    <aop:aspectj-autoproxy /> 
+    <context:component-scan base-package="gcp,intune" scoped-proxy="targetClass"/>       
+  	
+    <!-- Resources -->
+    <mvc:resources mapping="/resources/**" location="/resources/"/>
+         
+    <import resource="context/context-mybatis-oracle.xml" />
+    <import resource="context/context-mybatis-mssql.xml" />
+    <import resource="context/context-mybatis-mssql-pos.xml" />
+    <import resource="context/context-mybatis-oracle-hanjin.xml" />
+    <import resource="context/context-mybatis-mysql-tms.xml" />
+    <!-- <import resource="context/context-ehcache.xml" /> -->
+    <import resource="context/context-security.xml" /> 
+     
+    <bean id="daoAspect" class="gcp.common.DaoAspect"></bean>
+     
+    <bean id="config" class="intune.gsf.common.utils.Config">
+    	<property name="props">    		
+    		<list>
+    			<util:properties location="classpath:config/system/properties-admin.xml" />
+    			<util:properties location="classpath:config/system/properties.xml" />
+    		</list>
+    	</property>
+    </bean>        
+
+    <!-- 1. message -->
+    <bean id="messageSource" class="org.springframework.context.support.ReloadableResourceBundleMessageSource">
+        <property name="basenames">
+            <list>
+                <value>/WEB-INF/messages/message</value>
+                <value>/WEB-INF/messages/field/field_message</value>
+                <value>/WEB-INF/messages/field/custom_field_message</value>
+                <value>/WEB-INF/messages/error/error</value>
+                <value>/WEB-INF/messages/tms/contents</value>                
+            </list>
+        </property>
+<!--         <property name="cacheSeconds" value="100000" /> -->
+        <property name="cacheSeconds" value="10" />
+        <property name="defaultEncoding" value="UTF-8" />
+    </bean>
+    <bean id="messageSourceAccessor" class="org.springframework.context.support.MessageSourceAccessor">
+        <constructor-arg ref="messageSource"/>
+    </bean>
+    <bean id="messageUtil" class="intune.gsf.common.utils.MessageUtil">
+        <property name="messageSourceAccessor" ref="messageSourceAccessor"/>
+    </bean> 
+    <!-- 
+	<bean id="messageSource" class="org.springframework.context.support.ReloadableResourceBundleMessageSource">
+        <property name="basename" value="WEB-INF/messages/Messages"/>
+        <property name="defaultEncoding" value="UTF-8" />
+        <property name="cacheSeconds" value="180"/>
+	</bean>
+	  -->
+     
+    <!-- 2. locale -->
+    <!-- 	<bean id="loginInterceptor" class="intune.gsf.common.interceptors.LocaleInterceptor" />-->
+	
+	<bean id="localeChangeInterceptor" class="intune.gsf.common.interceptors.LocaleInterceptor"></bean>
+   	<mvc:interceptors>
+    	<mvc:interceptor>
+			<mvc:mapping path="/**" />
+			<mvc:exclude-mapping path="/resources/**" />
+			<ref bean="localeChangeInterceptor" />
+		</mvc:interceptor>
+<!--         <mvc:interceptor>
+			<mvc:mapping path="/**" />
+			<mvc:exclude-mapping path="/ccs/login" />
+			<mvc:exclude-mapping path="/resources/**" />
+			<ref bean="loginInterceptor" /> 
+		</mvc:interceptor> -->
+    </mvc:interceptors>
+    
+    <!-- 
+	<bean id="uploadDirResource" class="org.springframework.core.io.FileSystemResource">
+		<constructor-arg>
+			<value>#{config['upload.path']}</value>
+		</constructor-arg>
+	</bean>
+	
+	<bean id="filedown" class="kr.co.intune.gsf.controller.DownloadView" />
+	     -->
+
+ 	<bean id="excelView" class="intune.gsf.common.excel.ExcelView"></bean>
+</beans>

@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+	<title>0to7 BO</title>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+	<meta http-equiv="Pragma" content="no-cache" />
+	<script type="text/javascript" src="js/jquery-1.12.0.min.js"></script>
+	<script type="text/javascript" src="js/ui.js"></script>
+	<link rel="stylesheet" href="css/common.css" />
+	<script type="text/javascript">
+		$(window).load(function() {
+			$(".iframe1", parent.document).height($(".wrap").height());
+		});
+	</script>
+</head>
+
+<body>
+	<div class="wrap wrap_iframe">
+		<!-- ### content ### -->
+		<section class="content">
+			<div class="inner">
+				<!-- ### 1번 탭 ### -->
+				<article class="con_box con_on">
+					<!-- ### 카테고리 목록 ### -->
+					<div class="category">
+						<button type="button" class="btn_type2 btn_type2_gray2">
+							<b>카테고리등록</b>
+						</button>
+
+						<ul class="list_dep">
+							<li class="dep1">
+								<button type="button">폴더형 메뉴</button>
+								<a href="#none">표준카테고리</a>
+							</li>
+								<li class="dep2">
+									<button type="button">폴더형 메뉴</button>
+									<a href="#none">대카테고리</a>
+								</li>
+									<li class="dep3">
+										<button type="button">폴더형 메뉴</button>
+										<a href="#none">중카테고리</a>
+									</li>
+										<li class="dep4">
+											<button type="button">폴더형 메뉴</button>
+											<a href="#none">소카테고리</a>
+										</li>
+											<li class="dep5 end">
+												<button type="button">컨텐츠 메뉴</button>
+												<a href="#none">마지막 단계</a>
+											</li>
+										<li class="dep4">
+											<button type="button">폴더형 메뉴</button>
+											<a href="#none">소카테고리</a>
+										</li>
+											<li class="dep5 end">
+												<button type="button">컨텐츠 메뉴</button>
+												<a href="#none">마지막 단계</a>
+											</li>
+										<li class="dep4">
+											<button type="button">폴더형 메뉴</button>
+											<a href="#none">소카테고리</a>
+										</li>
+									<li class="dep3">
+										<button type="button">폴더형 메뉴</button>
+										<a href="#none">중카테고리</a>
+									</li>
+										<li class="dep4">
+											<button type="button">폴더형 메뉴</button>
+											<a href="#none">소카테고리</a>
+										</li>
+										<li class="dep4">
+											<button type="button">폴더형 메뉴</button>
+											<a href="#none">소카테고리</a>
+										</li>
+								<li class="dep2">
+									<button type="button">폴더형 메뉴</button>
+									<a href="#none">대카테고리</a>
+								</li>
+									<li class="dep3">
+										<button type="button">폴더형 메뉴</button>
+										<a href="#none">중카테고리</a>
+									</li>
+										<li class="dep4">
+											<button type="button">폴더형 메뉴</button>
+											<a href="#none">소카테고리</a>
+										</li>
+											<li class="dep5 end">
+												<button type="button">컨텐츠 메뉴</button>
+												<a href="#none">마지막 단계</a>
+											</li>
+										<li class="dep4">
+											<button type="button">폴더형 메뉴</button>
+											<a href="#none">소카테고리</a>
+										</li>
+									<li class="dep3">
+										<button type="button">폴더형 메뉴</button>
+										<a href="#none">중카테고리</a>
+									</li>
+								<li class="dep2">
+									<button type="button">폴더형 메뉴</button>
+									<a href="#none">대카테고리</a>
+								</li>
+									<li class="dep3">
+										<button type="button">폴더형 메뉴</button>
+										<a href="#none">중카테고리</a>
+									</li>
+									<li class="dep3">
+										<button type="button">폴더형 메뉴</button>
+										<a href="#none">중카테고리</a>
+									</li>
+								<li class="dep2">
+									<button type="button">폴더형 메뉴</button>
+									<a href="#none">대카테고리</a>
+								</li>
+									<li class="dep3">
+										<button type="button">폴더형 메뉴</button>
+										<a href="#none">중카테고리</a>
+									</li>
+							<li class="dep1">
+								<button type="button">폴더형 메뉴</button>
+								<a href="#none">표준카테고리</a>
+							</li>
+								<li class="dep2">
+									<button type="button">폴더형 메뉴</button>
+									<a href="#none">대카테고리</a>
+								</li>
+									<li class="dep3">
+										<button type="button">폴더형 메뉴</button>
+										<a href="#none">중카테고리</a>
+									</li>
+						</ul>
+
+						<!-- ### 접근성 트리 메뉴 ### 
+						<ul class="list">
+							<li class="on">
+								<button type="button">표준카테고리</button>
+
+								<ul>
+									<li class="on">
+										<button type="button">대카테고리</button>
+
+										<ul>
+											<li class="on">
+												<button type="button">중카테고리</button>
+
+												<ul>
+													<li class="on">
+														<button type="button" class="end">소카테고리</button>
+
+														<ul>
+															<li class="on">
+																<button type="button">자켓1</button>
+															</li>
+															<li>
+																<button type="button">자켓2</button>
+															</li>
+														</ul>
+													</li>
+
+													<li>
+														<button type="button">코트</button>
+
+														<ul>
+															<li>
+																<button type="button">자켓</button>
+															</li>
+														</ul>
+													</li>
+
+													<li>
+														<button type="button">원피스</button>
+
+														<ul>
+															<li>
+																<button type="button">자켓</button>
+															</li>
+														</ul>
+													</li>
+												</ul>
+											</li>
+										</ul>
+									</li>
+									<li>
+										<button type="button">대카테고리</button>
+									</li>
+									<li>
+										<button type="button">대카테고리</button>
+									</li>
+									<li>
+										<button type="button">대카테고리</button>
+									</li>
+								</ul>
+							</li>
+						</ul>
+						 ### 접근성 트리 메뉴 ### -->
+					</div>
+					<!-- ### //카테고리 목록 ### -->
+
+					<div class="columnR">
+						<!-- ### 표준카테고리 기본정보 설정 ### -->
+						<div class="box_type1">
+							<h3 class="sub_title2">
+								표준카테고리 기본정보 설정
+							</h3>
+							<table class="tb_type1">
+								<colgroup>
+									<col width="18%" />
+									<col width="32%" />
+									<col width="18%" />
+									<col width="*" />
+								</colgroup>
+								<tbody>
+									<tr>
+										<th>
+											표준카테고리번호 <i>필수입력</i>
+										</th>
+										<td>1234567</td>
+										<th>
+											표준카테고리명 <i>필수입력</i>
+										</th>
+										<td>
+											<input type="text" value="화장품" placeholder="" style="width:30%;" />
+										</td>
+									</tr>
+									<tr>
+										<th>
+											카테고리깊이
+										</th>
+										<td>1</td>
+										<th>
+											우선순위 <i>필수입력</i>
+										</th>
+										<td>
+											<input type="text" value="1" placeholder="" style="width:30%;" />
+										</td>
+									</tr>
+									<tr>
+										<th>
+											Leaf여부 <i>필수입력</i>
+										</th>
+										<td>
+											<input type="radio" value="" name="radio_set1" id="radio1" checked="checked" />
+											<label for="radio1">Yes</label>
+											<input type="radio" value="" name="radio_set1" id="radio2" />
+											<label for="radio2">No</label>
+										</td>
+										<th>
+											사용여부 <i>필수입력</i>
+										</th>
+										<td>
+											<input type="radio" value="" name="radio_set2" id="radio3" />
+											<label for="radio3">사용</label>
+											<input type="radio" value="" name="radio_set2" id="radio4" checked="checked" />
+											<label for="radio4">미사용</label>
+										</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+
+						<div class="btn_alignR">
+							<button type="button" class="btn_type1">
+								<b>삭제</b>
+							</button>
+							<button type="button" class="btn_type1 btn_type1_gray">
+								<b>취소</b>
+							</button>
+							<button type="button" class="btn_type1 btn_type1_purple">
+								<b>저장</b>
+							</button>
+						</div>
+						<!-- ### //표준카테고리 기본정보 설정 ### -->
+
+						<div class="division_set2" style="margin-top:49px;">
+							<!-- ### 속성 목록 ### -->
+							<section>
+								<div class="btn_alignR">
+									<button type="button" class="btn_type1 btn_type1_purple">
+										<b>저장</b>
+									</button>
+								</div>
+
+								<div class="box_type1" style="margin-top:10px;">
+									<h3 class="sub_title2">
+										속성 목록
+										<span>(총 <b>1,000</b>건)</span>
+									</h3>
+
+									<div class="tb_util">
+										<button type="button" class="btn_tb_util tb_util1">되돌리기</button>
+										<button type="button" class="btn_tb_util tb_util5">행삽입</button>
+									</div>
+
+									<div class="gridbox">
+										<img src="img/temp/grid3.gif" alt="" style="vertical-align:top;" />
+									</div>
+								</div>
+
+								<div class="btn_alignR">
+									<button type="button" class="btn_type1 btn_type1_purple">
+										<b>저장</b>
+									</button>
+								</div>
+							</section>
+							<!-- ### //속성 목록 ### -->
+
+							<!-- ### 속성값 목록 ### -->
+							<section>
+								<div class="btn_alignR">
+									<button type="button" class="btn_type1">
+										<b>삭제</b>
+									</button>
+									<button type="button" class="btn_type1 btn_type1_purple">
+										<b>저장</b>
+									</button>
+								</div>
+
+								<div class="box_type1" style="margin-top:10px;">
+									<h3 class="sub_title2">
+										속성값 목록
+										<span>(총 <b>1,000</b>건)</span>
+									</h3>
+
+									<div class="tb_util">
+										<button type="button" class="btn_tb_util tb_util1">되돌리기</button>
+										<button type="button" class="btn_tb_util tb_util5">행삽입</button>
+									</div>
+
+									<div class="gridbox">
+										<img src="img/temp/grid4.gif" alt="" style="vertical-align:top;" />
+									</div>
+								</div>
+
+								<div class="btn_alignR">
+									<button type="button" class="btn_type1">
+										<b>삭제</b>
+									</button>
+									<button type="button" class="btn_type1 btn_type1_purple">
+										<b>저장</b>
+									</button>
+								</div>
+							</section>
+							<!-- ### //속성값 목록 ### -->
+						</div>
+					</div>
+				</article>
+				<!-- ### //1번 탭 ### -->
+			</div>
+
+			<div class="loading_stopwatch">
+				<img src="img/loading_stopwatch_bo.gif" alt="" />
+			</div>
+		</section>
+		<!-- ### //content ### -->
+	</div>
+</body>
+</html>

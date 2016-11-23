@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+	<title>0to7 BO</title>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+	<meta http-equiv="Pragma" content="no-cache" />
+	<script type="text/javascript" src="js/jquery-1.12.0.min.js"></script>
+	<script type="text/javascript" src="js/ui.js"></script>
+	<link rel="stylesheet" href="css/common.css" />
+	<script type="text/javascript">
+		$(window).load(function() {
+			$(".iframe1", parent.document).height($(".wrap").height());
+		});
+	</script>
+</head>
+
+<body>
+	<div class="wrap wrap_iframe">
+		<!-- ### content ### -->
+		<section class="content">
+			<div class="inner">
+				<!-- ### 1번 탭 ### -->
+				<article class="con_box">
+					<!-- ### 주문자 정보 ### -->
+					<h2 class="sub_title1">주문 상세</h2>
+					<div class="box_type1">
+						<h3 class="sub_title2">
+							주문자정보
+						</h3>
+
+						<table class="tb_type1">
+							<colgroup>
+								<col width="9%" />
+								<col width="16%" />
+								<col width="9%" />
+								<col width="16%" />
+								<col width="9%" />
+								<col width="16%" />
+								<col width="9%" />
+								<col width="*" />
+							</colgroup>
+							<tbody>
+								<tr>
+									<th>회원구분</th>
+									<td>회원</td>
+									<th>주문자ID</th>
+									<td>Hong111</td>
+									<th>주문자명</th>
+									<td>홍길동</td>
+									<th>회원등급</th>
+									<td>일반</td>
+								</tr>
+								<tr>
+									<th>전화번호</th>
+									<td>02-0000-0000</td>
+									<th>휴대폰번호</th>
+									<td>010-0000-0000</td>
+									<th>E-mail</th>
+									<td colspan="3">aaa@aaa.com</td>
+								</tr>
+								<tr>
+									<th>주소</th>
+									<td colspan="7">
+										(00000) 도로명:서울시 서초구 서래로2길 1111 / 지번: 서울시 서초구 반포동 111
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+					<!-- ### //주문자 정보 ### -->
+
+					<!-- ### 주문 정보 ### -->
+					<div class="box_type1 marginT2"><!-- 2016.07.04 -->
+						<h3 class="sub_title2">
+							주문자정보
+						</h3>
+
+						<div class="tb_util">
+							<button type="button" class="btn_type2 btn_type2_gray2">
+								<b>최초주문상세</b>
+							</button>
+						</div>
+
+						<table class="tb_type1">
+							<colgroup>
+								<col width="9%" />
+								<col width="24%" />
+								<col width="9%" />
+								<col width="25%" />
+								<col width="9%" />
+								<col width="*" />
+							</colgroup>
+							<tbody>
+								<tr>
+									<th>주문번호</th>
+									<td>회원</td>
+									<th>주문일시</th>
+									<td>2016.03.26 10:00:00</td>
+									<th>주문상태</th>
+									<td>배송준비</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+					<!-- ### //주문 정보 ### -->
+
+					<!-- ### 결제 정보 ### -->
+					<div class="box_type1 marginT2"><!-- 2016.07.04 -->
+						<div class="sub_title2">
+							<h3>주문자정보</h3>
+
+							<dl class="total_money">
+								<dt>결제대상금액</dt>
+								<dd>
+									<i>985,000</i>원
+								</dd>
+								<dt>기결제금액</dt>
+								<dd>
+									<i>5,000</i>원
+								</dd>
+								<dt>미결제금액</dt>
+								<dd>
+									<i>980,000</i>원
+								</dd>
+							</dl>
+						</div>
+
+						<table class="tb_type1">
+							<colgroup>
+								<col width="9%" />
+								<col width="24%" />
+								<col width="9%" />
+								<col width="25%" />
+								<col width="9%" />
+								<col width="*" />
+							</colgroup>
+							<tbody>
+								<tr>
+									<th colspan="4">결제상세</th>
+									<th colspan="2">결제수단 (총 3건)</th>
+								</tr>
+								<tr class="order_info">
+									<th rowspan="2">총 상품금액</th>
+									<td rowspan="2">
+										<b>1,000,000원</b>
+									</td>
+									<th rowspan="2">배송비</th>
+									<td rowspan="2">
+										0원<br />
+										(배송비 무료쿠폰)
+									</td>
+									<th>신용카드</th>
+									<td>0원</td>
+								</tr>
+								<tr class="order_info">
+									<th>가상계좌</th>
+									<td>980,000원</td>
+								</tr>
+								<tr class="order_info">
+									<th rowspan="4">할인금액</th>
+									<td>
+										<b>-15,000원</b>
+									</td>
+									<th>적립포인트</th>
+									<td>3,000P</td>
+									<th>실시간 계좌이체</th>
+									<td>0원</td>
+								</tr>
+								<tr class="order_info">
+									<td rowspan="3">
+										<dl class="sale_list">
+											<dt>상품할인</dt>
+											<dd>-10,000원</dd>
+										</dl>
+
+										<dl class="sale_list">
+											<dt>상품쿠폰</dt>
+											<dd>-2,500원</dd>
+										</dl>
+
+										<dl class="sale_list">
+											<dt>딜</dt>
+											<dd>-2,500원</dd>
+										</dl>
+
+										<dl class="sale_list">
+											<dt>장바구니쿠폰</dt>
+											<dd>0원</dd>
+										</dl>
+									</td>
+									<th rowspan="3">총 결제금액</th>
+									<td rowspan="3">
+										<b>985,000원</b>
+									</td>
+									<th>휴대전화 소액결제</th>
+									<td>0원</td>
+								</tr>
+								<tr class="order_info">
+									<th>포인트</th>
+									<td>2,000P</td>
+								</tr>
+								<tr class="order_info">
+									<th>예치금</th>
+									<td>3,000원</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+					<!-- ### //결제 정보 ### -->
+
+					<!-- ### 배송지1 정보 ### -->
+					<div class="btn_alignR marginT3"><!-- 2016.07.04 -->
+						<button type="button" class="btn_type1">
+							<b>주문취소</b>
+						</button>
+						<button type="button" class="btn_type1">
+							<b>교환접수</b>
+						</button>
+						<button type="button" class="btn_type1">
+							<b>반품접수</b>
+						</button>
+					</div>
+
+					<dl class="user_address">
+						<dt>[배송지1]</dt>
+						<dd>서울시 서초구 서래로 0000</dd>
+					</dl>
+					<!-- ### //배송지1 정보 ### -->
+
+					<!-- ### 상품1 목록 ### -->
+					<div class="box_type1 marginT1><!-- 2016.07.04 -->
+						<h3 class="sub_title2">
+							상품 목록
+							<span>(총 <b>2</b>건)</span>
+						</h3>
+
+						<div class="tb_util">
+							<button type="button" class="btn_tb_util tb_util2">엑셀받기</button>
+
+							<select style="width:105px;">
+								<option value="">200건</option>
+							</select>
+
+							<span class="page">
+								<button type="button" class="btn_prev">이전</button>
+								<input type="text" value="1" placeholder="" />
+								<u>/</u><i>24</i>
+								<button type="button" class="btn_next">다음</button>
+							</span>
+
+							<button type="button" class="btn_type2">
+								<b>이동</b>
+							</button>
+						</div>
+
+						<div class="gridbox">
+							<img src="img/temp/grid12.gif" alt="" style="vertical-align:top;" />
+						</div>
+						<div class="tb_bar">
+							<button type="button" class="btn_grid_more">더보기</button>
+						</div>
+					</div>
+
+					<div class="btn_alignR">
+						<button type="button" class="btn_type1">
+							<b>주문취소</b>
+						</button>
+						<button type="button" class="btn_type1">
+							<b>교환접수</b>
+						</button>
+						<button type="button" class="btn_type1">
+							<b>반품접수</b>
+						</button>
+					</div>
+					<!-- ### //상품1 목록 ### -->
+
+					<!-- ### 배송지2 정보 ### -->
+					<div class="btn_alignR marginT3"><!-- 2016.07.04 -->
+						<button type="button" class="btn_type1">
+							<b>주문취소</b>
+						</button>
+						<button type="button" class="btn_type1">
+							<b>교환접수</b>
+						</button>
+						<button type="button" class="btn_type1">
+							<b>반품접수</b>
+						</button>
+					</div>
+
+					<dl class="user_address">
+						<dt>[배송지2]</dt>
+						<dd>서울시 서초구 강남구청로 0000</dd>
+					</dl>
+					<!-- ### //배송지2 정보 ### -->
+
+					<!-- ### 상품2 목록 ### -->
+					<div class="box_type1 marginT1"><!-- 2016.07.04 -->
+						<h3 class="sub_title2">
+							상품 목록
+							<span>(총 <b>2</b>건)</span>
+						</h3>
+
+						<div class="tb_util">
+							<button type="button" class="btn_tb_util tb_util2">엑셀받기</button>
+
+							<select style="width:105px;">
+								<option value="">200건</option>
+							</select>
+
+							<span class="page">
+								<button type="button" class="btn_prev">이전</button>
+								<input type="text" value="1" placeholder="" />
+								<u>/</u><i>24</i>
+								<button type="button" class="btn_next">다음</button>
+							</span>
+
+							<button type="button" class="btn_type2">
+								<b>이동</b>
+							</button>
+						</div>
+
+						<div class="gridbox">
+							<img src="img/temp/grid12.gif" alt="" style="vertical-align:top;" />
+						</div>
+						<div class="tb_bar">
+							<button type="button" class="btn_grid_more">더보기</button>
+						</div>
+					</div>
+
+					<div class="btn_alignR">
+						<button type="button" class="btn_type1">
+							<b>주문취소</b>
+						</button>
+						<button type="button" class="btn_type1">
+							<b>교환접수</b>
+						</button>
+						<button type="button" class="btn_type1">
+							<b>반품접수</b>
+						</button>
+					</div>
+					<!-- ### //상품2 목록 ### -->
+
+					<!-- ### 배송 상태 ### -->
+					<div class="box_type1 marginT2"><!-- 2016.07.04 -->
+						<div class="sub_title2 positionR">
+							<h3>[배송지1]</h3>
+
+							<dl class="etc_info">
+								<dt class="hide">주소</dt>
+								<dd>서울시 서초구 서래로 0000</dd>
+							</dl>
+
+							<button type="button" class="btn_type2 btn_type2_gray2 btn_addr_edit">
+								<b>변경</b>
+							</button>
+						</div>
+
+						<table class="tb_type1">
+							<colgroup>
+								<col width="91" />
+								<col width="41%" />
+								<col width="91" />
+								<col width="*" />
+							</colgroup>
+							<tbody>
+								<tr>
+									<th>배송정책</th>
+									<td>업체배송</td>
+									<th>배송상태</th>
+									<td>
+										상품준비중
+										<button type="button" class="btn_type2">
+											<b>상세</b>
+										</button>
+									</td>
+								</tr>
+								<tr>
+									<th>택배사</th>
+									<td>
+										<select>
+											<option value="">한진택배</option>
+										</select>
+									</td>
+									<th>배송비</th>
+									<td>
+										<input type="text" value="0" placeholder="" style="width:120px;" />
+									</td>
+								</tr>
+								<tr>
+									<th>배송상품</th>
+									<td colspan="3">
+										<table class="tb_type2">
+											<colgroup>
+												<col width="10%" />
+												<col width="*" />
+												<col width="10%" />
+												<col width="12%" />
+												<col width="12%" />
+												<col width="10%" />
+												<col width="12%" />
+												<col width="10%" />
+											</colgroup>
+											<thead>
+												<tr>
+													<th>상품번호</th>
+													<th>상품명</th>
+													<th>판매상태</th>
+													<th>판매가</th>
+													<th>브랜드</th>
+													<th>재고수량</th>
+													<th>주문수량</th>
+													<th>송장번호</th>
+												</tr>
+											</thead>
+											<tbody>
+												<tr>
+													<td>1111</td>
+													<td>
+														<span class="txt_ellipsis">남성 체크셔츠 반팔</span>
+													</td>
+													<td>판매중</td>
+													<td class="alignR">30,000</td>
+													<td>브랜드명</td>
+													<td>100</td>
+													<td>1</td>
+													<td>
+														<input type="text" value="" placeholder="" style="width:100%;" />
+													</td>
+												</tr>
+												<tr>
+													<td>1111</td>
+													<td>
+														<span class="txt_ellipsis">남성 체크셔츠 반팔 남성 체크셔츠 반팔 남성 체크셔츠 반팔</span>
+													</td>
+													<td>판매중</td>
+													<td class="alignR">30,000</td>
+													<td>브랜드명</td>
+													<td>100</td>
+													<td>1</td>
+													<td>
+														<input type="text" value="" placeholder="" style="width:100%;" />
+													</td>
+												</tr>
+											</tbody>
+										</table>
+									</td>
+								</tr>
+								<tr>
+									<th>수취인 정보</th>
+									<td colspan="3">
+										<input type="text" value="홍길동" placeholder="" style="width:100px;" />
+
+										<button type="button" class="btn_type2">
+											<b>배송지 관리</b>
+										</button>
+
+										<label for="user_tel1" style="margin-left:15px;">수취인 전화번호</label>
+										<input type="text" value="02-0000-0000" placeholder="" id="user_tel1" style="width:100px;" />
+
+										<label for="user_tel2" style="margin-left:15px;">수취인 휴대폰번호</label>
+										<input type="text" value="02-0000-0000" placeholder="" id="user_tel2" style="width:100px;" />
+									</td>
+								</tr>
+								<tr>
+									<th>메시지</th>
+									<td colspan="3">
+										<input type="text" value="부재시 경비실에 맡겨주세요~~" placeholder="" style="width:631px;" />
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+					<!-- ### //배송 상태 ### -->
+
+					<!-- ### 클레임 이력 ### -->
+					<dl class="user_address marginT3"><!-- 2016.07.04 -->
+						<dt>클레임 이력</dt>
+						<dd>&nbsp;</dd>
+					</dl>
+
+					<div class="box_type1 marginT1"><!-- 2016.07.04 -->
+						<div class="sub_title2">
+							<h3>주문 취소</h3>
+						</div>
+
+						<table class="tb_type2 no_bg">
+							<colgroup>
+								<col width="11%" span="8" />
+								<col width="*" />
+							</colgroup>
+							<tbody>
+								<tr>
+									<th>상품정보</th>
+									<td colspan="8">
+										<table class="tb_type2">
+											<colgroup>
+												<col width="15%" />
+												<col width="*" />
+												<col width="15%" />
+												<col width="15%" />
+												<col width="15%" />
+											</colgroup>
+											<thead>
+												<tr>
+													<th>상품코드</th>
+													<th>상품명</th>
+													<th>옵션</th>
+													<th>취소수량</th>
+													<th>취소사유</th>
+												</tr>
+											</thead>
+											<tbody>
+												<tr>
+													<td>1111</td>
+													<td>
+														<span class="txt_ellipsis">남성 체크셔츠 반팔 남성 체크셔츠 반팔남성 체크셔츠 반팔남성 체크셔츠 반팔남성 체크셔츠 반팔</span>
+													</td>
+													<td>Red/M</td>
+													<td>1</td>
+													<td>변심</td>
+												</tr>
+											</tbody>
+										</table>
+									</td>
+								</tr>
+								<tr>
+									<th colspan="6">주문</th>
+									<th colspan="2">할인</th>
+									<th rowspan="2">환불금액</th>
+								</tr>
+								<tr>
+									<th>구분</th>
+									<th>상품번호</th>
+									<th>상품명</th>
+									<th>판매가</th>
+									<th>수량</th>
+									<th>금액</th>
+									<th>할인수단</th>
+									<th>할인금액</th>
+								</tr>
+								<tr>
+									<td rowspan="2">상품</td>
+									<td>1111</td>
+									<td>
+										<span class="txt_ellipsis">aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa</span>
+									</td>
+									<td class="alignR">30,000</td>
+									<td>1</td>
+									<td class="alignR">30,000</td>
+									<td>상품할인</td>
+									<td class="alignR">20,000</td>
+									<td rowspan="3" class="alignR">
+										<b>40,000</b>
+									</td>
+								</tr>
+								<tr>
+									<td>1111</td>
+									<td>
+										<span class="txt_ellipsis">aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa</span>
+									</td>
+									<td class="alignR">30,000</td>
+									<td>1</td>
+									<td class="alignR">30,000</td>
+									<td>상품할인</td>
+									<td class="alignR">20,000</td>
+								</tr>
+								<tr>
+									<td>배송비</td>
+									<td>&nbsp;</td>
+									<td colspan="3">&nbsp;</td>
+									<td class="alignR">0</td>
+									<td>장바구니 쿠폰</td>
+									<td class="alignR">0</td>
+								</tr>
+								<tr>
+									<th colspan="3">결제수단</th>
+									<th colspan="3">결제금액</th>
+									<th colspan="3">
+										환불금액 <i>필수입력</i>
+									</th>
+								</tr>
+								<tr>
+									<td colspan="3">신용카드</td>
+									<td colspan="3" class="alignR">40,000</td>
+									<td colspan="3" class="alignR">40,000</td>
+								</tr>
+								<tr>
+									<td colspan="3">포인트</td>
+									<td colspan="3" class="alignR">1,000</td>
+									<td colspan="3" class="alignR">&nbsp;</td>
+								</tr>
+								<tr class="bg_faf8ed">
+									<td colspan="3">
+										<b>총금액</b>
+									</td>
+									<td colspan="3" class="alignR">
+										<b>40,000</b>
+									</td>
+									<td colspan="3" class="alignR">
+										<b>40,000</b>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+					<!-- ### //클레임 이력 ### -->
+
+					<!-- ### 반품 ### -->
+					<div class="box_type1 marginT2"><!-- 2016.07.04 -->
+						<div class="sub_title2">
+							<h3>반품</h3>
+						</div>
+
+						<table class="tb_type2 no_bg">
+							<colgroup>
+								<col width="11%" span="8" />
+								<col width="*" />
+							</colgroup>
+							<tbody>
+								<tr>
+									<th>상품정보</th>
+									<td colspan="8">
+										<table class="tb_type2">
+											<colgroup>
+												<col width="10%" />
+												<col width="*" />
+												<col width="10%" span="6" />
+											</colgroup>
+											<thead>
+												<tr>
+													<th>상품코드</th>
+													<th>상품명</th>
+													<th>옵션</th>
+													<th>판매가</th>
+													<th>브랜드</th>
+													<th>주문수량</th>
+													<th>반품수량</th>
+													<th>반품사유</th>
+													<th>입고완료</th>
+												</tr>
+											</thead>
+											<tbody>
+												<tr>
+													<td>1111</td>
+													<td>
+														<span class="txt_ellipsis">남성 체크셔츠 반팔 남성 체크셔츠 반팔남성 체크셔츠 반팔남성 체크셔츠 반팔남성 체크셔츠 반팔</span>
+													</td>
+													<td>Black/100</td>
+													<td class="alignR">30,000</td>
+													<td>브랜드명</td>
+													<td>1</td>
+													<td>1</td>
+													<td>변심</td>
+													<td>입고완료</td>
+												</tr>
+											</tbody>
+										</table>
+
+										<dl class="back_info">
+											<dt>수거지</dt>
+											<dd>(10000) 서울시 서초구 서초동</dd>
+										</dl>
+
+										<dl class="back_info">
+											<dt>집하지</dt>
+											<dd>(10000) 서울시 김포구 OOO</dd>
+										</dl>
+									</td>
+								</tr>
+								<tr>
+									<th colspan="6">주문</th>
+									<th colspan="2">할인</th>
+									<th rowspan="2">환불금액</th>
+								</tr>
+								<tr>
+									<th>구분</th>
+									<th>상품번호</th>
+									<th>상품명</th>
+									<th>판매가</th>
+									<th>수량</th>
+									<th>금액</th>
+									<th>할인수단</th>
+									<th>할인금액</th>
+								</tr>
+								<tr>
+									<td rowspan="2">상품</td>
+									<td>1111</td>
+									<td>
+										<span class="txt_ellipsis">aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa</span>
+									</td>
+									<td class="alignR">30,000</td>
+									<td>1</td>
+									<td class="alignR">30,000</td>
+									<td>상품할인</td>
+									<td class="alignR">20,000</td>
+									<td rowspan="3" class="alignR">
+										<b>40,000</b>
+									</td>
+								</tr>
+								<tr>
+									<td>1111</td>
+									<td>
+										<span class="txt_ellipsis">aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa</span>
+									</td>
+									<td class="alignR">30,000</td>
+									<td>1</td>
+									<td class="alignR">30,000</td>
+									<td>상품할인</td>
+									<td class="alignR">20,000</td>
+								</tr>
+								<tr>
+									<td>배송비</td>
+									<td>&nbsp;</td>
+									<td colspan="3">&nbsp;</td>
+									<td class="alignR">0</td>
+									<td>장바구니 쿠폰</td>
+									<td class="alignR">0</td>
+								</tr>
+								<tr>
+									<th colspan="3">결제수단</th>
+									<th colspan="3">결제금액</th>
+									<th colspan="3">
+										환불금액 <i>필수입력</i>
+									</th>
+								</tr>
+								<tr>
+									<td colspan="3">신용카드</td>
+									<td colspan="3" class="alignR">40,000</td>
+									<td colspan="3" class="alignR">40,000</td>
+								</tr>
+								<tr>
+									<td colspan="3">포인트</td>
+									<td colspan="3" class="alignR">1,000</td>
+									<td colspan="3" class="alignR">&nbsp;</td>
+								</tr>
+								<tr class="bg_faf8ed">
+									<td colspan="3">
+										<b>총금액</b>
+									</td>
+									<td colspan="3" class="alignR">
+										<b>40,000</b>
+									</td>
+									<td colspan="3" class="alignR">
+										<b>40,000</b>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+					<!-- ### //반품 ### -->
+
+					<!-- ### 교환 ### -->
+					<div class="box_type1 marginT2"><!-- 2016.07.04 -->
+						<div class="sub_title2">
+							<h3>교환</h3>
+						</div>
+
+						<table class="tb_type2 no_bg">
+							<colgroup>
+								<col width="11%" span="8" />
+								<col width="*" />
+							</colgroup>
+							<tbody>
+								<tr>
+									<th>반품상품</th>
+									<td colspan="8">
+										<table class="tb_type2">
+											<colgroup>
+												<col width="10%" />
+												<col width="*" />
+												<col width="10%" span="6" />
+											</colgroup>
+											<thead>
+												<tr>
+													<th>상품코드</th>
+													<th>상품명</th>
+													<th>옵션</th>
+													<th>판매가</th>
+													<th>브랜드</th>
+													<th>주문수량</th>
+													<th>반품수량</th>
+													<th>교환사유</th>
+													<th>입고완료</th>
+												</tr>
+											</thead>
+											<tbody>
+												<tr>
+													<td>1111</td>
+													<td>
+														<span class="txt_ellipsis">남성 체크셔츠 반팔 남성 체크셔츠 반팔남성 체크셔츠 반팔남성 체크셔츠 반팔남성 체크셔츠 반팔</span>
+													</td>
+													<td>Black/100</td>
+													<td class="alignR">30,000</td>
+													<td>브랜드명</td>
+													<td>1</td>
+													<td>1</td>
+													<td>사이즈 안맞음</td>
+													<td>입고완료</td>
+												</tr>
+											</tbody>
+										</table>
+
+										<dl class="back_info">
+											<dt>수거지</dt>
+											<dd>(10000) 서울시 서초구 서초동</dd>
+										</dl>
+
+										<dl class="back_info">
+											<dt>집하지</dt>
+											<dd>(10000) 서울시 김포구 OOO</dd>
+										</dl>
+									</td>
+								</tr>
+								<tr>
+									<th>반품상품</th>
+									<td colspan="8">
+										<table class="tb_type2">
+											<colgroup>
+												<col width="10%" />
+												<col width="*" />
+												<col width="10%" span="6" />
+											</colgroup>
+											<thead>
+												<tr>
+													<th>상품코드</th>
+													<th>상품명</th>
+													<th>옵션</th>
+													<th>판매가</th>
+													<th>브랜드</th>
+													<th>주문수량</th>
+													<th>반품수량</th>
+													<th>교환사유</th>
+													<th>입고완료</th>
+												</tr>
+											</thead>
+											<tbody>
+												<tr>
+													<td>1111</td>
+													<td>
+														<span class="txt_ellipsis">남성 체크셔츠 반팔 남성 체크셔츠 반팔남성 체크셔츠 반팔남성 체크셔츠 반팔남성 체크셔츠 반팔</span>
+													</td>
+													<td>Black/100</td>
+													<td class="alignR">30,000</td>
+													<td>브랜드명</td>
+													<td>1</td>
+													<td>1</td>
+													<td>사이즈 안맞음</td>
+													<td>입고완료</td>
+												</tr>
+											</tbody>
+										</table>
+
+										<dl class="back_info">
+											<dt>수거지</dt>
+											<dd>(10000) 서울시 서초구 서초동</dd>
+										</dl>
+
+										<dl class="back_info">
+											<dt>집하지</dt>
+											<dd>(10000) 서울시 김포구 OOO</dd>
+										</dl>
+									</td>
+								</tr>
+								<tr>
+									<th colspan="8">주문</th>
+									<th rowspan="2">환불금액</th>
+								</tr>
+								<tr>
+									<th>구분</th>
+									<th>교환</th>
+									<th>상품번호</th>
+									<th>상품명</th>
+									<th>옵션</th>
+									<th>판매가</th>
+									<th>수량</th>
+									<th>금액</th>
+								</tr>
+								<tr>
+									<td rowspan="2">상품</td>
+									<td>반품</td>
+									<td>1111</td>
+									<td>
+										<span class="txt_ellipsis">aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa</span>
+									</td>
+									<td>Black/100</td>
+									<td class="alignR">30,000</td>
+									<td>1</td>
+									<td class="alignR">30,000</td>
+									<td rowspan="3" class="alignR">
+										<b>5,000</b>
+									</td>
+								</tr>
+								<tr>
+									<td>반품</td>
+									<td>1111</td>
+									<td>
+										<span class="txt_ellipsis">aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa</span>
+									</td>
+									<td>Black/100</td>
+									<td class="alignR">30,000</td>
+									<td>1</td>
+									<td class="alignR">30,000</td>
+								</tr>
+								<tr>
+									<td>배송비</td>
+									<td>&nbsp;</td>
+									<td>&nbsp;</td>
+									<td>&nbsp;</td>
+									<td>&nbsp;</td>
+									<td>&nbsp;</td>
+									<td>&nbsp;</td>
+									<td class="alignR">0</td>
+								</tr>
+								<tr>
+									<th colspan="3">결제수단</th>
+									<th colspan="3">결제금액</th>
+									<th colspan="3">
+										환불금액 <i>필수입력</i>
+									</th>
+								</tr>
+								<tr>
+									<td colspan="3">신용카드</td>
+									<td colspan="3" class="alignR">40,000</td>
+									<td colspan="3" class="alignR">40,000</td>
+								</tr>
+								<tr>
+									<td colspan="3">포인트</td>
+									<td colspan="3" class="alignR">1,000</td>
+									<td colspan="3" class="alignR">&nbsp;</td>
+								</tr>
+								<tr class="bg_faf8ed">
+									<td colspan="3">
+										<b>총금액</b>
+									</td>
+									<td colspan="3" class="alignR">
+										<b>40,000</b>
+									</td>
+									<td colspan="3" class="alignR">
+										<b>40,000</b>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+					<!-- ### //반품 ### -->
+				</article>
+				<!-- ### //1번 탭 ### -->
+			</div>
+		</section>
+		<!-- ### //content ### -->
+	</div>
+</body>
+</html>

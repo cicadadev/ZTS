@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+	<title>0to7 BO</title>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+	<meta http-equiv="Pragma" content="no-cache" />
+	<script type="text/javascript" src="js/jquery-1.12.0.min.js"></script>
+	<script type="text/javascript" src="js/ui.js"></script>
+	<link rel="stylesheet" href="css/common.css" />
+	<script type="text/javascript">
+		$(window).load(function() {
+			$(".iframe1", parent.document).height($(".wrap").height());
+		});
+	</script>
+</head>
+
+<body>
+	<div class="wrap wrap_iframe">
+		<!-- ### content ### -->
+		<section class="content">
+			<div class="inner">
+				<!-- ### 1번 탭 ### -->
+				<article class="con_box">
+					<!-- ### 쿠폰상세_발급내역 ### -->
+					<h2 class="sub_title1">쿠폰상세_발급내역</h2>
+					<div class="box_type1">
+						<h3 class="sub_title2">
+							쿠폰 기본정보 설정
+							<em>쿠폰 발급 내역</em>
+						</h3>
+						<table class="tb_type1">
+							<colgroup>
+								<col width="140" />
+								<col width="*" />
+							</colgroup>
+							<tbody>
+								<tr>
+									<th>기간</th>
+									<td>
+										<input type="text" value="" placeholder="" />
+										<button type="button" class="btn_date">달력</button>
+										~
+										<input type="text" value="" placeholder="" />
+										<button type="button" class="btn_date">달력</button>
+
+										<div class="day_group">
+											<button type="button" class="btn_day">1주일</button>
+											<button type="button" class="btn_day">15일</button>
+											<button type="button" class="btn_day on">30일</button>
+											<button type="button" class="btn_day">60일</button>
+											<button type="button" class="btn_day">90일</button>
+										</div>
+									</td>
+								</tr>
+								<tr>
+									<th>회원</th>
+									<td>
+										<input type="checkbox" value="" id="chk1" />
+										<label for="chk1">전체</label>
+
+										<input type="checkbox" value="" id="chk2" />
+										<label for="chk2">골드</label>
+
+										<input type="checkbox" value="" id="chk3" />
+										<label for="chk3">실버</label>
+
+										<input type="checkbox" value="" id="chk4" />
+										<label for="chk4">브론즈</label>
+									</td>
+								</tr>
+								<tr>
+									<th>회원명</th>
+									<td>
+										<input type="text" value="" placeholder="" style="width:70%;" />
+									</td>
+								</tr>
+								<tr>
+									<th>회원번호</th>
+									<td>
+										<input type="text" value="" placeholder="" style="width:70%;" />
+									</td>
+								</tr>
+								<tr>
+									<th>사용상태</th>
+									<td>
+										<input type="checkbox" value="" id="chk5" />
+										<label for="chk5">전체</label>
+
+										<input type="checkbox" value="" id="chk6" />
+										<label for="chk6">사용</label>
+
+										<input type="checkbox" value="" id="chk7" />
+										<label for="chk7">미사용</label>
+
+										<input type="checkbox" value="" id="chk8" />
+										<label for="chk8">중지</label>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+
+					<div class="btn_alignR">
+						<button type="button" class="btn_type1">
+							<b>초기화</b>
+						</button>
+						<button type="button" class="btn_type1 btn_type1_purple">
+							<b>검색</b>
+						</button>
+					</div>
+					<!-- ### //쿠폰상세_발급내역 ### -->
+
+					<!-- ### 쿠폰 목록 ### -->
+					<div class="btn_alignR" style="margin-top:50px;">
+						<button type="button" class="btn_type1">
+							<b>사용중지</b>
+						</button>
+						<button type="button" class="btn_type1 btn_type1_gray">
+							<b>일괄발급(엑셀)</b>
+						</button>
+						<button type="button" class="btn_type1 btn_type1_purple">
+							<b>쿠폰 수동발급</b>
+						</button>
+					</div>
+
+					<div class="box_type1" style="margin-top:10px;">
+						<h3 class="sub_title2">
+							쿠폰 목록
+							<span>(총 <b>10,000</b>건)</span>
+						</h3>
+
+						<div class="tb_util">
+							<button type="button" class="btn_tb_util tb_util1">되돌리기</button>
+							<button type="button" class="btn_tb_util tb_util2">엑셀받기</button>
+							<button type="button" class="btn_tb_util tb_util3">셀잠그기</button>
+							<button type="button" class="btn_tb_util tb_util4">전체체크</button>
+
+							<select style="width:105px;">
+								<option value="">200개</option>
+							</select>
+
+							<span class="page">
+								<button type="button" class="btn_prev">이전</button>
+								<input type="text" value="1" placeholder="" />
+								<u>/</u><i>24</i>
+								<button type="button" class="btn_next">다음</button>
+							</span>
+
+							<button type="button" class="btn_type2">
+								<b>이동</b>
+							</button>
+						</div>
+
+						<div class="gridbox">
+							<img src="img/temp/grid9.gif" alt="" style="vertical-align:top;" />
+						</div>
+						<div class="tb_bar">
+							<button type="button" class="btn_grid_more">더보기</button>
+						</div>
+					</div>
+
+					<div class="btn_alignR">
+						<button type="button" class="btn_type1">
+							<b>사용중지</b>
+						</button>
+						<button type="button" class="btn_type1 btn_type1_gray">
+							<b>일괄발급(엑셀)</b>
+						</button>
+						<button type="button" class="btn_type1 btn_type1_purple">
+							<b>쿠폰 수동발급</b>
+						</button>
+					</div>
+					<!-- ### //쿠폰 목록 ### -->
+				</article>
+				<!-- ### //1번 탭 ### -->
+			</div>
+		</section>
+		<!-- ### //content ### -->
+	</div>
+</body>
+</html>

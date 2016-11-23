@@ -1,0 +1,150 @@
+.alignC {
+	text-align: center;
+}
+
+.alignR {
+	text-align: right;
+}
+
+.ui-grid-header-cell-row {
+	text-align: center;
+}
+
+.edit_column {
+	text-align: center;
+	color: #2e3192;
+	background-color: #ebecff !important;
+}
+
+.ui-grid-invisible {
+	display: none;
+}
+
+.gridbox .ui-grid-row-header-cell .check_header {
+	height: 100%;
+	text-align: center;
+}
+
+div.ui-grid-cell input[type="checkbox"] {
+	margin: 0;
+}
+
+label {
+	cursor: pointer;
+}
+
+input[type="checkbox"], input[type="radio"] {
+	width: 14px !important;
+	height: 14px !important;
+	margin: 0;
+	padding: 0;
+	vertical-align: middle;
+}
+
+input[type="text"], input[type="tel"], input[type="number"] {
+	height: 20px !important;
+	width: 190px;
+	font: normal 12px/14px '돋움';
+	color: #666;
+	vertical-align: middle;
+	border: 1px solid #b7b7b7;
+/* 	width: 90px; */
+/* 	height: 16px; */
+	padding-top: 1px;
+	text-indent: 4px;
+}
+
+input[ng-model="grid.options.paginationCurrentPage"] {
+	width: 30px !important;
+}
+
+textarea {
+/* 	margin-left: 3px; */
+/* 	padding-top: 1px; */
+}
+
+select {
+	width: 120px;
+}
+
+.hand {
+	cursor: pointer !important;
+}
+
+.non-hand {
+	cursor: default !important;
+}
+
+.hide-date button {
+	/* 	display: none; */
+	visibility: hidden
+}
+
+.underline {
+	text-decoration: underline;
+}
+
+.hasmemo {
+	font-weight: bold;
+	color: #ff0000 !important;
+}
+
+.paddingR5 {
+	padding-right: 5px;
+	width: 95% !important;
+}
+
+.width24p {width: 24%;}
+
+.width35p {width: 35%;}
+
+.width37p {width: 37%;}
+
+.width57p {width: 61%;}
+
+.marginT100 {margin-top:100px;}
+
+/* table tbody .order_info th { */
+/* 	text-align: right; */
+/* } */
+
+.order_info th {
+	text-align: right !important;
+}
+
+.tb_floatR3 {float:right;}
+
+.paddingL24 {
+	/* Firefox */
+	padding-left: -moz-calc(50% - 24px) !important;
+	/* WebKit */
+	padding-left: -webkit-calc(50% - 24px) !important;
+	/* Opera */
+	padding-left: -o-calc(50% - 24px) !important;
+	/* Standard */
+	padding-left: calc(50% - 24px) !important;
+}
+.marginT5 {
+	margin-top: 5px;
+}
+
+.btn_disabled {
+	opacity: 0.5;
+	filter: alpha(opacity = 50);
+	cursor: default;
+}
+
+.address_overflow {
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	/* Firefox */
+	width: -moz-calc(100% - 100px);
+	/* WebKit */
+	width: -webkit-calc(100% - 100px);
+	/* Opera */
+	width: -o-calc(100% - 100px);
+	/* Standard */
+	width: calc(100% - 100px);
+	display: inline-block;
+}

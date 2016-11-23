@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+	<title>0to7 BO</title>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+	<meta http-equiv="Pragma" content="no-cache" />
+	<script type="text/javascript" src="js/jquery-1.12.0.min.js"></script>
+	<script type="text/javascript" src="js/ui.js"></script>
+	<link rel="stylesheet" href="css/common.css" />
+	<script type="text/javascript">
+		$(window).load(function() {
+			$(".iframe1", parent.document).height($(".wrap").height());
+		});
+	</script>
+</head>
+
+<body>
+	<div class="wrap wrap_iframe">
+		<!-- ### content ### -->
+		<section class="content">
+			<div class="inner">
+				<!-- ### 1번 탭 ### -->
+				<article class="con_box">
+					<!-- ### 쿠폰상세_기본정보 ### -->
+					<h2 class="sub_title1">쿠폰상세_기본정보</h2>
+					<div class="box_type1">
+						<h3 class="sub_title2">
+							쿠폰 기본정보 설정
+							<em>쿠폰 발급 내역</em>
+						</h3>
+
+						<table class="tb_type1">
+							<colgroup>
+								<col class="col_142" />
+								<col class="col_auto" />
+								<col class="col_142" />
+								<col class="col_auto" />
+							</colgroup>
+							<tbody>
+								<tr>
+									<th>쿠폰번호</th>
+									<td></td>
+									<th>
+										쿠폰명 <i>필수입력</i>
+									</th>
+									<td>
+										<input type="text" value="" placeholder="" style="width:98%;" />
+									</td>
+								</tr>
+								<tr>
+									<th>
+										쿠폰유형 <i>필수입력</i>
+									</th>
+									<td>
+										<input type="radio" value="" name="radio_set1" id="radio1" checked="checked" />
+										<label for="radio1">상품할인</label>
+
+										<input type="radio" value="" name="radio_set1" id="radio2" />
+										<label for="radio2">장바구니 할인</label>
+
+										<input type="radio" value="" name="radio_set1" id="radio3" />
+										<label for="radio3">무료배송비</label>
+									</td>
+									<th>
+										쿠폰상태 <i>필수입력</i>
+									</th>
+									<td>
+										<input type="radio" value="" name="radio_set2" id="radio4" checked="checked" />
+										<label for="radio4">대기</label>
+
+										<input type="radio" value="" name="radio_set2" id="radio5" />
+										<label for="radio5">진행중</label>
+
+										<input type="radio" value="" name="radio_set2" id="radio6" />
+										<label for="radio6">중지</label>
+									</td>
+								</tr>
+								<tr>
+									<th>
+										상품상세 다운로드<br />
+										버튼 노출여부
+									</th>
+									<td colspan="3">
+										<input type="radio" value="" name="radio_set3" id="radio7" />
+										<label for="radio7">YES</label>
+
+										<input type="radio" value="" name="radio_set3" id="radio8" checked="checked" />
+										<label for="radio8">NO</label>
+									</td>
+								</tr>
+								<tr>
+									<th>
+										발급기간 <i>필수입력</i>
+									</th>
+									<td colspan="3">
+										<input type="text" value="" placeholder="" style="width:160px;" />
+										<button type="button" class="btn_date">달력</button>
+										~
+										<input type="text" value="" placeholder="" style="width:160px;" />
+										<button type="button" class="btn_date">달력</button>
+									</td>
+								</tr>
+								<tr>
+									<th rowspan="2">
+										할인 구분 <i>필수입력</i>
+									</th>
+									<td rowspan="2">
+										<span class="line_group">
+											<input type="radio" value="" name="radio_set4" id="radio9" checked="checked" />
+											<label for="radio9">정액</label>
+											<input type="text" value="" placeholder="" style="width:111px;" />
+											원 할인
+										</span>
+										<span class="line_group">
+											<input type="radio" value="" name="radio_set4" id="radio10" />
+											<label for="radio10">정율</label>
+											<input type="text" value="" placeholder="" style="width:111px;" />
+											% 할인
+										</span>
+									</td>
+									<th>최소 구매금액</th>
+									<td>
+										<input type="text" value="" placeholder="" style="width:111px;" />
+										원 이상 구매시 사용가능
+									</td>
+								</tr>
+								<tr>
+									<th>최대 할인율</th>
+									<td>
+										<input type="text" value="" placeholder="" style="width:111px;" /> %
+									</td>
+								</tr>
+								<tr>
+									<th>인증번호 사용여부</th>
+									<td>
+										<input type="radio" value="" name="radio_set5" id="radio11" />
+										<label for="radio11">YES</label>
+
+										<input type="radio" value="" name="radio_set5" id="radio12" checked="checked" />
+										<label for="radio12">NO</label>
+									</td>
+									<th>인증번호 유형</th>
+									<td>
+										<input type="radio" value="" name="radio_set6" id="radio13" checked="checked" />
+										<label for="radio13">단일</label>
+
+										<input type="radio" value="" name="radio_set6" id="radio14" />
+										<label for="radio14">복수</label>
+
+										<input type="text" value="" placeholder="쿠폰인증코드 입력" style="width:160px; margin-left:10px;" />
+										<button type="button" class="btn_type2 btn_type2_gray">
+											<b>중복확인</b>
+										</button>
+									</td>
+								</tr>
+								<tr>
+									<th>
+										최대 발급 매수 <i>필수입력</i>
+									</th>
+									<td>
+										<input type="text" value="" placeholder="" style="width:111px;" />
+									</td>
+									<th>
+										복수 발급제한 <i>필수입력</i>
+									</th>
+									<td>
+										<input type="text" value="" placeholder="" style="width:111px;" />
+									</td>
+								</tr>
+								<tr>
+									<th>총 발급매수</th>
+									<td>1000</td>
+									<th>총 사용수</th>
+									<td>300</td>
+								</tr>
+								<tr>
+									<th>
+										회원 등급 <i>필수입력</i>
+									</th>
+									<td>
+										<select style="width:113px;">
+											<option value="">미적용</option>
+										</select>
+									</td>
+									<th>
+										임직원 적용 <i>필수입력</i>
+									</th>
+									<td>
+										<input type="radio" value="" name="radio_set7" id="radio15" checked="checked" />
+										<label for="radio15">적용</label>
+
+										<input type="radio" value="" name="radio_set7" id="radio16" />
+										<label for="radio16">미적용</label>
+									</td>
+								</tr>
+								<tr>
+									<th>
+										쿠폰발급 채널 <i>필수입력</i>
+									</th>
+									<td>
+										<input type="radio" value="" name="radio_set8" id="radio17" checked="checked" />
+										<label for="radio17">전체</label>
+
+										<input type="radio" value="" name="radio_set8" id="radio18" />
+										<label for="radio18">PC전용</label>
+
+										<input type="radio" value="" name="radio_set8" id="radio19" />
+										<label for="radio19">MOBILE전용</label>
+									</td>
+								</tr>
+								<tr>
+									<th>
+										쿠폰사용 채널 <i>필수입력</i>
+									</th>
+									<td colspan="3">
+										<input type="radio" value="" name="radio_set9" id="radio20" checked="checked" />
+										<label for="radio20">전체</label>
+
+										<input type="radio" value="" name="radio_set9" id="radio21" />
+										<label for="radio21">PC전용</label>
+
+										<input type="radio" value="" name="radio_set9" id="radio22" />
+										<label for="radio22">MOBILE전용</label>
+									</td>
+								</tr>
+								<tr>
+									<th>
+										유효기간 <i>필수입력</i>
+									</th>
+									<td colspan="3">
+										<input type="radio" value="" name="radio_set10" id="radio23" checked="checked" />
+										<label for="radio23">
+											발급일로부터
+										</label>
+										<input type="text" value="" placeholder="" style="width:50px;" /> 일 까지
+
+										<input type="radio" value="" name="radio_set10" id="radio24" style="margin-left:28px;" />
+										<label for="radio24">
+											기간 입력
+										</label>
+										<input type="text" value="" placeholder="" style="width:160px;" />
+										<button type="button" class="btn_date">달력</button>
+										~
+										<input type="text" value="" placeholder="" style="width:160px;" />
+										<button type="button" class="btn_date">달력</button>
+									</td>
+								</tr>
+								<tr>
+									<th>
+										쿠폰사용 대상 <i>필수입력</i>
+									</th>
+									<td colspan="3">
+										<input type="radio" value="" name="radio_set11" id="radio25" checked="checked" />
+										<label for="radio25">전체</label>
+
+										<input type="radio" value="" name="radio_set11" id="radio26" />
+										<label for="radio26">상품</label>
+
+										<input type="radio" value="" name="radio_set11" id="radio27" />
+										<label for="radio27">전시카테고리</label>
+
+										<input type="radio" value="" name="radio_set11" id="radio28" />
+										<label for="radio28">브랜드</label>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+
+					<div class="btn_alignR">
+						<button type="button" class="btn_type1">
+							<b>취소</b>
+						</button>
+						<button type="button" class="btn_type1 btn_type1_purple">
+							<b>저장</b>
+						</button>
+					</div>
+					<!-- ### //쿠폰상세_기본정보 ### -->
+
+					<!-- ### 쿠폰 목록 ### -->
+					<div class="btn_alignR marginT3"><!-- 2016.07.04 -->
+						<button type="button" class="btn_type1">
+							<b>삭제</b>
+						</button>
+						<button type="button" class="btn_type1 btn_type1_gray">
+							<b>브랜드 추가</b>
+						</button>
+						<button type="button" class="btn_type1 btn_type1_purple">
+							<b>저장</b>
+						</button>
+					</div>
+
+					<div class="box_type1 marginT1"><!-- 2016.07.04 -->
+						<h3 class="sub_title2">
+							쿠폰 목록
+							<span>(총 <b>10,000</b>건)</span>
+						</h3>
+
+						<div class="tb_util">
+							<button type="button" class="btn_tb_util tb_util1">되돌리기</button>
+							<button type="button" class="btn_tb_util tb_util2">엑셀받기</button>
+							<button type="button" class="btn_tb_util tb_util3">셀잠그기</button>
+							<button type="button" class="btn_tb_util tb_util4">전체체크</button>
+
+							<select style="width:105px;">
+								<option value="">200개</option>
+							</select>
+
+							<span class="page">
+								<button type="button" class="btn_prev">이전</button>
+								<input type="text" value="1" placeholder="" />
+								<u>/</u><i>24</i>
+								<button type="button" class="btn_next">다음</button>
+							</span>
+
+							<button type="button" class="btn_type2">
+								<b>이동</b>
+							</button>
+						</div>
+
+						<div class="gridbox">
+							<img src="img/temp/grid7.gif" alt="" style="vertical-align:top;" />
+						</div>
+						<div class="tb_bar">
+							<button type="button" class="btn_grid_more">더보기</button>
+						</div>
+					</div>
+
+					<div class="btn_alignR">
+						<button type="button" class="btn_type1">
+							<b>삭제</b>
+						</button>
+						<button type="button" class="btn_type1 btn_type1_gray">
+							<b>브랜드 추가</b>
+						</button>
+						<button type="button" class="btn_type1 btn_type1_purple">
+							<b>저장</b>
+						</button>
+					</div>
+					<!-- ### //쿠폰 목록 ### -->
+
+					<!-- ### 제외상품 목록 ### -->
+					<div class="btn_alignR marginT3"><!-- 2016.07.04 -->
+						<button type="button" class="btn_type1">
+							<b>삭제</b>
+						</button>
+						<button type="button" class="btn_type1 btn_type1_gray">
+							<b>일괄등록(엑셀)</b>
+						</button>
+						<button type="button" class="btn_type1 btn_type1_gray">
+							<b>상품추가</b>
+						</button>
+						<button type="button" class="btn_type1 btn_type1_purple">
+							<b>저장</b>
+						</button>
+					</div>
+
+					<div class="box_type1 marginT1"><!-- 2016.07.04 -->
+						<h3 class="sub_title2">
+							제외상품 목록
+							<span>(총 <b>10,000</b>건)</span>
+						</h3>
+
+						<div class="tb_util">
+							<button type="button" class="btn_tb_util tb_util1">되돌리기</button>
+							<button type="button" class="btn_tb_util tb_util2">엑셀받기</button>
+							<button type="button" class="btn_tb_util tb_util3">셀잠그기</button>
+							<button type="button" class="btn_tb_util tb_util4">전체체크</button>
+
+							<select style="width:105px;">
+								<option value="">200개</option>
+							</select>
+
+							<span class="page">
+								<button type="button" class="btn_prev">이전</button>
+								<input type="text" value="1" placeholder="" />
+								<u>/</u><i>24</i>
+								<button type="button" class="btn_next">다음</button>
+							</span>
+
+							<button type="button" class="btn_type2">
+								<b>이동</b>
+							</button>
+						</div>
+
+						<div class="gridbox">
+							<img src="img/temp/grid8.gif" alt="" style="vertical-align:top;" />
+						</div>
+						<div class="tb_bar">
+							<button type="button" class="btn_grid_more">더보기</button>
+						</div>
+					</div>
+
+					<div class="btn_alignR">
+						<button type="button" class="btn_type1">
+							<b>삭제</b>
+						</button>
+						<button type="button" class="btn_type1 btn_type1_gray">
+							<b>일괄등록(엑셀)</b>
+						</button>
+						<button type="button" class="btn_type1 btn_type1_gray">
+							<b>상품추가</b>
+						</button>
+						<button type="button" class="btn_type1 btn_type1_purple">
+							<b>저장</b>
+						</button>
+					</div>
+
+					<!-- 2016.07.04 -->
+					<div class="btn_alignC marginT3">
+						<button type="button" class="btn_type3">
+							<b>삭제</b>
+						</button>
+						<button type="button" class="btn_type3 btn_type3_gray">
+							<b>일괄등록(엑셀)</b>
+						</button>
+						<button type="button" class="btn_type3 btn_type3_purple">
+							<b>저장</b>
+						</button>
+					</div>
+					<!-- //2016.07.04 -->
+					<!-- ### //제외상품 목록 ### -->
+				</article>
+				<!-- ### //1번 탭 ### -->
+			</div>
+		</section>
+		<!-- ### //content ### -->
+	</div>
+</body>
+</html>

@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+	<title>0to7 BO</title>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+	<meta http-equiv="Pragma" content="no-cache" />
+	<script type="text/javascript" src="js/jquery-1.12.0.min.js"></script>
+	<script type="text/javascript" src="js/ui.js"></script>
+	<link rel="stylesheet" href="css/common.css" />
+	<script type="text/javascript">
+
+	</script>
+</head>
+
+<body>
+	<!-- 1130 * 790 -->
+	<div class="wrap_popup">
+		<h1 class="sub_title1">브랜드 등록</h1>
+
+		<div class="box_type1">
+			<table class="tb_type1">
+				<colgroup>
+					<col width="13%" />
+					<col width="37%" />
+					<col width="13%" />
+					<col width="*" />
+				</colgroup>
+				<tbody>
+					<tr>
+						<th>
+							브랜드 번호
+						</th>
+						<td>1234567</td>
+						<th>
+							브랜드명 <i>필수입력</i>
+						</th>
+						<td>
+							<input type="text" value="A 브랜드" placeholder="" style="width:30%;" />
+							<p class="information">
+								링딩동~ 링딩동~ 링디기딩 디기딩딩딩
+							</p>
+						</td>
+					</tr>
+					<tr>
+						<th>
+							브랜드 소개
+						</th>
+						<td colspan="3">
+							<textarea cols="30" rows="3" placeholder="">브랜드 소개 입니다.</textarea>
+							<p class="information">
+								링딩동~ 링딩동~ 링디기딩 디기딩딩딩<br />
+								링딩동~ 링딩동~ 링디기딩 디기딩딩딩 링딩동~ 링딩동~ 링디기딩 디기딩딩딩
+							</p>
+						</td>
+					</tr>
+					<tr>
+						<th>
+							카테고리깊이
+						</th>
+						<td>1</td>
+						<th>
+							우선순위 <i>필수입력</i>
+						</th>
+						<td>
+							<input type="text" value="1" placeholder="" style="width:98%;" />
+						</td>
+					</tr>
+					<tr>
+						<th>
+							Leaf여부 <i>필수입력</i>
+						</th>
+						<td>
+							<input type="radio" value="" name="radio_set1" id="radio1" checked="checked" />
+							<label for="radio1">Yes</label>
+							<input type="radio" value="" name="radio_set1" id="radio2" />
+							<label for="radio2">No</label>
+						</td>
+						<th>
+							사용여부 <i>필수입력</i>
+						</th>
+						<td>
+							<input type="radio" value="" name="radio_set2" id="radio3" />
+							<label for="radio3">사용</label>
+							<input type="radio" value="" name="radio_set2" id="radio4" checked="checked" />
+							<label for="radio4">미사용</label>
+						</td>
+					</tr>
+					<tr>
+						<th>
+							브랜드 <br />
+							로고 이미지 <i>필수입력</i>
+						</th>
+						<td colspan="3">
+							<div class="input_file">
+								<input type="file" value="" />
+								<input type="text" value="" placeholder="" />
+								<button type="button" class="btn_type2 btn_addFile">
+									<b>찾아보기</b>
+								</button>
+								<!-- ### 2016.05.25 : 클래스 추가 btn_del_disabled ### -->
+								<button type="button" class="btn_file_del btn_del_disabled">파일 삭제</button>
+								<button type="button" class="btn_plus btn_plus_disabled">추가</button>
+								<button type="button" class="btn_eraser btn_eraser_disabled">지우개</button>
+								<button type="button" class="btn_minus btn_minus_disabled">감소</button>
+								<span>(이미지 사이즈 : 000*000)</span>
+							</div>
+
+							<p class="txt_type1">
+								* jpg, png 00MB 이하의 파일만 업로드가 가능합니다.
+							</p>
+
+							<div class="preview">
+								<img src="img/bg/bg_temp_img.gif" alt="" />
+								<!-- ### 2016.05.25 : 버튼 종류 추가 ### -->
+								<button type="button" class="btn_file_del">파일 삭제</button>
+								<button type="button" class="btn_plus">추가</button>
+								<button type="button" class="btn_eraser">지우개</button>
+								<button type="button" class="btn_minus">감소</button>
+								<!-- ### //2016.05.25 : 버튼 종류 추가 ### -->
+							</div>
+
+							<dl class="img_alt">
+								<dt>이미지 대체텍스트</dt>
+								<dd>
+									<input type="text" value="" placeholder="" style="width:41%;" />
+								</dd>
+							</dl>
+
+							<p class="txt_type1">
+								* 이미지에 포함된 텍스트 정보를 기입해주세요.(텍스트가 없는 이미지의 경우에는 이미지에 대한 설명을 기입해주세요.)
+							</p>
+						</td>
+					</tr>
+					<tr class="column2">
+						<th>
+							PC<br />
+							브랜드 <br />
+							대표 이미지 <i>필수입력</i>
+						</th>
+						<td>
+							<div class="input_file">
+								<input type="file" value="" />
+								<input type="text" value="" placeholder="" />
+								<button type="button" class="btn_type2 btn_addFile">
+									<b>찾아보기</b>
+								</button>
+								<button type="button" class="btn_file_del">파일 삭제</button>
+								<span>(이미지 사이즈 : 000*000)</span>
+							</div>
+
+							<p class="txt_type1">
+								* jpg, png 00MB 이하의 파일만 업로드가 가능합니다.
+							</p>
+
+							<div class="preview">
+								<img src="img/bg/bg_temp_img.gif" alt="" />
+								<button type="button" class="btn_file_del">파일 삭제</button>
+							</div>
+
+							<dl class="img_alt">
+								<dt>이미지 대체텍스트</dt>
+								<dd>
+									<input type="text" value="" placeholder="" style="width:98%;" />
+								</dd>
+							</dl>
+
+							<p class="txt_type1">
+								* 이미지에 포함된 텍스트 정보를 기입해주세요.<br />
+								(텍스트가 없는 이미지의 경우에는 이미지에 대한 설명을 기입해주세요.)
+							</p>
+						</td>
+						<th>
+							MOBILE<br />
+							브랜드 <br />
+							대표 이미지 <i>필수입력</i>
+						</th>
+						<td>
+							<div class="input_file">
+								<input type="file" value="" />
+								<input type="text" value="" placeholder="" />
+								<button type="button" class="btn_type2 btn_addFile">
+									<b>찾아보기</b>
+								</button>
+								<button type="button" class="btn_file_del">파일 삭제</button>
+								<span>(이미지 사이즈 : 000*000)</span>
+							</div>
+
+							<p class="txt_type1">
+								* jpg, png 00MB 이하의 파일만 업로드가 가능합니다.
+							</p>
+
+							<div class="preview">
+								<img src="img/bg/bg_temp_img.gif" alt="" />
+								<button type="button" class="btn_file_del">파일 삭제</button>
+							</div>
+
+							<dl class="img_alt">
+								<dt>이미지 대체텍스트</dt>
+								<dd>
+									<input type="text" value="" placeholder="" style="width:98%;" />
+								</dd>
+							</dl>
+
+							<p class="txt_type1">
+								* 이미지에 포함된 텍스트 정보를 기입해주세요.<br />
+								(텍스트가 없는 이미지의 경우에는 이미지에 대한 설명을 기입해주세요.)
+							</p>
+						</td>
+					</tr>
+					<tr>
+						<th>
+							브랜드 템플릿 <i>필수입력</i>
+						</th>
+						<td colspan="3">
+							<select style="min-width:300px;">
+								<option value="">브랜드 템플릿 A _ Type</option>
+							</select>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+
+		<div class="btn_alignC" style="margin-top:20px;">
+			<button type="button" class="btn_type3 btn_type3_white">
+				<b>취소</b>
+			</button>
+			<button type="button" class="btn_type3 btn_type3_purple">
+				<b>저장</b>
+			</button>
+		</div>
+	</div>
+</body>
+</html>

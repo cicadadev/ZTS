@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+	<title>0to7 BO</title>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+	<meta http-equiv="Pragma" content="no-cache" />
+	<script type="text/javascript" src="js/jquery-1.12.0.min.js"></script>
+	<script type="text/javascript" src="js/ui.js"></script>
+	<link rel="stylesheet" href="css/common.css" />
+	<script type="text/javascript">
+
+	</script>
+</head>
+
+<body>
+	<!-- 820 * 240 -->
+	<div class="wrap_popup">
+		<h1 class="sub_title1">제한 설정</h1>
+
+		<ul class="tab_type2">
+			<li class="on">
+				<button type="button">탭활성화</button>
+			</li>
+			<li>
+				<button type="button">탭비활성화</button>
+			</li>
+			<li>
+				<button type="button">탭비활성화</button>
+			</li>
+			<li class="disabled">
+				<button type="button">탭비활성화</button>
+			</li>
+			<li>
+				<button type="button">탭비활성화</button>
+			</li>
+		</ul>
+
+		<div class="box_type1">
+			<table class="tb_type1 tab_cont"> <!-- 160523 class(tab_cont) 추가 -->
+				<colgroup>
+					<col width="20%" />
+					<col width="*" />
+				</colgroup>
+				<tbody>
+					<tr>
+						<th>
+							접근가능 회원 유형 <i>필수입력</i>
+						</th>
+						<td>
+							<input type="checkbox" value="" id="chk1" />
+							<label for="chk1">일반회원</label>
+
+							<input type="checkbox" value="" id="chk2" />
+							<label for="chk2">멤버십회원</label>
+
+							<input type="checkbox" value="" id="chk3" />
+							<label for="chk3">골드회원</label>
+
+							<input type="checkbox" value="" id="chk4" />
+							<label for="chk4">회원유형1</label>
+
+							<input type="checkbox" value="" id="chk5" />
+							<label for="chk5">회원유형2</label>
+
+							<input type="checkbox" value="" id="chk6" />
+							<label for="chk6">회원유형3</label>
+						</td>
+					</tr>
+					<tr>
+						<th>
+							유입경로채널 <i>필수입력</i>
+						</th>
+						<td>
+							<input type="radio" value="true" name="radio_set1" id="radio1" class="ad_disabled" checked="checked" />
+							<label for="radio1">제한없음</label>
+							<input type="radio" value="false" name="radio_set1" id="radio2" class="ad_disabled" />
+							<label for="radio2">제한</label>
+
+							<select class="ad_select" disabled>
+								<option value="">-- 광고 채널 선택 --</option>
+								<option value="">네이버1 광고 채널</option>
+								<option value="">네이버2 광고 채널</option>
+								<option value="">네이버3 광고 채널</option>
+								<option value="">네이버4 광고 채널</option>
+								<option value="">네이버5 광고 채널</option>
+								<option value="">네이버6 광고 채널</option>
+								<option value="">네이버7 광고 채널</option>
+								<option value="">네이버8 광고 채널</option>
+								<option value="">네이버9 광고 채널</option>
+								<option value="">네이버10 광고 채널</option>
+								<option value="">네이버11 광고 채널</option>
+								<option value="">네이버12 광고 채널</option>
+								<option value="">네이버13 광고 채널</option>
+								<option value="">네이버14 광고 채널</option>
+								<option value="">네이버15 광고 채널</option>
+							</select>
+
+							<!-- ### 2016.06.07 추가 ### -->
+							<span class="sp_position">
+								<button type="button" class="btn_type2">
+									<b>추가</b>
+								</button>
+							</span>
+
+							<div class="ad_box">
+								<!--
+								<span>
+									네이버1 광고 채널 <button type="button" class="btn_txt_del">파일 삭제</button>
+								</span>
+								-->
+							</div>
+						</td>
+					</tr>
+					<tr>
+						<th>
+							디바이스 선택 <i>필수입력</i>
+						</th>
+						<td>
+							<input type="checkbox" value="" id="chk7" />
+							<label for="chk7">PC</label>
+
+							<input type="checkbox" value="" id="chk8" />
+							<label for="chk8">MOBILE</label>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+
+			<!-- 160523 add -->
+			<table class="tb_type1 tab_cont">
+				<colgroup>
+					<col width="20%" />
+					<col width="*" />
+				</colgroup>
+				<tbody>
+					<tr>
+						<th>
+							접근가능 회원 유형 22 <i>필수입력</i>
+						</th>
+						<td>
+							<input type="checkbox" value="" id="chk1" />
+							<label for="chk1">일반회원</label>
+
+							<input type="checkbox" value="" id="chk2" />
+							<label for="chk2">멤버십회원</label>
+
+							<input type="checkbox" value="" id="chk3" />
+							<label for="chk3">골드회원</label>
+
+							<input type="checkbox" value="" id="chk4" />
+							<label for="chk4">회원유형1</label>
+
+							<input type="checkbox" value="" id="chk5" />
+							<label for="chk5">회원유형2</label>
+
+							<input type="checkbox" value="" id="chk6" />
+							<label for="chk6">회원유형3</label>
+						</td>
+					</tr>
+					<tr>
+						<th>
+							유입경로채널 <i>필수입력</i>
+						</th>
+						<td>
+							<input type="radio" value="true" name="radio_set2" id="radio3" class="ad_disabled" checked="checked" />
+							<label for="radio3">제한없음</label>
+							<input type="radio" value="false" name="radio_set2" id="radio4" class="ad_disabled" />
+							<label for="radio4">제한</label>
+
+							<select class="ad_select" disabled>
+								<option value="">-- 광고 채널 선택 --</option>
+								<option value="">네이버1 광고 채널</option>
+								<option value="">네이버2 광고 채널</option>
+								<option value="">네이버3 광고 채널</option>
+								<option value="">네이버4 광고 채널</option>
+								<option value="">네이버5 광고 채널</option>
+								<option value="">네이버6 광고 채널</option>
+								<option value="">네이버7 광고 채널</option>
+								<option value="">네이버8 광고 채널</option>
+								<option value="">네이버9 광고 채널</option>
+								<option value="">네이버10 광고 채널</option>
+								<option value="">네이버11 광고 채널</option>
+								<option value="">네이버12 광고 채널</option>
+								<option value="">네이버13 광고 채널</option>
+								<option value="">네이버14 광고 채널</option>
+								<option value="">네이버15 광고 채널</option>
+							</select>
+
+							<div class="ad_box">
+								<!--
+								<span>
+									네이버1 광고 채널 <button type="button" class="btn_txt_del">파일 삭제</button>
+								</span>
+								-->
+							</div>
+						</td>
+					</tr>
+					<tr>
+						<th>
+							디바이스 선택 <i>필수입력</i>
+						</th>
+						<td>
+							<input type="checkbox" value="" id="chk7" />
+							<label for="chk7">PC</label>
+
+							<input type="checkbox" value="" id="chk8" />
+							<label for="chk8">MOBILE</label>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			<table class="tb_type1 tab_cont">
+				<colgroup>
+					<col width="20%" />
+					<col width="*" />
+				</colgroup>
+				<tbody>
+					<tr>
+						<th>
+							접근가능 회원 유형 33 <i>필수입력</i>
+						</th>
+						<td>
+							<input type="checkbox" value="" id="chk1" />
+							<label for="chk1">일반회원</label>
+
+							<input type="checkbox" value="" id="chk2" />
+							<label for="chk2">멤버십회원</label>
+
+							<input type="checkbox" value="" id="chk3" />
+							<label for="chk3">골드회원</label>
+
+							<input type="checkbox" value="" id="chk4" />
+							<label for="chk4">회원유형1</label>
+
+							<input type="checkbox" value="" id="chk5" />
+							<label for="chk5">회원유형2</label>
+
+							<input type="checkbox" value="" id="chk6" />
+							<label for="chk6">회원유형3</label>
+						</td>
+					</tr>
+					<tr>
+						<th>
+							유입경로채널 <i>필수입력</i>
+						</th>
+						<td>
+							<input type="radio" value="true" name="radio_set3" id="radio5" class="ad_disabled" checked="checked" />
+							<label for="radio5">제한없음</label>
+							<input type="radio" value="false" name="radio_set3" id="radio6" class="ad_disabled" />
+							<label for="radio6">제한</label>
+
+							<select class="ad_select" disabled>
+								<option value="">-- 광고 채널 선택 --</option>
+								<option value="">네이버1 광고 채널</option>
+								<option value="">네이버2 광고 채널</option>
+								<option value="">네이버3 광고 채널</option>
+								<option value="">네이버4 광고 채널</option>
+								<option value="">네이버5 광고 채널</option>
+								<option value="">네이버6 광고 채널</option>
+								<option value="">네이버7 광고 채널</option>
+								<option value="">네이버8 광고 채널</option>
+								<option value="">네이버9 광고 채널</option>
+								<option value="">네이버10 광고 채널</option>
+								<option value="">네이버11 광고 채널</option>
+								<option value="">네이버12 광고 채널</option>
+								<option value="">네이버13 광고 채널</option>
+								<option value="">네이버14 광고 채널</option>
+								<option value="">네이버15 광고 채널</option>
+							</select>
+
+							<div class="ad_box">
+								<!--
+								<span>
+									네이버1 광고 채널 <button type="button" class="btn_txt_del">파일 삭제</button>
+								</span>
+								-->
+							</div>
+						</td>
+					</tr>
+					<tr>
+						<th>
+							디바이스 선택 <i>필수입력</i>
+						</th>
+						<td>
+							<input type="checkbox" value="" id="chk7" />
+							<label for="chk7">PC</label>
+
+							<input type="checkbox" value="" id="chk8" />
+							<label for="chk8">MOBILE</label>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			<table class="tb_type1 tab_cont">
+				<colgroup>
+					<col width="20%" />
+					<col width="*" />
+				</colgroup>
+				<tbody>
+					<tr>
+						<th>
+							접근가능 회원 유형 44 <i>필수입력</i>
+						</th>
+						<td>
+							<input type="checkbox" value="" id="chk1" />
+							<label for="chk1">일반회원</label>
+
+							<input type="checkbox" value="" id="chk2" />
+							<label for="chk2">멤버십회원</label>
+
+							<input type="checkbox" value="" id="chk3" />
+							<label for="chk3">골드회원</label>
+
+							<input type="checkbox" value="" id="chk4" />
+							<label for="chk4">회원유형1</label>
+
+							<input type="checkbox" value="" id="chk5" />
+							<label for="chk5">회원유형2</label>
+
+							<input type="checkbox" value="" id="chk6" />
+							<label for="chk6">회원유형3</label>
+						</td>
+					</tr>
+					<tr>
+						<th>
+							유입경로채널 <i>필수입력</i>
+						</th>
+						<td>
+							<input type="radio" value="true" name="radio_set4" id="radio7" class="ad_disabled" checked="checked" />
+							<label for="radio7">제한없음</label>
+							<input type="radio" value="false" name="radio_set4" id="radio8" class="ad_disabled" />
+							<label for="radio8">제한</label>
+
+							<select class="ad_select" disabled>
+								<option value="">-- 광고 채널 선택 --</option>
+								<option value="">네이버1 광고 채널</option>
+								<option value="">네이버2 광고 채널</option>
+								<option value="">네이버3 광고 채널</option>
+								<option value="">네이버4 광고 채널</option>
+								<option value="">네이버5 광고 채널</option>
+								<option value="">네이버6 광고 채널</option>
+								<option value="">네이버7 광고 채널</option>
+								<option value="">네이버8 광고 채널</option>
+								<option value="">네이버9 광고 채널</option>
+								<option value="">네이버10 광고 채널</option>
+								<option value="">네이버11 광고 채널</option>
+								<option value="">네이버12 광고 채널</option>
+								<option value="">네이버13 광고 채널</option>
+								<option value="">네이버14 광고 채널</option>
+								<option value="">네이버15 광고 채널</option>
+							</select>
+
+							<div class="ad_box">
+								<!--
+								<span>
+									네이버1 광고 채널 <button type="button" class="btn_txt_del">파일 삭제</button>
+								</span>
+								-->
+							</div>
+						</td>
+					</tr>
+					<tr>
+						<th>
+							디바이스 선택 <i>필수입력</i>
+						</th>
+						<td>
+							<input type="checkbox" value="" id="chk7" />
+							<label for="chk7">PC</label>
+
+							<input type="checkbox" value="" id="chk8" />
+							<label for="chk8">MOBILE</label>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			<table class="tb_type1 tab_cont">
+				<colgroup>
+					<col width="20%" />
+					<col width="*" />
+				</colgroup>
+				<tbody>
+					<tr>
+						<th>
+							접근가능 회원 유형 55 <i>필수입력</i>
+						</th>
+						<td>
+							<input type="checkbox" value="" id="chk1" />
+							<label for="chk1">일반회원</label>
+
+							<input type="checkbox" value="" id="chk2" />
+							<label for="chk2">멤버십회원</label>
+
+							<input type="checkbox" value="" id="chk3" />
+							<label for="chk3">골드회원</label>
+
+							<input type="checkbox" value="" id="chk4" />
+							<label for="chk4">회원유형1</label>
+
+							<input type="checkbox" value="" id="chk5" />
+							<label for="chk5">회원유형2</label>
+
+							<input type="checkbox" value="" id="chk6" />
+							<label for="chk6">회원유형3</label>
+						</td>
+					</tr>
+					<tr>
+						<th>
+							유입경로채널 <i>필수입력</i>
+						</th>
+						<td>
+							<input type="radio" value="true" name="radio_set5" id="radio9" class="ad_disabled" checked="checked" />
+							<label for="radio9">제한없음</label>
+							<input type="radio" value="false" name="radio_set5" id="radio10" class="ad_disabled" />
+							<label for="radio10">제한</label>
+
+							<select class="ad_select" disabled>
+								<option value="">-- 광고 채널 선택 --</option>
+								<option value="">네이버1 광고 채널</option>
+								<option value="">네이버2 광고 채널</option>
+								<option value="">네이버3 광고 채널</option>
+								<option value="">네이버4 광고 채널</option>
+								<option value="">네이버5 광고 채널</option>
+								<option value="">네이버6 광고 채널</option>
+								<option value="">네이버7 광고 채널</option>
+								<option value="">네이버8 광고 채널</option>
+								<option value="">네이버9 광고 채널</option>
+								<option value="">네이버10 광고 채널</option>
+								<option value="">네이버11 광고 채널</option>
+								<option value="">네이버12 광고 채널</option>
+								<option value="">네이버13 광고 채널</option>
+								<option value="">네이버14 광고 채널</option>
+								<option value="">네이버15 광고 채널</option>
+							</select>
+
+							<div class="ad_box">
+								<!--
+								<span>
+									네이버1 광고 채널 <button type="button" class="btn_txt_del">파일 삭제</button>
+								</span>
+								-->
+							</div>
+						</td>
+					</tr>
+					<tr>
+						<th>
+							디바이스 선택 <i>필수입력</i>
+						</th>
+						<td>
+							<input type="checkbox" value="" id="chk7" />
+							<label for="chk7">PC</label>
+
+							<input type="checkbox" value="" id="chk8" />
+							<label for="chk8">MOBILE</label>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			<!-- //160523 add -->
+		</div>
+
+		<div class="btn_alignC" style="margin-top:20px;">
+			<button type="button" class="btn_type3 btn_type3_white">
+				<b>취소</b>
+			</button>
+			<button type="button" class="btn_type3 btn_type3_purple">
+				<b>저장</b>
+			</button>
+		</div>
+	</div>
+</body>
+</html>

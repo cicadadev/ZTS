@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+	<title>0to7 BO</title>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+	<meta http-equiv="Pragma" content="no-cache" />
+	<script type="text/javascript" src="js/jquery-1.12.0.min.js"></script>
+	<script type="text/javascript" src="js/ui.js"></script>
+	<link rel="stylesheet" href="css/common.css" />
+	<script type="text/javascript">
+
+	</script>
+</head>
+
+<body>
+	<!-- 820 * 640 -->
+	<div class="wrap_popup">
+		<h1 class="sub_title1">주문조회</h1>
+
+		<div class="box_type1">
+			<table class="tb_type1">
+				<colgroup>
+					<col width="142px" />
+					<col width="*" />
+				</colgroup>
+				<tbody>
+					<tr>
+						<th>주문접수일</th>
+						<td>
+							<input type="text" value="" placeholder="" />
+							<button type="button" class="btn_date">달력</button>
+							~
+							<input type="text" value="" placeholder="" />
+							<button type="button" class="btn_date">달력</button>
+						</td>
+					</tr>
+					<tr>
+						<th>주문상품</th>
+						<td>
+							<input type="text" value="" placeholder="" style="width:98%;" />
+						</td>
+					</tr>
+					<tr>
+						<th>주문번호</th>
+						<td>
+							<input type="text" value="" placeholder="" style="width:98%;" />
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+
+		<div class="btn_alignC">
+			<button type="button" class="btn_type1 btn_type1_white">
+				<b>초기화</b>
+			</button>
+			<button type="button" class="btn_type1 btn_type1_gray">
+				<b>검색</b>
+			</button>
+		</div>
+
+		<div class="box_type1" style="margin-top:20px;">
+			<h2 class="sub_title2">검색 결과</h2>
+
+			<div class="tb_util">
+				<select style="width:105px;">
+					<option value="">200건</option>
+				</select>
+
+				<span class="page">
+					<button type="button" class="btn_prev">이전</button>
+					<input type="text" value="1" placeholder="" />
+					<u>/</u><i>24</i>
+					<button type="button" class="btn_next">다음</button>
+				</span>
+
+				<button type="button" class="btn_type2">
+					<b>이동</b>
+				</button>
+			</div>
+
+			<div class="gridbox">
+				<img src="img/temp/grid2.gif" alt="" style="vertical-align:top;" />
+			</div>
+
+			<div class="tb_bar">
+				<button type="button" class="btn_grid_more">더보기</button>
+			</div>
+		</div>
+
+		<div class="btn_alignC" style="margin-top:39px;">
+			<button type="button" class="btn_type3">
+				<b>취소</b>
+			</button>
+			<button type="button" class="btn_type3 btn_type3_purple">
+				<b>선택</b>
+			</button>
+		</div>
+	</div>
+</body>
+</html>

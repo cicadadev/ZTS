@@ -1,0 +1,2059 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+	<title>Guide : 커머스솔루션</title>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+	<meta http-equiv="Pragma" content="no-cache" />
+	<script type="text/javascript" src="js/jquery-1.12.0.min.js"></script>
+	<link rel="stylesheet" href="css/common.css" />
+	<style type="text/css">
+		body {min-width:980px;}
+		.gheader {position:fixed; left:0; top:0; right:0; padding:25px 0; border-bottom:5px solid #5c6870; background-color:#fff; z-index:20;}
+		.gheader h1 {padding:0 20px; color:#555; font-size:30px; line-height:1;}
+		.gheader span {margin-right:20px; padding-right:20px; border-right:2px solid #ddd;}
+
+		.guide_tab {position:fixed; left:0; top:0; bottom:0; width:250px; padding-top:85px; border-right:1px solid #a7a7a7; background:#fff; z-index:10;}
+		.guide_tab:after {content:''; position:absolute; top:0; right:0; display:block; width:3px; height:100%; border-right:4px solid #ededed; border-left:1px solid #ededed;}
+		.guide_tab li {margin-right:10px;}
+		.guide_tab li a {display:block; padding:10px; border-bottom:1px solid #ededed; font:normal 19px/28px "맑은 고딕"; letter-spacing:-0.08em;}
+		.guide_tab li a.on {border-color:#0e6ed0; color:#0e6ed0; font-weight:bold;}
+		.guide_tab li:first-child {margin-top:30px;}
+
+		.guide_article {padding:85px 50px 50px 300px; background-color:#fff;}
+		.guide_article .guide_tit1 {margin:20px 0 10px; padding:20px 0 11px; border-bottom:2px solid #000; font:bold 19px/26px "맑은 고딕"; color:#000; letter-spacing:-0.05em;}
+		.guide_article .guide_tit1 + .guide_tit2 {margin-top:10px;}
+		.guide_article .guide_tit2 {margin:30px 0 10px; padding:5px 10px; background:#0e6ed0; font:bold 12px/20px '돋움',dotum, sans-serif; color:#fff; letter-spacing:0em;}
+		.guide_article .guide_tit3 {margin:30px 0 10px; padding:5px 10px; background:#e4e4e4; font:normal 12px/20px '돋움',dotum, sans-serif; color:#000; letter-spacing:0em;}
+		.guide_article .guide_tit2 + .guide_tit3 {margin-top:0;} 
+
+		.code_view {margin-top:10px; padding:2px 5px 3px 5px; font-weight:bold; color:#fff; background-color:#f78e1e; cursor:pointer;}
+
+		.gcode {display:none;}
+		.gcode textarea {margin-top:10px; padding:0 10px 0 45px; width:91%; min-height:80px; border:1px dashed #6ca801; background:#f9f9f9 url("img/guide/bg_markup.png") no-repeat -10px 0; font-size:12px; line-height:16px; resize:none;}
+	</style>
+
+	<script type="text/javascript">
+		$(window).scroll(function(){
+			var cont = $('.guide_wrap');
+			var contNum = cont.length;
+			var story_move_now = 0;
+			var btn = $(".guide_tab > li > a");
+			cont.each(function(){
+				var game_content = $(this).offset().top-100;
+				if(game_content <= $(window).scrollTop()){
+					story_move_now = cont.index($(this));
+					//console.log(story_move_now)
+				}
+				btn.removeClass('on').eq(story_move_now).addClass('on');
+			});
+		});
+
+		$(document).ready(function(){
+			var btn = $(".guide_tab > li > a");
+			btn.click(function(evt){
+				btn.removeClass("on");
+				$(this).addClass("on");
+				$(window).scrollTop($($(this).attr("href")).offset().top - 100);
+
+				evt.preventDefault();
+			});
+
+			$(".code_view").on("click", function() {
+				if($(this).next().css("display") == "block"){
+					$(this).next().hide();
+				}else{
+					$(this).next().show();
+				}
+			});
+		});
+	</script>
+
+</head>
+
+<body>
+	<header class="gheader">
+		<h1>커머스솔루션 HTML 가이드</h1>
+	</header>
+
+	<ul class="guide_tab">
+		<li><a href="#guideBtn" class="on">버튼</a></li>
+		<li><a href="#guideTab">탭</a></li>
+		<li><a href="#guideTit">타이틀</a></li>
+		<li><a href="#guideTxt">텍스트</a></li>
+		<li><a href="#guideList">리스트</a></li>
+		<li><a href="#guideTbl">테이블</a></li>
+		<li><a href="#guideForm">폼</a></li>
+		<li><a href="#guideBg">배경</a></li>
+		<li><a href="#guidePage">페이징</a></li>
+		<li><a href="#guideEtc">기타</a></li>
+	</ul>
+
+	<article class="guide_article content">
+		<!-- ### 버튼 ### -->
+		<div class="guide_wrap" id="guideBtn">
+			<h2 class="guide_tit1">버튼</h2>
+
+			<h3 class="guide_tit2">달력 버튼 (20*20) : .btn_date</h3>
+			<div class="gpreview">
+				<button type="button" class="btn_date">달력</button>
+			</div>
+			<button type="button" class="code_view">소스 보기</button>
+			<div class="gcode">
+				<textarea cols="30" rows="1" readonly="readonly">
+<button type="button" class="btn_date">달력</button>
+				</textarea>
+			</div>
+
+			<h3 class="guide_tit2">아이콘 버튼 (20*21) : .btn_tb_util + (.tb_util1 ~ .tb_util4)</h3>
+			<div class="gpreview">
+				<button type="button" class="btn_tb_util tb_util1">되돌리기</button>
+				<button type="button" class="btn_tb_util tb_util2">엑셀받기</button>
+				<button type="button" class="btn_tb_util tb_util3">셀잠그기</button>
+				<button type="button" class="btn_tb_util tb_util4">전체체크</button>
+				<button type="button" class="btn_tb_util tb_util5">행추가</button>
+			</div>
+			<button type="button" class="code_view">소스 보기</button>
+			<div class="gcode">
+				<textarea cols="30" rows="1" readonly="readonly">
+<button type="button" class="btn_tb_util tb_util1">되돌리기</button>
+<button type="button" class="btn_tb_util tb_util2">엑셀받기</button>
+<button type="button" class="btn_tb_util tb_util3">셀잠그기</button>
+<button type="button" class="btn_tb_util tb_util4">전체체크</button>
+<button type="button" class="btn_tb_util tb_util5">행추가</button>
+				</textarea>
+			</div>
+
+			<h3 class="guide_tit2">기간 버튼 (auto * 20) : .btn_day</h3>
+			<div class="gpreview">
+				<div class="day_group">
+					<button type="button" class="btn_day">1주일</button>
+					<button type="button" class="btn_day">15일</button>
+					<button type="button" class="btn_day on">30일</button>
+				</div>
+			</div>
+			<button type="button" class="code_view">소스 보기</button>
+			<div class="gcode">
+				<textarea cols="30" rows="9" readonly="readonly">
+<div class="day_group">
+	<button type="button" class="btn_day">1주일</button>
+	<button type="button" class="btn_day">15일</button>
+	<button type="button" class="btn_day on">30일</button>
+</div>
+				</textarea>
+			</div>
+
+			<h3 class="guide_tit2">버튼타입 1 (auto * 29) : .btn_type1</h3>
+			<div class="gpreview">
+				<button type="button" class="btn_type1">
+					<b>초기화</b>
+				</button>
+				<button type="button" class="btn_type1">
+					<b>문의등록</b>
+				</button>
+			</div>
+			<button type="button" class="code_view">소스 보기</button>
+			<div class="gcode">
+				<textarea cols="30" rows="9" readonly="readonly">
+<button type="button" class="btn_type1">
+	<b>초기화</b>
+</button>
+<button type="button" class="btn_type1">
+	<b>문의등록</b>
+</button>
+				</textarea>
+			</div>
+
+			<h4 class="guide_tit3">purple : .btn_type1 + .btn_type1_purple</h4>
+			<div class="gpreview">
+				<button type="button" class="btn_type1 btn_type1_purple">
+					<b>초기화</b>
+				</button>
+				<button type="button" class="btn_type1 btn_type1_purple">
+					<b>문의등록</b>
+				</button>
+			</div>
+			<button type="button" class="code_view">소스 보기</button>
+			<div class="gcode">
+				<textarea cols="30" rows="9" readonly="readonly">
+<button type="button" class="btn_type1 btn_type1_purple">
+	<b>초기화</b>
+</button>
+<button type="button" class="btn_type1 btn_type1_purple">
+	<b>문의등록</b>
+</button>
+				</textarea>
+			</div>
+
+			<h4 class="guide_tit3">white : .btn_type1 + .btn_type1_white</h4>
+			<div class="gpreview">
+				<button type="button" class="btn_type1 btn_type1_white">
+					<b>초기화</b>
+				</button>
+				<button type="button" class="btn_type1 btn_type1_white">
+					<b>문의등록</b>
+				</button>
+			</div>
+			<button type="button" class="code_view">소스 보기</button>
+			<div class="gcode">
+				<textarea cols="30" rows="9" readonly="readonly">
+<button type="button" class="btn_type1 btn_type1_white">
+	<b>초기화</b>
+</button>
+<button type="button" class="btn_type1 btn_type1_white">
+	<b>문의등록</b>
+</button>
+				</textarea>
+			</div>
+
+			<h4 class="guide_tit3">gray : .btn_type1 + .btn_type1_gray</h4>
+			<div class="gpreview">
+				<button type="button" class="btn_type1 btn_type1_gray">
+					<b>초기화</b>
+				</button>
+				<button type="button" class="btn_type1 btn_type1_gray">
+					<b>문의등록</b>
+				</button>
+			</div>
+			<button type="button" class="code_view">소스 보기</button>
+			<div class="gcode">
+				<textarea cols="30" rows="9" readonly="readonly">
+<button type="button" class="btn_type1 btn_type1_gray">
+	<b>초기화</b>
+</button>
+<button type="button" class="btn_type1 btn_type1_gray">
+	<b>문의등록</b>
+</button>
+				</textarea>
+			</div>
+
+			<h3 class="guide_tit2">버튼타입 2 (auto * 21) : .btn_type2</h3>
+			<div class="gpreview">
+				<button type="button" class="btn_type2">
+					<b>이동</b>
+				</button>
+				<button type="button" class="btn_type2">
+					<b>모두 닫기</b>
+				</button>
+			</div>
+			<button type="button" class="code_view">소스 보기</button>
+			<div class="gcode">
+				<textarea cols="30" rows="9" readonly="readonly">
+<button type="button" class="btn_type2">
+	<b>이동</b>
+</button>
+<button type="button" class="btn_type2">
+	<b>모두 닫기</b>
+</button>
+				</textarea>
+			</div>
+
+			<h4 class="guide_tit3">gray : .btn_type2 + .btn_type2_gray</h4>
+			<div class="gpreview">
+				<button type="button" class="btn_type2 btn_type2_gray">
+					<b>이동</b>
+				</button>
+				<button type="button" class="btn_type2 btn_type2_gray">
+					<b>모두 닫기</b>
+				</button>
+			</div>
+			<button type="button" class="code_view">소스 보기</button>
+			<div class="gcode">
+				<textarea cols="30" rows="9" readonly="readonly">
+<button type="button" class="btn_type2 btn_type2_gray">
+	<b>이동</b>
+</button>
+<button type="button" class="btn_type2 btn_type2_gray">
+	<b>모두 닫기</b>
+</button>
+				</textarea>
+			</div>
+
+			<h4 class="guide_tit3">gray2 : .btn_type2 + .btn_type2_gray2</h4>
+			<div class="gpreview">
+				<button type="button" class="btn_type2 btn_type2_gray2">
+					<b>이동</b>
+				</button>
+				<button type="button" class="btn_type2 btn_type2_gray2">
+					<b>모두 닫기</b>
+				</button>
+			</div>
+			<button type="button" class="code_view">소스 보기</button>
+			<div class="gcode">
+				<textarea cols="30" rows="9" readonly="readonly">
+<button type="button" class="btn_type2 btn_type2_gray2">
+	<b>이동</b>
+</button>
+<button type="button" class="btn_type2 btn_type2_gray2">
+	<b>모두 닫기</b>
+</button>
+				</textarea>
+			</div>
+
+			<h3 class="guide_tit2">버튼타입 3 (auto * 36) : .btn_type3</h3>
+			<div class="gpreview">
+				<button type="button" class="btn_type3">
+					<b>이동</b>
+				</button>
+				<button type="button" class="btn_type3">
+					<b>모두 닫기</b>
+				</button>
+			</div>
+			<button type="button" class="code_view">소스 보기</button>
+			<div class="gcode">
+				<textarea cols="30" rows="9" readonly="readonly">
+<button type="button" class="btn_type3">
+	<b>이동</b>
+</button>
+<button type="button" class="btn_type3">
+	<b>모두 닫기</b>
+</button>
+				</textarea>
+			</div>
+
+			<h4 class="guide_tit3">purple : .btn_type3 + .btn_type3_purple</h4>
+			<div class="gpreview">
+				<button type="button" class="btn_type3 btn_type3_purple">
+					<b>이동</b>
+				</button>
+				<button type="button" class="btn_type3 btn_type3_purple">
+					<b>모두 닫기</b>
+				</button>
+			</div>
+			<button type="button" class="code_view">소스 보기</button>
+			<div class="gcode">
+				<textarea cols="30" rows="9" readonly="readonly">
+<button type="button" class="btn_type3 btn_type3_purple">
+	<b>이동</b>
+</button>
+<button type="button" class="btn_type3 btn_type3_purple">
+	<b>모두 닫기</b>
+</button>
+				</textarea>
+			</div>
+
+			<h3 class="guide_tit2">버튼타입 4 (auto * 28 / 투명) : .btn_type4</h3>
+			<div class="gpreview" style="padding:10px 0; background-color:#2e3192;">
+				<button type="button" class="btn_type4">
+					<b>이동</b>
+				</button>
+				<button type="button" class="btn_type4">
+					<b>모두 닫기</b>
+				</button>
+			</div>
+			<button type="button" class="code_view">소스 보기</button>
+			<div class="gcode">
+				<textarea cols="30" rows="9" readonly="readonly">
+<button type="button" class="btn_type4">
+	<b>이동</b>
+</button>
+<button type="button" class="btn_type4">
+	<b>모두 닫기</b>
+</button>
+				</textarea>
+			</div>
+		</div>
+		<!-- ### //버튼 ### -->
+
+		<!-- ### 탭 ### -->
+		<div class="guide_wrap" id="guideTab">
+			<h2 class="guide_tit1">탭</h2>
+
+			<h3 class="guide_tit2">탭 타입1 : .tab_type1</h3>
+			<div class="gpreview">
+				<ul class="tab_type1">
+					<li class="on">
+						<button type="button">010-5681-5687</button>
+						<button type="button" class="tab_close">탭 닫기</button>
+					</li>
+					<li>
+						<button type="button">010-5681-5687</button>
+						<button type="button" class="tab_close">탭 닫기</button>
+					</li>
+					<li>
+						<button type="button">010-5681-5687</button>
+						<button type="button" class="tab_close">탭 닫기</button>
+					</li>
+					<li>
+						<button type="button">010-5681-5687</button>
+						<button type="button" class="tab_close">탭 닫기</button>
+					</li>
+					<li>
+						<button type="button">딜검색</button>
+						<button type="button" class="tab_close">탭 닫기</button>
+					</li>
+				</ul>
+			</div>
+			<button type="button" class="code_view">소스 보기</button>
+			<div class="gcode">
+				<textarea cols="30" rows="23" readonly="readonly">
+<ul class="tab_type1">
+	<li class="on">
+		<button type="button">010-5681-5687</button>
+		<button type="button" class="tab_close">탭 닫기</button>
+	</li>
+	<li>
+		<button type="button">010-5681-5687</button>
+		<button type="button" class="tab_close">탭 닫기</button>
+	</li>
+	<li>
+		<button type="button">010-5681-5687</button>
+		<button type="button" class="tab_close">탭 닫기</button>
+	</li>
+	<li>
+		<button type="button">010-5681-5687</button>
+		<button type="button" class="tab_close">탭 닫기</button>
+	</li>
+	<li>
+		<button type="button">딜검색</button>
+		<button type="button" class="tab_close">탭 닫기</button>
+	</li>
+</ul>
+				</textarea>
+			</div>
+		</div>
+		<!-- ### //탭 ### -->
+
+		<!-- ### 타이틀 ### -->
+		<div class="guide_wrap" id="guideTit">
+			<h2 class="guide_tit1">타이틀</h2>
+
+			<h3 class="guide_tit2">페이지 제목 타입1 : .sub_title1</h3>
+			<div class="gpreview">
+				<h2 class="sub_title1">전화문의 등록</h2>
+			</div>
+			<button type="button" class="code_view">소스 보기</button>
+			<div class="gcode">
+				<textarea cols="30" rows="1" readonly="readonly">
+<h2 class="sub_title1">전화문의 등록</h2>
+				</textarea>
+			</div>
+
+			<h3 class="guide_tit2">페이지 제목 타입2 : .sub_title2</h3>
+			<div class="gpreview">
+				<h3 class="sub_title2">전화문의 상세</h3>
+			</div>
+			<button type="button" class="code_view">소스 보기</button>
+			<div class="gcode">
+				<textarea cols="30" rows="1" readonly="readonly">
+<h3 class="sub_title2">전화문의 상세</h3>
+				</textarea>
+			</div>
+
+			<h4 class="guide_tit3">페이지 제목 타입2-1 : .sub_title2</h4>
+			<div class="gpreview">
+				<h3 class="sub_title2">
+					전화문의 상세
+					<span>(총 <b>1,000</b>건)</span>
+				</h3>
+			</div>
+			<button type="button" class="code_view">소스 보기</button>
+			<div class="gcode">
+				<textarea cols="30" rows="1" readonly="readonly">
+<h3 class="sub_title2">
+	전화문의 상세
+	<span>(총 <b>1,000</b>건)</span>
+</h3>
+				</textarea>
+			</div>
+
+			<h4 class="guide_tit3">페이지 제목 타입2-2 : .sub_title2</h4>
+			<div class="gpreview">
+				<div class="sub_title2">
+					<h3>주문자정보</h3>
+
+					<dl class="total_money">
+						<dt>결제대상금액</dt>
+						<dd>
+							<i>985,000</i>원
+						</dd>
+						<dt>기결제금액</dt>
+						<dd>
+							<i>5,000</i>원
+						</dd>
+						<dt>미결제금액</dt>
+						<dd>
+							<i>980,000</i>원
+						</dd>
+					</dl>
+				</div>
+			</div>
+			<button type="button" class="code_view">소스 보기</button>
+			<div class="gcode">
+				<textarea cols="30" rows="20" readonly="readonly">
+<div class="sub_title2">
+	<h3>주문자정보</h3>
+
+	<dl class="total_money">
+		<dt>결제대상금액</dt>
+		<dd>
+			<i>985,000</i>원
+		</dd>
+		<dt>기결제금액</dt>
+		<dd>
+			<i>5,000</i>원
+		</dd>
+		<dt>미결제금액</dt>
+		<dd>
+			<i>980,000</i>원
+		</dd>
+	</dl>
+</div>
+				</textarea>
+			</div>
+		</div>
+		<!-- ### //타이틀 ### -->
+
+		<!-- ### 텍스트 ### -->
+		<div class="guide_wrap" id="guideTxt">
+			<h2 class="guide_tit1">텍스트</h2>
+
+			<h3 class="guide_tit2">말줄임 : .txt_ellipsis</h3>
+			<div class="gpreview">
+				<span class="txt_ellipsis">aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa</span>
+			</div>
+			<button type="button" class="code_view">소스 보기</button>
+			<div class="gcode">
+				<textarea cols="30" rows="5" readonly="readonly">
+<span class="txt_ellipsis">aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa</span>
+				</textarea>
+			</div>
+		</div>
+		<!-- ### //텍스트 ### -->
+
+		<!-- ### 리스트 ### -->
+		<div class="guide_wrap" id="guideList">
+			<h2 class="guide_tit1">리스트</h2>
+
+			<h3 class="guide_tit2">리스트타입1 : .list_type1</h3>
+			<div class="gpreview">
+
+			</div>
+			<button type="button" class="code_view">소스 보기</button>
+			<div class="gcode">
+				<textarea cols="30" rows="38" readonly="readonly">
+
+				</textarea>
+			</div>
+		</div>
+		<!-- ### //리스트 ### -->
+
+		<!-- ### 테이블 ### -->
+		<div class="guide_wrap" id="guideTbl">
+			<h2 class="guide_tit1">테이블</h2>
+
+			<h3 class="guide_tit2">테이블타입1 : .tb_type1 (샘플1)</h3>
+			<div class="gpreview">
+				<div class="box_type1">
+					<table class="tb_type1">
+						<colgroup>
+							<col width="9%" />
+							<col width="55%" />
+							<col width="9%" />
+							<col width="*" />
+						</colgroup>
+						<tbody>
+							<tr>
+								<th>기간</th>
+								<td>
+									<select>
+										<option value="">문의일</option>
+									</select>
+
+									<input type="text" value="문의일" placeholder="" />
+									<button type="button" class="btn_date">달력</button>
+									~
+									<input type="text" value="문의일" placeholder="" />
+									<button type="button" class="btn_date">달력</button>
+
+									<div class="day_group">
+										<button type="button" class="btn_day">1주일</button>
+										<button type="button" class="btn_day">15일</button>
+										<button type="button" class="btn_day on">30일</button>
+										<button type="button" class="btn_day">60일</button>
+										<button type="button" class="btn_day">90일</button>
+									</div>
+								</td>
+								<th rowspan="6" class="alignC">상담번호</th>
+								<td rowspan="6">
+									<textarea cols="30" rows="5" placeholder="" style="height:146px;"></textarea>
+								</td>
+							</tr>
+							<tr>
+								<th>상담유형</th>
+								<td>
+									<input type="checkbox" value="" id="chk1" />
+									<label for="chk1">전체</label>
+
+									<input type="checkbox" value="" id="chk2" />
+									<label for="chk2">1:1문의</label>
+
+									<input type="checkbox" value="" id="chk3" />
+									<label for="chk3">전화문의</label>
+								</td>
+							</tr>
+							<tr>
+								<th>상담상태</th>
+								<td>
+									<input type="checkbox" value="" id="chk4" />
+									<label for="chk4">전체</label>
+
+									<input type="checkbox" value="" id="chk5" />
+									<label for="chk5">문의접수</label>
+
+									<input type="checkbox" value="" id="chk6" />
+									<label for="chk6">답변중</label>
+
+									<input type="checkbox" value="" id="chk7" />
+									<label for="chk7">답변완료</label>
+								</td>
+							</tr>
+							<tr>
+								<th>문의유형</th>
+								<td>
+									<select>
+										<option value="">대분류</option>
+									</select>
+
+									<select>
+										<option value="">중분류</option>
+									</select>
+
+									<select>
+										<option value="">소분류</option>
+									</select>
+								</td>
+							</tr>
+							<tr>
+								<th>문의자 정보</th>
+								<td>
+									<select>
+										<option value="">문의자ID</option>
+									</select>
+
+									<input type="text" value="" placeholder="" style="width:190px;" />
+								</td>
+							</tr>
+							<tr>
+								<th>문의내용</th>
+								<td>
+									<select>
+										<option value="">제목</option>
+									</select>
+
+									<input type="text" value="" placeholder="" style="width:80%;" />
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+			<button type="button" class="code_view">소스 보기</button>
+			<div class="gcode">
+				<textarea cols="30" rows="104" readonly="readonly">
+<div class="box_type1">
+	<table class="tb_type1">
+		<colgroup>
+			<col width="9%" />
+			<col width="55%" />
+			<col width="9%" />
+			<col width="*" />
+		</colgroup>
+		<tbody>
+			<tr>
+				<th>기간</th>
+				<td>
+					<select>
+						<option value="">문의일</option>
+					</select>
+
+					<input type="text" value="문의일" placeholder="" />
+					<button type="button" class="btn_date">달력</button>
+					~
+					<input type="text" value="문의일" placeholder="" />
+					<button type="button" class="btn_date">달력</button>
+
+					<div class="day_group">
+						<button type="button" class="btn_day">1주일</button>
+						<button type="button" class="btn_day">15일</button>
+						<button type="button" class="btn_day on">30일</button>
+						<button type="button" class="btn_day">60일</button>
+						<button type="button" class="btn_day">90일</button>
+					</div>
+				</td>
+				<th rowspan="6" class="alignC">상담번호</th>
+				<td rowspan="6">
+					&lt;textarea cols="30" rows="5" placeholder="" style="height:146px;"&gt; &lt;/textarea&gt;
+				</td>
+			</tr>
+			<tr>
+				<th>상담유형</th>
+				<td>
+					<input type="checkbox" value="" id="chk1" />
+					<label for="chk1">전체</label>
+
+					<input type="checkbox" value="" id="chk2" />
+					<label for="chk2">1:1문의</label>
+
+					<input type="checkbox" value="" id="chk3" />
+					<label for="chk3">전화문의</label>
+				</td>
+			</tr>
+			<tr>
+				<th>상담상태</th>
+				<td>
+					<input type="checkbox" value="" id="chk4" />
+					<label for="chk4">전체</label>
+
+					<input type="checkbox" value="" id="chk5" />
+					<label for="chk5">문의접수</label>
+
+					<input type="checkbox" value="" id="chk6" />
+					<label for="chk6">답변중</label>
+
+					<input type="checkbox" value="" id="chk7" />
+					<label for="chk7">답변완료</label>
+				</td>
+			</tr>
+			<tr>
+				<th>문의유형</th>
+				<td>
+					<select>
+						<option value="">대분류</option>
+					</select>
+
+					<select>
+						<option value="">중분류</option>
+					</select>
+
+					<select>
+						<option value="">소분류</option>
+					</select>
+				</td>
+			</tr>
+			<tr>
+				<th>문의자 정보</th>
+				<td>
+					<select>
+						<option value="">문의자ID</option>
+					</select>
+
+					<input type="text" value="" placeholder="" style="width:190px;" />
+				</td>
+			</tr>
+			<tr>
+				<th>문의내용</th>
+				<td>
+					<select>
+						<option value="">제목</option>
+					</select>
+
+					<input type="text" value="" placeholder="" style="width:80%;" />
+				</td>
+			</tr>
+		</tbody>
+	</table>
+</div>
+				</textarea>
+			</div>
+
+			<h4 class="guide_tit3">테이블타입1 : .tb_type1 (샘플2)</h4>
+			<div class="gpreview">
+				<div class="box_type1">
+					<h3 class="sub_title2">
+						전화문의 상세
+						<span>(총 <b>1,000</b>건)</span>
+					</h3>
+					<table class="tb_type1">
+						<colgroup>
+							<col width="9%" />
+							<col width="41%" />
+							<col width="9%" />
+							<col width="*" />
+						</colgroup>
+						<tbody>
+							<tr>
+								<th>문의자</th>
+								<td>
+									김길동(ID)
+									<button type="button" class="btn_type2">
+										<b>회원검색</b>
+									</button>
+								</td>
+								<th>문의일시</th>
+								<td>
+									<input type="text" value="문의일" placeholder="" />
+									<button type="button" class="btn_date">달력</button>
+								</td>
+							</tr>
+							<tr>
+								<th>문의유형</th>
+								<td>
+									<select style="width:120px;">
+										<option value="">주문/결제</option>
+									</select>
+
+									<select style="width:120px;">
+										<option value="">결제</option>
+									</select>
+								</td>
+								<th>주문번호</th>
+								<td>
+									20160322-0000001
+									<button type="button" class="btn_type2">
+										<b>주문조회</b>
+									</button>
+								</td>
+							</tr>
+							<tr>
+								<th>문의상품</th>
+								<td colspan="3">
+									<input type="checkbox" value="" id="chk8" />
+									<label for="chk8">전체</label>
+
+									<input type="checkbox" value="" id="chk9" />
+									<label for="chk9">상품명</label>
+
+									<input type="checkbox" value="" id="chk10" />
+									<label for="chk10">상품명</label>
+
+									<input type="checkbox" value="" id="chk11" />
+									<label for="chk11">상품명</label>
+								</td>
+							</tr>
+							<tr>
+								<th>문의제목</th>
+								<td colspan="3">
+									<input type="text" value="문의일" placeholder="" style="width:55%;" />
+								</td>
+							</tr>
+							<tr>
+								<th>문의상품</th>
+								<td colspan="3">
+									<textarea cols="30" rows="5" placeholder="" style="height:145px;">00:00  전화 상담시작 </textarea>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+			<button type="button" class="code_view">소스 보기</button>
+			<div class="gcode">
+				<textarea cols="30" rows="79" readonly="readonly">
+<div class="box_type1">
+	<h3 class="sub_title2">
+		전화문의 상세
+		<span>(총 <b>1,000</b>건)</span>
+	</h3>
+	<table class="tb_type1">
+		<colgroup>
+			<col width="9%" />
+			<col width="41%" />
+			<col width="9%" />
+			<col width="*" />
+		</colgroup>
+		<tbody>
+			<tr>
+				<th>문의자</th>
+				<td>
+					김길동(ID)
+					<button type="button" class="btn_type2">
+						<b>회원검색</b>
+					</button>
+				</td>
+				<th>문의일시</th>
+				<td>
+					<input type="text" value="문의일" placeholder="" />
+					<button type="button" class="btn_date">달력</button>
+				</td>
+			</tr>
+			<tr>
+				<th>문의유형</th>
+				<td>
+					<select style="width:120px;">
+						<option value="">주문/결제</option>
+					</select>
+
+					<select style="width:120px;">
+						<option value="">결제</option>
+					</select>
+				</td>
+				<th>주문번호</th>
+				<td>
+					20160322-0000001
+					<button type="button" class="btn_type2">
+						<b>주문조회</b>
+					</button>
+				</td>
+			</tr>
+			<tr>
+				<th>문의상품</th>
+				<td colspan="3">
+					<input type="checkbox" value="" id="chk8" />
+					<label for="chk8">전체</label>
+
+					<input type="checkbox" value="" id="chk9" />
+					<label for="chk9">상품명</label>
+
+					<input type="checkbox" value="" id="chk10" />
+					<label for="chk10">상품명</label>
+
+					<input type="checkbox" value="" id="chk11" />
+					<label for="chk11">상품명</label>
+				</td>
+			</tr>
+			<tr>
+				<th>문의제목</th>
+				<td colspan="3">
+					<input type="text" value="문의일" placeholder="" style="width:55%;" />
+				</td>
+			</tr>
+			<tr>
+				<th>문의상품</th>
+				<td colspan="3">
+					&lt;textarea cols="30" rows="5" placeholder="" style="height:145px;"&gt;00:00  전화 상담시작 &lt;/textarea&gt;
+				</td>
+			</tr>
+		</tbody>
+	</table>
+</div>
+				</textarea>
+			</div>
+
+			<h4 class="guide_tit3">테이블타입1 : .tb_type1 (샘플3)</h4>
+			<div class="gpreview">
+				<div class="box_type1">
+					<h3 class="sub_title2">
+						브랜드 기본정보 상세
+						<span>(총 <b>1,000</b>건)</span>
+					</h3>
+					<table class="tb_type1">
+						<colgroup>
+							<col width="13%" />
+							<col width="37%" />
+							<col width="13%" />
+							<col width="*" />
+						</colgroup>
+						<tbody>
+							<tr>
+								<th>
+									브랜드 번호
+								</th>
+								<td>1234567</td>
+								<th>
+									브랜드명 <i>필수입력</i>
+								</th>
+								<td>
+									<input type="text" value="A 브랜드" placeholder="" style="width:30%;" />
+								</td>
+							</tr>
+							<tr>
+								<th>
+									브랜드 소개
+								</th>
+								<td colspan="3">
+									<textarea cols="30" rows="3" placeholder="">브랜드 소개 입니다.</textarea>
+								</td>
+							</tr>
+							<tr>
+								<th>
+									카테고리깊이
+								</th>
+								<td>1</td>
+								<th>
+									우선순위 <i>필수입력</i>
+								</th>
+								<td>
+									<input type="text" value="1" placeholder="" style="width:98%;" />
+								</td>
+							</tr>
+							<tr>
+								<th>
+									Leaf여부 <i>필수입력</i>
+								</th>
+								<td>
+									<input type="radio" value="" name="radio_set1" id="radio1" checked="checked" />
+									<label for="radio1">Yes</label>
+									<input type="radio" value="" name="radio_set1" id="radio2" />
+									<label for="radio2">No</label>
+								</td>
+								<th>
+									사용여부 <i>필수입력</i>
+								</th>
+								<td>
+									<input type="radio" value="" name="radio_set2" id="radio3" />
+									<label for="radio3">사용</label>
+									<input type="radio" value="" name="radio_set2" id="radio4" checked="checked" />
+									<label for="radio4">미사용</label>
+								</td>
+							</tr>
+							<tr>
+								<th>
+									브랜드 <br />
+									로고 이미지 <i>필수입력</i>
+								</th>
+								<td colspan="3">
+									<div class="input_file">
+										<input type="file" value="" />
+										<input type="text" value="" placeholder="" />
+										<button type="button" class="btn_type2">
+											<b>찾아보기</b>
+										</button>
+										<button type="button" class="btn_file_del">파일 삭제</button>
+										<span>(이미지 사이즈 : 000*000)</span>
+									</div>
+
+									<p class="txt_type1">
+										* jpg, png 00MB 이하의 파일만 업로드가 가능합니다.
+									</p>
+
+									<div class="preview">
+										<img src="img/bg/bg_temp_img.gif" alt="" />
+										<button type="button" class="btn_file_del">파일 삭제</button>
+										<button type="button" class="btn_plus">추가하기</button>
+									</div>
+
+									<dl class="img_alt">
+										<dt>이미지 대체텍스트</dt>
+										<dd>
+											<input type="text" value="" placeholder="" style="width:41%;" />
+										</dd>
+									</dl>
+
+									<p class="txt_type1">
+										* 이미지에 포함된 텍스트 정보를 기입해주세요.(텍스트가 없는 이미지의 경우에는 이미지에 대한 설명을 기입해주세요.)
+									</p>
+								</td>
+							</tr>
+							<tr class="column2">
+								<th>
+									PC<br />
+									브랜드 <br />
+									대표 이미지 <i>필수입력</i>
+								</th>
+								<td>
+									<div class="input_file">
+										<input type="file" value="" />
+										<input type="text" value="" placeholder="" />
+										<button type="button" class="btn_type2">
+											<b>찾아보기</b>
+										</button>
+										<button type="button" class="btn_file_del">파일 삭제</button>
+										<span>(이미지 사이즈 : 000*000)</span>
+									</div>
+
+									<p class="txt_type1">
+										* jpg, png 00MB 이하의 파일만 업로드가 가능합니다.
+									</p>
+
+									<div class="preview">
+										<img src="img/bg/bg_temp_img.gif" alt="" />
+										<button type="button" class="btn_file_del">파일 삭제</button>
+									</div>
+
+									<dl class="img_alt">
+										<dt>이미지 대체텍스트</dt>
+										<dd>
+											<input type="text" value="" placeholder="" style="width:98%;" />
+										</dd>
+									</dl>
+
+									<p class="txt_type1">
+										* 이미지에 포함된 텍스트 정보를 기입해주세요.<br />
+										(텍스트가 없는 이미지의 경우에는 이미지에 대한 설명을 기입해주세요.)
+									</p>
+								</td>
+								<th>
+									MOBILE<br />
+									브랜드 <br />
+									대표 이미지 <i>필수입력</i>
+								</th>
+								<td>
+									<div class="input_file">
+										<input type="file" value="" />
+										<input type="text" value="" placeholder="" />
+										<button type="button" class="btn_type2">
+											<b>찾아보기</b>
+										</button>
+										<button type="button" class="btn_file_del">파일 삭제</button>
+										<span>(이미지 사이즈 : 000*000)</span>
+									</div>
+
+									<p class="txt_type1">
+										* jpg, png 00MB 이하의 파일만 업로드가 가능합니다.
+									</p>
+
+									<div class="preview">
+										<img src="img/bg/bg_temp_img.gif" alt="" />
+										<button type="button" class="btn_file_del">파일 삭제</button>
+									</div>
+
+									<dl class="img_alt">
+										<dt>이미지 대체텍스트</dt>
+										<dd>
+											<input type="text" value="" placeholder="" style="width:98%;" />
+										</dd>
+									</dl>
+
+									<p class="txt_type1">
+										* 이미지에 포함된 텍스트 정보를 기입해주세요.<br />
+										(텍스트가 없는 이미지의 경우에는 이미지에 대한 설명을 기입해주세요.)
+									</p>
+								</td>
+							</tr>
+							<tr>
+								<th>
+									브랜드 템플릿 <i>필수입력</i>
+								</th>
+								<td colspan="3">
+									<select style="min-width:300px;">
+										<option value="">브랜드 템플릿 A _ Type</option>
+									</select>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+			<button type="button" class="code_view">소스 보기</button>
+			<div class="gcode">
+				<textarea cols="30" rows="79" readonly="readonly">
+<div class="box_type1">
+	<h3 class="sub_title2">
+		브랜드 기본정보 상세
+		<span>(총 <b>1,000</b>건)</span>
+	</h3>
+	<table class="tb_type1">
+		<colgroup>
+			<col width="13%" />
+			<col width="37%" />
+			<col width="13%" />
+			<col width="*" />
+		</colgroup>
+		<tbody>
+			<tr>
+				<th>
+					브랜드 번호
+				</th>
+				<td>1234567</td>
+				<th>
+					브랜드명 <i>필수입력</i>
+				</th>
+				<td>
+					<input type="text" value="A 브랜드" placeholder="" style="width:30%;" />
+				</td>
+			</tr>
+			<tr>
+				<th>
+					브랜드 소개
+				</th>
+				<td colspan="3">
+					<textarea cols="30" rows="3" placeholder="">브랜드 소개 입니다.</textarea>
+				</td>
+			</tr>
+			<tr>
+				<th>
+					카테고리깊이
+				</th>
+				<td>1</td>
+				<th>
+					우선순위 <i>필수입력</i>
+				</th>
+				<td>
+					<input type="text" value="1" placeholder="" style="width:98%;" />
+				</td>
+			</tr>
+			<tr>
+				<th>
+					Leaf여부 <i>필수입력</i>
+				</th>
+				<td>
+					<input type="radio" value="" name="radio_set1" id="radio1" checked="checked" />
+					<label for="radio1">Yes</label>
+					<input type="radio" value="" name="radio_set1" id="radio2" />
+					<label for="radio2">No</label>
+				</td>
+				<th>
+					사용여부 <i>필수입력</i>
+				</th>
+				<td>
+					<input type="radio" value="" name="radio_set2" id="radio3" />
+					<label for="radio3">사용</label>
+					<input type="radio" value="" name="radio_set2" id="radio4" checked="checked" />
+					<label for="radio4">미사용</label>
+				</td>
+			</tr>
+			<tr>
+				<th>
+					브랜드 <br />
+					로고 이미지 <i>필수입력</i>
+				</th>
+				<td colspan="3">
+					<div class="input_file">
+						<input type="file" value="" />
+						<input type="text" value="" placeholder="" />
+						<button type="button" class="btn_type2">
+							<b>찾아보기</b>
+						</button>
+						<button type="button" class="btn_file_del">파일 삭제</button>
+						<span>(이미지 사이즈 : 000*000)</span>
+					</div>
+
+					<p class="txt_type1">
+						* jpg, png 00MB 이하의 파일만 업로드가 가능합니다.
+					</p>
+
+					<div class="preview">
+						<img src="img/bg/bg_temp_img.gif" alt="" />
+						<button type="button" class="btn_file_del">파일 삭제</button>
+						<button type="button" class="btn_plus">추가하기</button>
+					</div>
+
+					<dl class="img_alt">
+						<dt>이미지 대체텍스트</dt>
+						<dd>
+							<input type="text" value="" placeholder="" style="width:41%;" />
+						</dd>
+					</dl>
+
+					<p class="txt_type1">
+						* 이미지에 포함된 텍스트 정보를 기입해주세요.(텍스트가 없는 이미지의 경우에는 이미지에 대한 설명을 기입해주세요.)
+					</p>
+				</td>
+			</tr>
+			<tr class="column2">
+				<th>
+					PC<br />
+					브랜드 <br />
+					대표 이미지 <i>필수입력</i>
+				</th>
+				<td>
+					<div class="input_file">
+						<input type="file" value="" />
+						<input type="text" value="" placeholder="" />
+						<button type="button" class="btn_type2">
+							<b>찾아보기</b>
+						</button>
+						<button type="button" class="btn_file_del">파일 삭제</button>
+						<span>(이미지 사이즈 : 000*000)</span>
+					</div>
+
+					<p class="txt_type1">
+						* jpg, png 00MB 이하의 파일만 업로드가 가능합니다.
+					</p>
+
+					<div class="preview">
+						<img src="img/bg/bg_temp_img.gif" alt="" />
+						<button type="button" class="btn_file_del">파일 삭제</button>
+					</div>
+
+					<dl class="img_alt">
+						<dt>이미지 대체텍스트</dt>
+						<dd>
+							<input type="text" value="" placeholder="" style="width:98%;" />
+						</dd>
+					</dl>
+
+					<p class="txt_type1">
+						* 이미지에 포함된 텍스트 정보를 기입해주세요.<br />
+						(텍스트가 없는 이미지의 경우에는 이미지에 대한 설명을 기입해주세요.)
+					</p>
+				</td>
+				<th>
+					MOBILE<br />
+					브랜드 <br />
+					대표 이미지 <i>필수입력</i>
+				</th>
+				<td>
+					<div class="input_file">
+						<input type="file" value="" />
+						<input type="text" value="" placeholder="" />
+						<button type="button" class="btn_type2">
+							<b>찾아보기</b>
+						</button>
+						<button type="button" class="btn_file_del">파일 삭제</button>
+						<span>(이미지 사이즈 : 000*000)</span>
+					</div>
+
+					<p class="txt_type1">
+						* jpg, png 00MB 이하의 파일만 업로드가 가능합니다.
+					</p>
+
+					<div class="preview">
+						<img src="img/bg/bg_temp_img.gif" alt="" />
+						<button type="button" class="btn_file_del">파일 삭제</button>
+					</div>
+
+					<dl class="img_alt">
+						<dt>이미지 대체텍스트</dt>
+						<dd>
+							<input type="text" value="" placeholder="" style="width:98%;" />
+						</dd>
+					</dl>
+
+					<p class="txt_type1">
+						* 이미지에 포함된 텍스트 정보를 기입해주세요.<br />
+						(텍스트가 없는 이미지의 경우에는 이미지에 대한 설명을 기입해주세요.)
+					</p>
+				</td>
+			</tr>
+			<tr>
+				<th>
+					브랜드 템플릿 <i>필수입력</i>
+				</th>
+				<td colspan="3">
+					<select style="min-width:300px;">
+						<option value="">브랜드 템플릿 A _ Type</option>
+					</select>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+</div>
+				</textarea>
+			</div>
+
+			<h4 class="guide_tit3">테이블타입1 : .tb_type1 (샘플4)</h4>
+			<div class="gpreview">
+				<div class="box_type1">
+					<div class="sub_title2 positionR">
+						<h3>[배송지1]</h3>
+
+						<dl class="etc_info">
+							<dt class="hide">주소</dt>
+							<dd>서울시 서초구 서래로 0000</dd>
+						</dl>
+
+						<button type="button" class="btn_type2 btn_type2_gray2 btn_addr_edit">
+							<b>변경</b>
+						</button>
+					</div>
+
+					<table class="tb_type1">
+						<colgroup>
+							<col width="91" />
+							<col width="41%" />
+							<col width="91" />
+							<col width="*" />
+						</colgroup>
+						<tbody>
+							<tr>
+								<th>배송정책</th>
+								<td>업체배송</td>
+								<th>배송상태</th>
+								<td>
+									상품준비중
+									<button type="button" class="btn_type2">
+										<b>상세</b>
+									</button>
+								</td>
+							</tr>
+							<tr>
+								<th>택배사</th>
+								<td>
+									<select>
+										<option value="">한진택배</option>
+									</select>
+								</td>
+								<th>배송비</th>
+								<td>
+									<input type="text" value="0" placeholder="" style="width:120px;" />
+								</td>
+							</tr>
+							<tr>
+								<th>배송상품</th>
+								<td colspan="3">
+									<table class="tb_type2">
+										<colgroup>
+											<col width="10%" />
+											<col width="*" />
+											<col width="10%" />
+											<col width="12%" />
+											<col width="12%" />
+											<col width="10%" />
+											<col width="12%" />
+											<col width="10%" />
+										</colgroup>
+										<thead>
+											<tr>
+												<th>상품번호</th>
+												<th>상품명</th>
+												<th>판매상태</th>
+												<th>판매가</th>
+												<th>브랜드</th>
+												<th>재고수량</th>
+												<th>주문수량</th>
+												<th>송장번호</th>
+											</tr>
+										</thead>
+										<tbody>
+											<tr>
+												<td>1111</td>
+												<td>
+													<span class="txt_ellipsis">남성 체크셔츠 반팔</span>
+												</td>
+												<td>판매중</td>
+												<td class="alignR">30,000</td>
+												<td>브랜드명</td>
+												<td>100</td>
+												<td>1</td>
+												<td>
+													<input type="text" value="" placeholder="" style="width:100%;" />
+												</td>
+											</tr>
+											<tr>
+												<td>1111</td>
+												<td>
+													<span class="txt_ellipsis">남성 체크셔츠 반팔 남성 체크셔츠 반팔 남성 체크셔츠 반팔</span>
+												</td>
+												<td>판매중</td>
+												<td class="alignR">30,000</td>
+												<td>브랜드명</td>
+												<td>100</td>
+												<td>1</td>
+												<td>
+													<input type="text" value="" placeholder="" style="width:100%;" />
+												</td>
+											</tr>
+										</tbody>
+									</table>
+								</td>
+							</tr>
+							<tr>
+								<th>수취인 정보</th>
+								<td colspan="3">
+									<input type="text" value="홍길동" placeholder="" style="width:100px;" />
+
+									<button type="button" class="btn_type2">
+										<b>배송지 관리</b>
+									</button>
+
+									<label for="user_tel1" style="margin-left:15px;">수취인 전화번호</label>
+									<input type="text" value="02-0000-0000" placeholder="" id="user_tel1" style="width:100px;" />
+
+									<label for="user_tel2" style="margin-left:15px;">수취인 휴대폰번호</label>
+									<input type="text" value="02-0000-0000" placeholder="" id="user_tel2" style="width:100px;" />
+								</td>
+							</tr>
+							<tr>
+								<th>메시지</th>
+								<td colspan="3">
+									<input type="text" value="부재시 경비실에 맡겨주세요~~" placeholder="" style="width:631px;" />
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+			<button type="button" class="code_view">소스 보기</button>
+			<div class="gcode">
+				<textarea cols="30" rows="133" readonly="readonly">
+<div class="box_type1">
+	<div class="sub_title2 positionR">
+		<h3>[배송지1]</h3>
+
+		<dl class="etc_info">
+			<dt class="hide">주소</dt>
+			<dd>서울시 서초구 서래로 0000</dd>
+		</dl>
+
+		<button type="button" class="btn_type2 btn_type2_gray2 btn_addr_edit">
+			<b>변경</b>
+		</button>
+	</div>
+
+	<table class="tb_type1">
+		<colgroup>
+			<col width="91" />
+			<col width="41%" />
+			<col width="91" />
+			<col width="*" />
+		</colgroup>
+		<tbody>
+			<tr>
+				<th>배송정책</th>
+				<td>업체배송</td>
+				<th>배송상태</th>
+				<td>
+					상품준비중
+					<button type="button" class="btn_type2">
+						<b>상세</b>
+					</button>
+				</td>
+			</tr>
+			<tr>
+				<th>택배사</th>
+				<td>
+					<select>
+						<option value="">한진택배</option>
+					</select>
+				</td>
+				<th>배송비</th>
+				<td>
+					<input type="text" value="0" placeholder="" style="width:120px;" />
+				</td>
+			</tr>
+			<tr>
+				<th>배송상품</th>
+				<td colspan="3">
+					<table class="tb_type2">
+						<colgroup>
+							<col width="10%" />
+							<col width="*" />
+							<col width="10%" />
+							<col width="12%" />
+							<col width="12%" />
+							<col width="10%" />
+							<col width="12%" />
+							<col width="10%" />
+						</colgroup>
+						<thead>
+							<tr>
+								<th>상품번호</th>
+								<th>상품명</th>
+								<th>판매상태</th>
+								<th>판매가</th>
+								<th>브랜드</th>
+								<th>재고수량</th>
+								<th>주문수량</th>
+								<th>송장번호</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td>1111</td>
+								<td>
+									<span class="txt_ellipsis">남성 체크셔츠 반팔</span>
+								</td>
+								<td>판매중</td>
+								<td class="alignR">30,000</td>
+								<td>브랜드명</td>
+								<td>100</td>
+								<td>1</td>
+								<td>
+									<input type="text" value="" placeholder="" style="width:100%;" />
+								</td>
+							</tr>
+							<tr>
+								<td>1111</td>
+								<td>
+									<span class="txt_ellipsis">남성 체크셔츠 반팔 남성 체크셔츠 반팔 남성 체크셔츠 반팔</span>
+								</td>
+								<td>판매중</td>
+								<td class="alignR">30,000</td>
+								<td>브랜드명</td>
+								<td>100</td>
+								<td>1</td>
+								<td>
+									<input type="text" value="" placeholder="" style="width:100%;" />
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</td>
+			</tr>
+			<tr>
+				<th>수취인 정보</th>
+				<td colspan="3">
+					<input type="text" value="홍길동" placeholder="" style="width:100px;" />
+
+					<button type="button" class="btn_type2">
+						<b>배송지 관리</b>
+					</button>
+
+					<label for="user_tel1" style="margin-left:15px;">수취인 전화번호</label>
+					<input type="text" value="02-0000-0000" placeholder="" id="user_tel1" style="width:100px;" />
+
+					<label for="user_tel2" style="margin-left:15px;">수취인 휴대폰번호</label>
+					<input type="text" value="02-0000-0000" placeholder="" id="user_tel2" style="width:100px;" />
+				</td>
+			</tr>
+			<tr>
+				<th>메시지</th>
+				<td colspan="3">
+					<input type="text" value="부재시 경비실에 맡겨주세요~~" placeholder="" style="width:631px;" />
+				</td>
+			</tr>
+		</tbody>
+	</table>
+</div>
+				</textarea>
+			</div>
+
+			<h4 class="guide_tit3">테이블타입1 : .tb_type1 (샘플5)</h4>
+			<div class="gpreview">
+				<div class="box_type1">
+					<div class="sub_title2">
+						<h3>반품</h3>
+					</div>
+
+					<table class="tb_type2 no_bg">
+						<colgroup>
+							<col width="11%" span="8" />
+							<col width="*" />
+						</colgroup>
+						<tbody>
+							<tr>
+								<th>상품정보</th>
+								<td colspan="8">
+									<table class="tb_type2">
+										<colgroup>
+											<col width="10%" />
+											<col width="*" />
+											<col width="10%" span="6" />
+										</colgroup>
+										<thead>
+											<tr>
+												<th>상품코드</th>
+												<th>상품명</th>
+												<th>옵션</th>
+												<th>판매가</th>
+												<th>브랜드</th>
+												<th>주문수량</th>
+												<th>반품수량</th>
+												<th>반품사유</th>
+												<th>입고완료</th>
+											</tr>
+										</thead>
+										<tbody>
+											<tr>
+												<td>1111</td>
+												<td>
+													<span class="txt_ellipsis">남성 체크셔츠 반팔 남성 체크셔츠 반팔남성 체크셔츠 반팔남성 체크셔츠 반팔남성 체크셔츠 반팔</span>
+												</td>
+												<td>Black/100</td>
+												<td class="alignR">30,000</td>
+												<td>브랜드명</td>
+												<td>1</td>
+												<td>1</td>
+												<td>변심</td>
+												<td>입고완료</td>
+											</tr>
+										</tbody>
+									</table>
+
+									<dl class="back_info">
+										<dt>수거지</dt>
+										<dd>(10000) 서울시 서초구 서초동</dd>
+									</dl>
+
+									<dl class="back_info">
+										<dt>집하지</dt>
+										<dd>(10000) 서울시 김포구 OOO</dd>
+									</dl>
+								</td>
+							</tr>
+							<tr>
+								<th colspan="6">주문</th>
+								<th colspan="2">할인</th>
+								<th rowspan="2">환불금액</th>
+							</tr>
+							<tr>
+								<th>구분</th>
+								<th>상품번호</th>
+								<th>상품명</th>
+								<th>판매가</th>
+								<th>수량</th>
+								<th>금액</th>
+								<th>할인수단</th>
+								<th>할인금액</th>
+							</tr>
+							<tr>
+								<td rowspan="2">상품</td>
+								<td>1111</td>
+								<td>
+									<span class="txt_ellipsis">aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa</span>
+								</td>
+								<td class="alignR">30,000</td>
+								<td>1</td>
+								<td class="alignR">30,000</td>
+								<td>상품할인</td>
+								<td class="alignR">20,000</td>
+								<td rowspan="3" class="alignR">
+									<b>40,000</b>
+								</td>
+							</tr>
+							<tr>
+								<td>1111</td>
+								<td>
+									<span class="txt_ellipsis">aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa</span>
+								</td>
+								<td class="alignR">30,000</td>
+								<td>1</td>
+								<td class="alignR">30,000</td>
+								<td>상품할인</td>
+								<td class="alignR">20,000</td>
+							</tr>
+							<tr>
+								<td>배송비</td>
+								<td>&nbsp;</td>
+								<td colspan="3">&nbsp;</td>
+								<td class="alignR">0</td>
+								<td>장바구니 쿠폰</td>
+								<td class="alignR">0</td>
+							</tr>
+							<tr>
+								<th colspan="3">결제수단</th>
+								<th colspan="3">결제금액</th>
+								<th colspan="3">
+									환불금액 <i>필수입력</i>
+								</th>
+							</tr>
+							<tr>
+								<td colspan="3">신용카드</td>
+								<td colspan="3" class="alignR">40,000</td>
+								<td colspan="3" class="alignR">40,000</td>
+							</tr>
+							<tr>
+								<td colspan="3">포인트</td>
+								<td colspan="3" class="alignR">1,000</td>
+								<td colspan="3" class="alignR">&nbsp;</td>
+							</tr>
+							<tr class="bg_faf8ed">
+								<td colspan="3">
+									<b>총금액</b>
+								</td>
+								<td colspan="3" class="alignR">
+									<b>40,000</b>
+								</td>
+								<td colspan="3" class="alignR">
+									<b>40,000</b>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+			<button type="button" class="code_view">소스 보기</button>
+			<div class="gcode">
+				<textarea cols="30" rows="145" readonly="readonly">
+<div class="box_type1">
+	<div class="sub_title2">
+		<h3>반품</h3>
+	</div>
+
+	<table class="tb_type2 no_bg">
+		<colgroup>
+			<col width="11%" span="8" />
+			<col width="*" />
+		</colgroup>
+		<tbody>
+			<tr>
+				<th>상품정보</th>
+				<td colspan="8">
+					<table class="tb_type2">
+						<colgroup>
+							<col width="10%" />
+							<col width="*" />
+							<col width="10%" span="6" />
+						</colgroup>
+						<thead>
+							<tr>
+								<th>상품코드</th>
+								<th>상품명</th>
+								<th>옵션</th>
+								<th>판매가</th>
+								<th>브랜드</th>
+								<th>주문수량</th>
+								<th>반품수량</th>
+								<th>반품사유</th>
+								<th>입고완료</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td>1111</td>
+								<td>
+									<span class="txt_ellipsis">남성 체크셔츠 반팔 남성 체크셔츠 반팔남성 체크셔츠 반팔남성 체크셔츠 반팔남성 체크셔츠 반팔</span>
+								</td>
+								<td>Black/100</td>
+								<td class="alignR">30,000</td>
+								<td>브랜드명</td>
+								<td>1</td>
+								<td>1</td>
+								<td>변심</td>
+								<td>입고완료</td>
+							</tr>
+						</tbody>
+					</table>
+
+					<dl class="back_info">
+						<dt>수거지</dt>
+						<dd>(10000) 서울시 서초구 서초동</dd>
+					</dl>
+
+					<dl class="back_info">
+						<dt>집하지</dt>
+						<dd>(10000) 서울시 김포구 OOO</dd>
+					</dl>
+				</td>
+			</tr>
+			<tr>
+				<th colspan="6">주문</th>
+				<th colspan="2">할인</th>
+				<th rowspan="2">환불금액</th>
+			</tr>
+			<tr>
+				<th>구분</th>
+				<th>상품번호</th>
+				<th>상품명</th>
+				<th>판매가</th>
+				<th>수량</th>
+				<th>금액</th>
+				<th>할인수단</th>
+				<th>할인금액</th>
+			</tr>
+			<tr>
+				<td rowspan="2">상품</td>
+				<td>1111</td>
+				<td>
+					<span class="txt_ellipsis">aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa</span>
+				</td>
+				<td class="alignR">30,000</td>
+				<td>1</td>
+				<td class="alignR">30,000</td>
+				<td>상품할인</td>
+				<td class="alignR">20,000</td>
+				<td rowspan="3" class="alignR">
+					<b>40,000</b>
+				</td>
+			</tr>
+			<tr>
+				<td>1111</td>
+				<td>
+					<span class="txt_ellipsis">aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa</span>
+				</td>
+				<td class="alignR">30,000</td>
+				<td>1</td>
+				<td class="alignR">30,000</td>
+				<td>상품할인</td>
+				<td class="alignR">20,000</td>
+			</tr>
+			<tr>
+				<td>배송비</td>
+				<td>&nbsp;</td>
+				<td colspan="3">&nbsp;</td>
+				<td class="alignR">0</td>
+				<td>장바구니 쿠폰</td>
+				<td class="alignR">0</td>
+			</tr>
+			<tr>
+				<th colspan="3">결제수단</th>
+				<th colspan="3">결제금액</th>
+				<th colspan="3">
+					환불금액 <i>필수입력</i>
+				</th>
+			</tr>
+			<tr>
+				<td colspan="3">신용카드</td>
+				<td colspan="3" class="alignR">40,000</td>
+				<td colspan="3" class="alignR">40,000</td>
+			</tr>
+			<tr>
+				<td colspan="3">포인트</td>
+				<td colspan="3" class="alignR">1,000</td>
+				<td colspan="3" class="alignR">&nbsp;</td>
+			</tr>
+			<tr class="bg_faf8ed">
+				<td colspan="3">
+					<b>총금액</b>
+				</td>
+				<td colspan="3" class="alignR">
+					<b>40,000</b>
+				</td>
+				<td colspan="3" class="alignR">
+					<b>40,000</b>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+</div>
+				</textarea>
+			</div>
+		</div>
+		<!-- ### //테이블 ### -->
+
+		<!-- ### 폼 ### -->
+		<div class="guide_wrap" id="guideForm">
+			<h2 class="guide_tit1">폼</h2>
+
+			<h3 class="guide_tit2">입력텍스트 (기본)</h3>
+			<div class="gpreview">
+				<input type="text" value="문의일" placeholder="" />
+			</div>
+			<button type="button" class="code_view">소스 보기</button>
+			<div class="gcode">
+				<textarea cols="30" rows="1" readonly="readonly">
+<input type="text" value="문의일" placeholder="" />
+				</textarea>
+			</div>
+
+			<h3 class="guide_tit2">파일추가 폼 (기본)</h3>
+			<div class="gpreview">
+				<div class="input_file">
+					<input type="file" value="" />
+					<input type="text" value="" />
+					<button type="button" class="btn_type2 btn_addFile">
+						<b>찾아보기</b>
+					</button>
+					<button type="button" class="btn_file_del">파일 삭제</button>
+					<span>(이미지 사이즈 000*000)</span>
+				</div>
+			</div>
+			<button type="button" class="code_view">소스 보기</button>
+			<div class="gcode">
+				<textarea cols="30" rows="1" readonly="readonly">
+<div class="input_file">
+	<input type="file" value="" />
+	<input type="text" value="" />
+	<button type="button" class="btn_type2 btn_addFile">
+		<b>찾아보기</b>
+	</button>
+	<button type="button" class="btn_file_del">파일 삭제</button>
+	<span>(이미지 사이즈 000*000)</span>
+</div>
+				</textarea>
+			</div>
+
+			<h3 class="guide_tit2">셀렉트박스 (기본)</h3>
+			<div class="gpreview">
+				<select>
+					<option value="">문의일</option>
+				</select>
+			</div>
+			<button type="button" class="code_view">소스 보기</button>
+			<div class="gcode">
+				<textarea cols="30" rows="3" readonly="readonly">
+<select>
+	<option value="">문의일</option>
+</select>
+				</textarea>
+			</div>
+
+			<h3 class="guide_tit2">체크박스 (기본)</h3>
+			<div class="gpreview">
+				<input type="checkbox" value="" id="chk1" />
+				<label for="chk1">전체</label>
+			</div>
+			<button type="button" class="code_view">소스 보기</button>
+			<div class="gcode">
+				<textarea cols="30" rows="3" readonly="readonly">
+<input type="checkbox" value="" id="chk1" />
+<label for="chk1">전체</label>
+				</textarea>
+			</div>
+
+			<h3 class="guide_tit2">라디오박스 (기본)</h3>
+			<div class="gpreview">
+				<input type="radio" value="" name="radio_set1" id="radio1" />
+				<label for="radio1">Yes</label>
+			</div>
+			<button type="button" class="code_view">소스 보기</button>
+			<div class="gcode">
+				<textarea cols="30" rows="3" readonly="readonly">
+<input type="radio" value="" name="radio_set1" id="radio1" />
+<label for="radio1">Yes</label>
+				</textarea>
+			</div>
+
+			<h3 class="guide_tit2">텍스트영역 (기본)</h3>
+			<div class="gpreview">
+				<textarea cols="30" rows="3" placeholder="">00:00  전화 상담시작 </textarea>
+			</div>
+			<button type="button" class="code_view">소스 보기</button>
+			<div class="gcode">
+				<textarea cols="30" rows="3" readonly="readonly">
+&lt;textarea cols="30" rows="3" placeholder=""&gt;00:00  전화 상담시작 &lt;/textarea&gt;
+				</textarea>
+			</div>
+		</div>
+		<!-- ### //폼 ### -->
+
+		<!-- ### 페이지 배경 이미지 ### -->
+		<div class="guide_wrap" id="guideBg">
+			<h2 class="guide_tit1">페이지 배경 이미지</h2>
+			<h3 class="guide_tit2">이용권 : .bg_billing_sub2</h3>
+		</div>
+		<!-- ### //페이지 배경 이미지 ### -->
+
+		<!-- ### 관리자 등록 이미지 ### -->
+		<div class="guide_wrap" id="guidePage">
+			<h2 class="guide_tit1">페이징</h2>
+
+			<h3 class="guide_tit2">테이블 유틸 페이징</h3>
+			<div class="gpreview">
+				<div class="tb_util" style="position:static;">
+					<button type="button" class="btn_tb_util tb_util1">되돌리기</button>
+					<button type="button" class="btn_tb_util tb_util2">엑셀받기</button>
+					<button type="button" class="btn_tb_util tb_util3">셀잠그기</button>
+					<button type="button" class="btn_tb_util tb_util4">전체체크</button>
+
+					<select style="width:105px;">
+						<option value="">200건</option>
+					</select>
+
+					<span class="page">
+						<button type="button" class="btn_prev">이전</button>
+						<input type="text" value="1" placeholder="" />
+						<u>/</u><i>24</i>
+						<button type="button" class="btn_next">다음</button>
+					</span>
+
+					<button type="button" class="btn_type2">
+						<b>이동</b>
+					</button>
+				</div>
+			</div>
+			<button type="button" class="code_view">소스 보기</button>
+			<div class="gcode">
+				<textarea cols="30" rows="24" readonly="readonly">
+<div class="tb_util">
+	<button type="button" class="btn_tb_util tb_util1">되돌리기</button>
+	<button type="button" class="btn_tb_util tb_util2">엑셀받기</button>
+	<button type="button" class="btn_tb_util tb_util3">셀잠그기</button>
+	<button type="button" class="btn_tb_util tb_util4">전체체크</button>
+
+	<select style="width:105px;">
+		<option value="">200건</option>
+	</select>
+
+	<span class="page">
+		<button type="button" class="btn_prev">이전</button>
+		<input type="text" value="1" placeholder="" />
+		<u>/</u><i>24</i>
+		<button type="button" class="btn_next">다음</button>
+	</span>
+
+	<button type="button" class="btn_type2">
+		<b>이동</b>
+	</button>
+</div>
+				</textarea>
+			</div>
+		</div>
+		<!-- ### //관리자 등록 이미지 ### -->
+
+		<!-- ### 기타 ### -->
+		<div class="guide_wrap" id="guideEtc">
+			<h2 class="guide_tit1">기타</h2>
+
+			<h3 class="guide_tit2">테이블 하단 바 : .bar</h3>
+			<div class="gpreview">
+				<div class="tb_bar">
+					<button type="button" class="btn_grid_more">더보기</button>
+				</div>
+			</div>
+
+			<button type="button" class="code_view">소스 보기</button>
+			<div class="gcode">
+				<textarea cols="30" rows="24" readonly="readonly">
+<div class="tb_bar">
+	<button type="button" class="btn_grid_more">더보기</button>
+</div>
+				</textarea>
+			</div>
+		</div>
+		<!-- ### //기타 ### -->
+	</article>
+</body>
+</html>

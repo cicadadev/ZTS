@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+	<title>0to7 BO</title>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+	<meta http-equiv="Pragma" content="no-cache" />
+	<script type="text/javascript" src="js/jquery-1.12.0.min.js"></script>
+	<script type="text/javascript" src="js/ui.js"></script>
+	<link rel="stylesheet" href="css/common.css" />
+	<script type="text/javascript">
+
+	</script>
+</head>
+
+<body>
+	<!-- 820 * 240 -->
+	<div class="wrap_popup">
+		<h1 class="sub_title1">전시카테고리 등록</h1>
+
+		<div class="box_type1">
+			<table class="tb_type1">
+				<colgroup>
+					<col width="13%" />
+					<col width="37%" />
+					<col width="13%" />
+					<col width="*" />
+				</colgroup>
+				<tbody>
+					<tr>
+						<th>
+							전시카테고리번호
+						</th>
+						<td>&nbsp;</td>
+						<th>
+							전시카테고리명 <i>필수입력</i>
+						</th>
+						<td>
+							<input type="text" value="화장품" placeholder="" style="width:98%;" />
+						</td>
+					</tr>
+					<tr>
+						<th>
+							카테고리깊이
+						</th>
+						<td>1</td>
+						<th>
+							우선순위 <i>필수입력</i>
+						</th>
+						<td>
+							<input type="text" value="1" placeholder="" style="width:98%;" />
+						</td>
+					</tr>
+					<tr>
+						<th>
+							Leaf여부 <i>필수입력</i>
+						</th>
+						<td>
+							<input type="radio" value="" name="radio_set1" id="radio1" checked="checked" />
+							<label for="radio1">Yes</label>
+							<input type="radio" value="" name="radio_set1" id="radio2" />
+							<label for="radio2">No</label>
+						</td>
+						<th>
+							사용여부 <i>필수입력</i>
+						</th>
+						<td>
+							<input type="radio" value="" name="radio_set2" id="radio3" />
+							<label for="radio3">사용</label>
+							<input type="radio" value="" name="radio_set2" id="radio4" checked="checked" />
+							<label for="radio4">미사용</label>
+						</td>
+					</tr>
+					<tr>
+						<th>
+							카테고리 템플릿 <i>필수입력</i>
+						</th>
+						<td colspan="3">
+							<select style="min-width:300px;">
+								<option value="">전시카테고리 템플릿 A _ Type</option>
+							</select>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+
+		<div class="btn_alignC" style="margin-top:20px;">
+			<button type="button" class="btn_type3 btn_type3_white">
+				<b>취소</b>
+			</button>
+			<button type="button" class="btn_type3 btn_type3_purple">
+				<b>저장</b>
+			</button>
+		</div>
+	</div>
+</body>
+</html>

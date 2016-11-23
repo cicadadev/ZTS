@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+	<title>0to7 BO</title>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+	<meta http-equiv="Pragma" content="no-cache" />
+	<script type="text/javascript" src="js/jquery-1.12.0.min.js"></script>
+	<script type="text/javascript" src="js/ui.js"></script>
+	<link rel="stylesheet" href="css/common.css" />
+	<script type="text/javascript">
+		$(window).load(function() {
+			$(".iframe1", parent.document).height($(".wrap").height());
+		});
+	</script>
+</head>
+
+<body>
+	<div class="wrap wrap_iframe">
+		<!-- ### content ### -->
+		<section class="content">
+			<div class="inner">
+				<!-- ### 1번 탭 ### -->
+				<article class="con_box">
+					<!-- ### 주문 조회 ### -->
+					<h2 class="sub_title1">주문 조회</h2>
+					<div class="box_type1">
+						<table class="tb_type1">
+							<colgroup>
+								<col width="9%" />
+								<col width="64%" />
+								<col width="9%" />
+								<col width="*" />
+							</colgroup>
+							<tbody>
+								<tr>
+									<th>기간</th>
+									<td>
+										<input type="text" value="" placeholder="" />
+										<button type="button" class="btn_date">달력</button>
+										~
+										<input type="text" value="" placeholder="" />
+										<button type="button" class="btn_date">달력</button>
+
+										<div class="day_group">
+											<button type="button" class="btn_day">1주일</button>
+											<button type="button" class="btn_day">15일</button>
+											<button type="button" class="btn_day on">30일</button>
+											<button type="button" class="btn_day">60일</button>
+											<button type="button" class="btn_day">90일</button>
+										</div>
+									</td>
+									<th rowspan="4" class="alignC">주문번호</th>
+									<td rowspan="4">
+										<textarea cols="30" rows="5" placeholder="" style="height:106px;"> </textarea>
+									</td>
+								</tr>
+								<tr>
+									<th>주문자정보</th>
+									<td>
+										<select>
+											<option value="">전체</option>
+										</select>
+
+										<input type="text" value="" placeholder="" style="width:30%;" />
+									</td>
+								</tr>
+								<tr>
+									<th>결제상태</th>
+									<td>
+										<input type="checkbox" value="" id="chk1" />
+										<label for="chk1">전체</label>
+
+										<input type="checkbox" value="" id="chk2" />
+										<label for="chk2">미입금</label>
+
+										<input type="checkbox" value="" id="chk3" />
+										<label for="chk3">결제완료</label>
+
+										<input type="checkbox" value="" id="chk4" />
+										<label for="chk4">결제취소</label>
+
+										<input type="checkbox" value="" id="chk5" />
+										<label for="chk5">결제취소 오류</label>
+
+										<input type="checkbox" value="" id="chk6" />
+										<label for="chk6">환불접수</label>
+
+										<input type="checkbox" value="" id="chk7" />
+										<label for="chk7">환불완료</label>
+									</td>
+								</tr>
+								<tr>
+									<th>주문상태</th>
+									<td>
+										<input type="checkbox" value="" id="chk8" />
+										<label for="chk8">전체</label>
+
+										<input type="checkbox" value="" id="chk9" />
+										<label for="chk9">주문접수</label>
+
+										<input type="checkbox" value="" id="chk10" />
+										<label for="chk10">주문완료</label>
+
+										<input type="checkbox" value="" id="chk11" />
+										<label for="chk11">주문취소</label>
+
+										<input type="checkbox" value="" id="chk12" />
+										<label for="chk12">상품준비중</label>
+
+										<input type="checkbox" value="" id="chk13" />
+										<label for="chk13">배송중</label>
+
+										<input type="checkbox" value="" id="chk14" />
+										<label for="chk14">배송완료</label>
+
+										<input type="checkbox" value="" id="chk15" />
+										<label for="chk15">구매확정</label>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+
+					<div class="btn_alignR">
+						<button type="button" class="btn_type1">
+							<b>초기화</b>
+						</button>
+						<button type="button" class="btn_type1 btn_type1_purple">
+							<b>검색</b>
+						</button>
+					</div>
+					<!-- ### //주문 조회 ### -->
+
+					<!-- ### 주문 목록 ### -->
+					<div class="box_type1" style="margin-top:50px;">
+						<h3 class="sub_title2">
+							주문 목록
+							<span>(총 <b>1,000</b>건)</span>
+						</h3>
+
+						<div class="tb_util">
+							<button type="button" class="btn_tb_util tb_util1">되돌리기</button>
+							<button type="button" class="btn_tb_util tb_util2">엑셀받기</button>
+							<button type="button" class="btn_tb_util tb_util3">셀잠그기</button>
+							<button type="button" class="btn_tb_util tb_util4">전체체크</button>
+
+							<select style="width:105px;">
+								<option value="">200건</option>
+							</select>
+
+							<span class="page">
+								<button type="button" class="btn_prev">이전</button>
+								<input type="text" value="1" placeholder="" />
+								<u>/</u><i>24</i>
+								<button type="button" class="btn_next">다음</button>
+							</span>
+
+							<button type="button" class="btn_type2">
+								<b>이동</b>
+							</button>
+						</div>
+
+						<div class="gridbox">
+							<img src="img/temp/grid11.gif" alt="" style="vertical-align:top;" />
+						</div>
+						<div class="tb_bar">
+							<button type="button" class="btn_grid_more">더보기</button>
+						</div>
+					</div>
+					<!-- ### //주문 목록 ### -->
+
+					<!-- ### 판매반려 레이어 팝업 : 2016.06.02 ### -->
+					<div class="layer_box">
+						<div class="inner">
+							<h3 class="sub_title3">쿠폰 발급</h3>
+							<table class="tb_type1">
+								<colgroup>
+									<col width="20%" />
+									<col width="*" />
+								</colgroup>
+								<tbody>
+									<tr>
+										<th>상품코드</th>
+										<td>1234567890</td>
+									</tr>
+									<tr>
+										<th>반려사유</th>
+										<td>
+											<select>
+												<option value="">주문결제</option>
+											</select>
+										</td>
+									</tr>
+								</tbody>
+							</table>
+
+							<div class="btn_alignC" style="margin-top:20px;">
+								<button type="button" class="btn_type3 btn_type3_white">
+									<b>취소</b>
+								</button>
+								<button type="button" class="btn_type3 btn_type3_purple">
+									<b>저장</b>
+								</button>
+							</div>
+
+							<button type="button" class="btn_layer_close">레이어 닫기</button>
+						</div>
+					</div>
+					<!-- ### //판매반려 레이어 팝업 : 2016.06.02 ### -->
+				</article>
+				<!-- ### //1번 탭 ### -->
+			</div>
+		</section>
+		<!-- ### //content ### -->
+	</div>
+</body>
+</html>

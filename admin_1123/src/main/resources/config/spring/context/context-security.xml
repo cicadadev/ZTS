@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans xmlns="http://www.springframework.org/schema/security"
+    xmlns:beans="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:jee="http://www.springframework.org/schema/jee"
+    xmlns:security="http://www.springframework.org/schema/security"
+    xsi:schemaLocation="http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security-4.1.xsd
+        http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee-4.1.xsd
+        http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.1.xsd">                     
+    
+        <http pattern="/imapi/**" security="none" />
+        <http pattern="/openapi/**" security="none" />
+    <http auto-config='true' create-session="ifRequired" use-expressions="true" disable-url-rewriting="true" ><!-- entry-point-ref="restAuthenticationEntryPoint" > -->
+        <headers>
+    		<frame-options policy="SAMEORIGIN"/>
+    	</headers>	
+    	<!--<csrf disabled="false"/> -->
+        <csrf token-repository-ref="csrfTokenRepository" />
+        
+        <intercept-url pattern="/resources/**" access="permitAll" />
+        <intercept-url pattern="/index.jsp" access="permitAll" />        
+        <intercept-url pattern="/ccs/login" access="permitAll" />
+        <intercept-url pattern="/ccs/loginpo" access="permitAll" />
+        <intercept-url pattern="/ccs/login/**" access="permitAll" />
+        <intercept-url pattern="/ccs/loginpo/**" access="permitAll" />
+        <intercept-url pattern="/ccs/user/popup/findPwd" access="permitAll" />
+        <intercept-url pattern="/ccs/business/insert" access="permitAll" />
+        <intercept-url pattern="/sample/*" access="permitAll" />
+        <intercept-url pattern="/samplePage/*" access="permitAll" />
+        <intercept-url pattern="/pms/category/popup/*" access="permitAll" />
+        <intercept-url pattern="/api/pms/category/tree" access="permitAll" />
+        <intercept-url pattern="/api/ccs/business/*" access="permitAll" />
+        <intercept-url pattern="/api/ccs/business" access="permitAll" />
+        <intercept-url pattern="/api/ccs/business/**" access="permitAll" />
+        <intercept-url pattern="/api/ccs/user/findPwd" access="permitAll" />
+        <intercept-url pattern="/ccs/user/popup/authExternalNetwork" access="permitAll" />
+        <intercept-url pattern="/api/ccs/common/checkExternalNetwork" access="permitAll" />
+        <intercept-url pattern="/api/ccs/user/checkUserInfo" access="permitAll" />
+        <intercept-url pattern="/api/ccs/common/sendAuthSms" access="permitAll" />
+        <intercept-url pattern="/api/ccs/common/checkAuthSms" access="permitAll" />
+        <intercept-url pattern="/api/ccs/common/field" access="permitAll" />
+        <intercept-url pattern="/api/ccs/common/grid/field" access="permitAll" />
+        <intercept-url pattern="/common/address/popup/search" access="permitAll" />
+        <intercept-url pattern="/api/ccs/common/districtList" access="permitAll" />
+        <intercept-url pattern="/api/ccs/common/addressList" access="permitAll" />
+        <intercept-url pattern="/imapi/**" access="permitAll" />
+        <intercept-url pattern="/openapi/coupon/issue/campaign" access="permitAll" />
+        
+        <intercept-url pattern="/**" access="hasRole('ROLE_USER')" />
+        
+        <form-login login-page="/ccs/login" 
+        			login-processing-url="/j_spring_security_check"
+        			username-parameter="j_username"
+                    password-parameter="j_password"
+                    always-use-default-target='true'        
+                    authentication-success-handler-ref="loginSuccessHandler"
+                    authentication-failure-handler-ref="loginFailHandler"                    
+                    />
+                    
+        <logout invalidate-session="true" logout-url="/j_spring_security_logout" success-handler-ref="logoutSuccessHandler" delete-cookies="zts_bo_JSESSIONID"/>                                
+        
+<!--         <session-management session-fixation-protection="changeSessionId" > -->
+<!--         	<concurrency-control max-sessions="1"/>한계정의 동시 접속 가능 수        	                       -->
+<!--         </session-management>                 -->
+    	    	    	
+    	<custom-filter before="SESSION_MANAGEMENT_FILTER" ref="customSessionManagementFilter" />
+		<access-denied-handler ref="customDeidHandler"/>	
+		
+		<custom-filter after="FILTER_SECURITY_INTERCEPTOR" ref="menuAuthManagementFiter"/>
+		
+		<remember-me key="remember-me-key" services-ref="rememberMeServices" authentication-success-handler-ref="loginSuccessHandler"/> 
+    </http>
+    
+    <beans:bean id="rememberMeServices"
+          class="org.springframework.security.web.authentication.rememberme.PersistentTokenBasedRememberMeServices">
+        <beans:constructor-arg value="remember-me-key"/>
+        <beans:constructor-arg ref="userLoginService"/>
+        <beans:constructor-arg ref="tokenRepository"/>
+        <beans:property name="cookieName" value="remember-me-zts"/>
+        <beans:property name="tokenLength" value="32"/>
+        <beans:property name="parameter" value="_spring_security_remember_me"/>
+    </beans:bean>
+
+    <beans:bean id="tokenRepository"
+          class="org.springframework.security.web.authentication.rememberme.InMemoryTokenRepositoryImpl">
+    </beans:bean>
+
+    <!-- strategy -->
+    <beans:bean id="customInvalidSessionStrategy" class="gcp.admin.common.strategy.CustomInvalidSessionStrategy"/>
+    
+    <!-- filter -->
+    <beans:bean id="customSessionManagementFilter" class="org.springframework.security.web.session.SessionManagementFilter">
+	    <beans:constructor-arg name="securityContextRepository" ref="httpSessionSecurityContextRepository" />
+	    <beans:property name="invalidSessionStrategy" ref="customInvalidSessionStrategy" />
+	</beans:bean>
+	<beans:bean id="menuAuthManagementFiter" class="gcp.admin.common.filter.MenuAuthManagementFilter"></beans:bean>
+	
+	
+	<!-- handler -->		  
+	<beans:bean id="loginSuccessHandler" class="gcp.admin.common.handler.LoginSuccessHandler">
+    	<beans:property name="defaultTargetUrl" value="/main"/>
+    </beans:bean>
+    <beans:bean id="loginFailHandler" class="gcp.admin.common.handler.LoginFailHandler">
+    	<beans:property name="defaultFailureUrl" value="/ccs/login" />
+    </beans:bean>    
+    <beans:bean id="logoutSuccessHandler" class="gcp.admin.common.handler.LogoutSuccessHandler"/>    	    
+    <beans:bean id="customDeidHandler" class="gcp.admin.common.handler.CustomAccessDenidHandler"/>
+    <!-- repository -->
+    <beans:bean id="httpSessionSecurityContextRepository" class="org.springframework.security.web.context.HttpSessionSecurityContextRepository"/>
+     
+    <beans:bean id="csrfTokenRepository" class="org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository">
+	    <beans:property name="headerName" value="X-XSRF-TOKEN" />	    
+	</beans:bean>
+ 
+ 	<!-- auth service -->
+    <beans:bean id="userLoginService" class="gcp.ccs.service.UserLoginService" />
+    	
+    <beans:bean id="passwordEncoder" class="gcp.common.util.SHAPasswordEncoder" />        
+        	    	    
+    <authentication-manager>
+    	<authentication-provider user-service-ref="userLoginService">
+    		<password-encoder ref="passwordEncoder" />
+    	</authentication-provider>       	    
+    </authentication-manager>                     
+     
+</beans:beans>

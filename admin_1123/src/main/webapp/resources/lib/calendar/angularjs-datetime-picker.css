@@ -1,0 +1,83 @@
+.angularjs-datetime-picker {
+  z-index: 999;
+  color: #333;
+  font: normal 14px sans-serif;
+  border: 1px solid #ddd;
+  display: inline-block;
+  background: #fff;
+}
+.angularjs-datetime-picker > .adp-month {
+  text-align: center;
+  line-height: 22px;
+  padding: 10px;
+  background: #fcfcfc;
+  text-transform: uppercase;
+  font-weight: bold;
+  border-bottom: 1px solid #ddd;
+  position: relative;
+}
+.angularjs-datetime-picker > .adp-month > button {
+  color: #555;
+  font: normal 25px sans-serif;
+  outline: none;
+  position: absolute;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  bottom: 5px;
+}
+.angularjs-datetime-picker > .adp-month > button:hover {
+  color: #333;
+}
+.angularjs-datetime-picker > .adp-month > button.adp-prevYear {
+  left: 10px;
+}
+.angularjs-datetime-picker > .adp-month > button.adp-prev {
+  left: 30px;
+}
+.angularjs-datetime-picker > .adp-month > button.adp-nextYear {
+  right: 10px;
+}
+.angularjs-datetime-picker > .adp-month > button.adp-next {
+  right: 30px;
+}
+.angularjs-datetime-picker > .adp-days {
+  width: 224px; /* 32 x 7 */
+  margin: 10px;
+  text-align: center;
+}
+.btn_exType {height:21px; padding:0 3px; line-height:21px; color:#fff; border:1px solid #999; background-color:#999;}
+.angularjs-datetime-picker > .adp-days > .adp-day-of-week, .angularjs-datetime-picker > .adp-days > .adp-day {
+  box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  border: 1px solid transparent;
+  width: 32px;
+  line-height: 28px;
+  float: left;
+}
+.angularjs-datetime-picker > .adp-days > .adp-day-of-week {
+  font-weight: bold;
+}
+.angularjs-datetime-picker > .adp-days > .adp-day:not(.selectable) {
+  opacity: 0.15;
+  cursor: default;
+}
+.angularjs-datetime-picker > .adp-days > .adp-day.selectable  {
+  cursor: pointer;
+}
+.angularjs-datetime-picker > .adp-days > .adp-day.selected {
+  background: #e0e0e0;
+}
+.angularjs-datetime-picker > .adp-days > .adp-day.selectable:hover {
+  background: #eee;
+}
+.angularjs-datetime-picker > .adp-days:after {
+  content: '';
+  display: block;
+  clear: left;
+  height: 0;
+}
+
+.angularjs-datetime-picker input[type=range] {
+  width: 150px;
+}
